@@ -1,4 +1,116 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body><script>
+(function(){
+  const SB_URL = "https://rlnxsdvvkabbpkjuqavc.supabase.co";
+  const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJsbnhzZHZ2a2FiYnBranVxYXZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUzNjcwNjksImV4cCI6MjExMDk0MzA2OX0.mVk6GWmZs7bZbQYO09AypgafE8mQe5MHliXv1uvlcYM_هنا";
+  const H = { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY, "Content-Type": "application/json" };
+  const listeners = new Set();
+  const notify = () => listeners.forEach(fn => { try { fn(); } catch(e){} });
+
+  function applyPatch(base, patch) {
+    const out = JSON.parse(JSON.stringify(base || {}));
+    for (const [k, v] of Object.entries(patch || {})) {
+      if (k.includes(".")) {
+        const parts = k.split("."); let cur = out;
+        for (let i = 0; i < parts.length - 1; i++) { cur[parts[i]] = cur[parts[i]] || {}; cur = cur[parts[i]]; }
+        cur[parts[parts.length - 1]] = v;
+      } else { out[k] = v; }
+    }
+    return out;
+  }
+
+  function docRef(path) {
+    const clean = String(path).replace(/^\/+|\/+$/g, "");
+    const parts = clean.split("/");
+    const col = parts.slice(0, -1).join("/");
+    const get = async () => {
+      const r = await fetch(`${SB_URL}/rest/v1/app_docs?id=eq.${encodeURIComponent(clean)}&select=data`, { headers: H });
+      const rows = await r.json();
+      const row = Array.isArray(rows) ? rows[0] : null;
+      return { exists: !!row, id: parts[parts.length - 1], data: () => (row ? row.data : undefined) };
+    };
+    const set = async (data) => {
+      await fetch(`${SB_URL}/rest/v1/app_docs`, {
+        method: "POST",
+        headers: { ...H, "Prefer": "resolution=merge-duplicates" },
+        body: JSON.stringify({ id: clean, col, data, updated_at: new Date().toISOString() })
+      });
+      notify();
+    };
+    const update = async (patch) => {
+      const cur = await get();
+      await set(applyPatch(cur.exists ? cur.data() : {}, patch));
+    };
+    const del = async () => {
+      await fetch(`${SB_URL}/rest/v1/app_docs?id=eq.${encodeURIComponent(clean)}`, { method: "DELETE", headers: H });
+      notify();
+    };
+    const onSnapshot = (cb, errCb) => {
+      let active = true;
+      const run = async () => { if (!active) return; try { cb(await get()); } catch(e) { errCb && errCb(e); } };
+      run(); listeners.add(run);
+      const iv = setInterval(run, 8000);
+      return () => { active = false; listeners.delete(run); clearInterval(iv); };
+    };
+    return { get, set, update, delete: del, onSnapshot };
+  }
+
+  function colQuery(colPath, filters = [], lim = null) {
+    const cleanCol = String(colPath).replace(/^\/+|\/+$/g, "");
+    const get = async () => {
+      const r = await fetch(`${SB_URL}/rest/v1/app_docs?col=eq.${encodeURIComponent(cleanCol)}&select=id,data`, { headers: H });
+      let rows = await r.json();
+      if (!Array.isArray(rows)) rows = [];
+      for (const [f, op, v] of filters) {
+        rows = rows.filter(x => op === "==" ? (x.data && x.data[f] === v) : true);
+      }
+      if (lim) rows = rows.slice(0, lim);
+      return {
+        docs: rows.map(x => ({
+          id: x.id.split("/").pop(),
+          data: () => x.data
+        }))
+      };
+    };
+    const onSnapshot = (cb, errCb) => {
+      let active = true;
+      const run = async () => { if (!active) return; try { cb(await get()); } catch(e) { errCb && errCb(e); } };
+      run(); listeners.add(run);
+      const iv = setInterval(run, 8000);
+      return () => { active = false; listeners.delete(run); clearInterval(iv); };
+    };
+    return {
+      doc: (id) => docRef(cleanCol + "/" + id),
+      where: (f, op, v) => colQuery(cleanCol, [...filters, [f, op, v]], lim),
+      orderBy: () => colQuery(cleanCol, filters, lim),
+      limit: (n) => colQuery(cleanCol, filters, n),
+      startAfter: () => colQuery(cleanCol, filters, lim),
+      get,
+      onSnapshot
+    };
+  }
+
+  const db = { doc: docRef, collection: (p) => colQuery(p) };
+  const user = { id: async () => "admin", canEdit: async () => true, name: "إدارة المدرسة" };
+  const downloads = {
+    save: async ({ filename, data }) => {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(data instanceof Blob ? data : new Blob([data]));
+      a.download = filename; a.click();
+    }
+  };
+  const assets = {
+    upload: (file) => new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res({ id: Date.now(), url: r.result });
+      r.onerror = rej; r.readAsDataURL(file);
+    })
+  };
+
+  window.claude = {
+    use: async (name) => ({ db, user, downloads, assets }[name] || null)
+  };
+})();
+</script>
 <title>المراكز التنافسية</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap">
