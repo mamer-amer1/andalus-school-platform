@@ -1,115 +1,251 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body><script>
 (function(){
-  const SB_URL = "https://nvvmnyosywxvxgbhqhst.supabase.co";
-  const SB_KEY = "sb_publishable_H2pTXfO_cQLld6G1r7VNVg_Bo5teYZT";
-  const H = { "apikey": SB_KEY, "Content-Type": "application/json" };
-  if (SB_KEY.startsWith("eyJ")) H["Authorization"] = "Bearer " + SB_KEY;
-  const listeners = new Set();
-  const notify = () => listeners.forEach(fn => { try { fn(); } catch(e){} });
+  /* Andalus platform data layer: everything goes through this site's own /api (Cloudflare Worker).
+     No database key is in this page. Access rules are checked on the server. */
+  const LS = {
+    get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
+    set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} },
+    del(k){ try{ localStorage.removeItem(k); }catch(e){} }
+  };
+  let UID = LS.get("andalusUid");
+  if(!UID || !/^[a-z0-9]{16,64}$/.test(UID)){
+    UID = Array.from(crypto.getRandomValues(new Uint8Array(16)), b=>b.toString(16).padStart(2,"0")).join("");
+    LS.set("andalusUid", UID);
+  }
+  let TOKEN = LS.get("andalusTok") || "";
+  let ROLE = LS.get("andalusRole") || "";
+  const isAdmin = () => !!TOKEN && ROLE === "admin";
+  const headers = (extra) => Object.assign({ "Content-Type":"application/json", "X-Uid": UID }, TOKEN ? { "Authorization": "Bearer "+TOKEN } : {}, extra||{});
 
-  function applyPatch(base, patch) {
-    const out = JSON.parse(JSON.stringify(base || {}));
-    for (const [k, v] of Object.entries(patch || {})) {
-      if (k.includes(".")) {
-        const parts = k.split("."); let cur = out;
-        for (let i = 0; i < parts.length - 1; i++) { cur[parts[i]] = cur[parts[i]] || {}; cur = cur[parts[i]]; }
-        cur[parts[parts.length - 1]] = v;
-      } else { out[k] = v; }
+  async function api(path, body){
+    const r = await fetch(path, { method:"POST", headers: headers(), body: JSON.stringify(body||{}) });
+    let j = null; try{ j = await r.json(); }catch(e){}
+    if(r.status === 401 && TOKEN && path !== "/api/login"){ logout(true); }
+    if(!r.ok){ const e = new Error((j&&j.error)||("HTTP "+r.status)); e.status = r.status; throw e; }
+    return j;
+  }
+
+  /* ---- batching: all reads in the same moment go out as ONE request ---- */
+  let pend = null;
+  function queue(kind, key){
+    if(!pend){ pend = { docs:new Map(), cols:new Map() }; setTimeout(flush, 0); }
+    const m = pend[kind];
+    return new Promise((res, rej) => { if(!m.has(key)) m.set(key, []); m.get(key).push({res, rej}); });
+  }
+  async function flush(){
+    const p = pend; pend = null;
+    const docs = [...p.docs.keys()], cols = [...p.cols.keys()];
+    try{
+      const out = await api("/api/q", { docs, cols });
+      const denied = new Set(out.denied || []);
+      p.docs.forEach((ws, k) => ws.forEach(w => denied.has(k) ? w.rej(Object.assign(new Error("permission-denied"),{code:"permission-denied"})) : w.res(out.docs[k] === undefined ? null : out.docs[k])));
+      p.cols.forEach((ws, k) => ws.forEach(w => denied.has(k) ? w.rej(Object.assign(new Error("permission-denied"),{code:"permission-denied"})) : w.res(out.cols[k] || [])));
+    }catch(e){
+      p.docs.forEach(ws => ws.forEach(w => w.rej(e)));
+      p.cols.forEach(ws => ws.forEach(w => w.rej(e)));
+    }
+  }
+
+  /* ---- live updates: one shared timer, paused while the tab is hidden ---- */
+  const listeners = new Set();
+  const notify = () => setTimeout(() => listeners.forEach(fn => { try{ fn(); }catch(e){} }), 0);
+  setInterval(() => { if(document.visibilityState === "visible") notify(); }, 12000);
+  document.addEventListener("visibilitychange", () => { if(document.visibilityState === "visible") notify(); });
+
+  const clean = p => String(p).replace(/^\/+|\/+$/g, "");
+  const clone = x => x == null ? x : JSON.parse(JSON.stringify(x));
+  function applyPatch(base, patch){
+    const out = clone(base || {});
+    for(const [k, v] of Object.entries(patch || {})){
+      if(k.includes(".")){ const parts = k.split("."); let cur = out;
+        for(let i=0;i<parts.length-1;i++){ cur[parts[i]] = cur[parts[i]] || {}; cur = cur[parts[i]]; }
+        cur[parts[parts.length-1]] = v; }
+      else out[k] = v;
     }
     return out;
   }
-
-  function docRef(path) {
-    const clean = String(path).replace(/^\/+|\/+$/g, "");
-    const parts = clean.split("/");
-    const col = parts.slice(0, -1).join("/");
-    const get = async () => {
-      const r = await fetch(`${SB_URL}/rest/v1/app_docs?id=eq.${encodeURIComponent(clean)}&select=data`, { headers: H });
-      const rows = await r.json();
-      const row = Array.isArray(rows) ? rows[0] : null;
-      return { exists: !!row, id: parts[parts.length - 1], data: () => (row ? row.data : undefined) };
+  function docSnap(path, data){
+    const id = path.split("/").pop();
+    return { exists: data != null, id, ref: { id, path }, data: () => clone(data == null ? undefined : data) };
+  }
+  function querySnap(rows){
+    const docs = rows.map(x => docSnap(x.id, x.data));
+    return { docs, size: docs.length, empty: !docs.length, forEach: fn => docs.forEach(fn) };
+  }
+  function live(get, cb, errCb){
+    let active = true;
+    let last = undefined;
+    const run = async () => {
+      if(!active) return;
+      try{ const s = await get(); const sig = JSON.stringify(s.docs ? s.docs.map(d=>[d.id,d.data()]) : [s.exists, s.data()]);
+        if(sig !== last){ last = sig; if(active) cb(s); } }
+      catch(e){ if(active && errCb) errCb(e); }
     };
-    const set = async (data) => {
-      await fetch(`${SB_URL}/rest/v1/app_docs`, {
-        method: "POST",
-        headers: { ...H, "Prefer": "resolution=merge-duplicates" },
-        body: JSON.stringify({ id: clean, col, data, updated_at: new Date().toISOString() })
-      });
-      notify();
-    };
-    const update = async (patch) => {
-      const cur = await get();
-      await set(applyPatch(cur.exists ? cur.data() : {}, patch));
-    };
-    const del = async () => {
-      await fetch(`${SB_URL}/rest/v1/app_docs?id=eq.${encodeURIComponent(clean)}`, { method: "DELETE", headers: H });
-      notify();
-    };
-    const onSnapshot = (cb, errCb) => {
-      let active = true;
-      const run = async () => { if (!active) return; try { cb(await get()); } catch(e) { errCb && errCb(e); } };
-      run(); listeners.add(run);
-      const iv = setInterval(run, 8000);
-      return () => { active = false; listeners.delete(run); clearInterval(iv); };
-    };
-    return { get, set, update, delete: del, onSnapshot };
+    run(); listeners.add(run);
+    return () => { active = false; listeners.delete(run); };
   }
 
-  function colQuery(colPath, filters = [], lim = null) {
-    const cleanCol = String(colPath).replace(/^\/+|\/+$/g, "");
-    const get = async () => {
-      const r = await fetch(`${SB_URL}/rest/v1/app_docs?col=eq.${encodeURIComponent(cleanCol)}&select=id,data`, { headers: H });
-      let rows = await r.json();
-      if (!Array.isArray(rows)) rows = [];
-      for (const [f, op, v] of filters) {
-        rows = rows.filter(x => op === "==" ? (x.data && x.data[f] === v) : true);
-      }
-      if (lim) rows = rows.slice(0, lim);
-      return {
-        docs: rows.map(x => ({
-          id: x.id.split("/").pop(),
-          data: () => x.data
-        }))
-      };
+  function docRef(path){
+    const id = clean(path);
+    const get = async () => docSnap(id, await queue("docs", id));
+    const set = async (data, opts) => {
+      let val = data;
+      if(opts && opts.merge){ const cur = await queue("docs", id).catch(() => null); val = Object.assign({}, cur || {}, data); }
+      await api("/api/w", { op:"set", id, data: clone(val) }); notify();
     };
-    const onSnapshot = (cb, errCb) => {
-      let active = true;
-      const run = async () => { if (!active) return; try { cb(await get()); } catch(e) { errCb && errCb(e); } };
-      run(); listeners.add(run);
-      const iv = setInterval(run, 8000);
-      return () => { active = false; listeners.delete(run); clearInterval(iv); };
+    const update = async (patch) => { const cur = await queue("docs", id); await set(applyPatch(cur || {}, patch)); };
+    const del = async () => { await api("/api/w", { op:"delete", id }); notify(); };
+    const parts = id.split("/");
+    return { id: parts[parts.length-1], path: id, get, set, update, delete: del,
+      collection: (sub) => colQuery(id + "/" + clean(sub)),
+      onSnapshot: (cb, errCb) => live(get, cb, errCb) };
+  }
+
+  function colQuery(colPath, filters, lim, order){
+    filters = filters || [];
+    const col = clean(colPath);
+    const cmp = (a, op, v) => op === "==" ? a === v : op === "!=" ? a !== v : op === "<" ? a < v : op === "<=" ? a <= v :
+      op === ">" ? a > v : op === ">=" ? a >= v : op === "in" ? (v||[]).includes(a) : op === "array-contains" ? Array.isArray(a) && a.includes(v) : true;
+    const get = async () => {
+      let rows = await queue("cols", col);
+      for(const [f, op, v] of filters) rows = rows.filter(x => x.data && cmp(x.data[f], op, v));
+      if(order){ const [f, dir] = order; rows = rows.slice().sort((a,b) => { const x = a.data&&a.data[f], y = b.data&&b.data[f]; return (x>y?1:x<y?-1:0) * (dir==="desc"?-1:1); }); }
+      if(lim) rows = rows.slice(0, lim);
+      return querySnap(rows);
     };
     return {
-      doc: (id) => docRef(cleanCol + "/" + id),
-      where: (f, op, v) => colQuery(cleanCol, [...filters, [f, op, v]], lim),
-      orderBy: () => colQuery(cleanCol, filters, lim),
-      limit: (n) => colQuery(cleanCol, filters, n),
-      startAfter: () => colQuery(cleanCol, filters, lim),
+      id: col.split("/").pop(), path: col,
+      doc: (id) => docRef(col + "/" + (id || Date.now().toString(36) + Math.random().toString(36).slice(2,8))),
+      add: async (data) => { const r = docRef(col + "/" + Date.now().toString(36) + Math.random().toString(36).slice(2,8)); await r.set(data); return r; },
+      where: (f, op, v) => colQuery(col, [...filters, [f, op, v]], lim, order),
+      orderBy: (f, dir) => colQuery(col, filters, lim, [f, dir]),
+      limit: (n) => colQuery(col, filters, n, order),
+      startAfter: () => colQuery(col, filters, lim, order),
       get,
-      onSnapshot
+      onSnapshot: (cb, errCb) => live(get, cb, errCb)
     };
   }
 
   const db = { doc: docRef, collection: (p) => colQuery(p) };
-  const user = { id: async () => "admin", canEdit: async () => true, name: "إدارة المدرسة" };
+  const user = { id: async () => UID, canEdit: async () => isAdmin(), name: LS.get("andalusName") || "" };
   const downloads = {
     save: async ({ filename, data }) => {
       const a = document.createElement("a");
       a.href = URL.createObjectURL(data instanceof Blob ? data : new Blob([data]));
-      a.download = filename; a.click();
+      a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+      return { ok: true };
     }
   };
   const assets = {
-    upload: (file) => new Promise((res, rej) => {
-      const r = new FileReader();
-      r.onload = () => res({ id: Date.now(), url: r.result });
-      r.onerror = rej; r.readAsDataURL(file);
-    })
+    upload: async (file, opts) => {
+      if(file && file.size > 15*1024*1024){ const e = new Error("too_large"); e.code = "too_large"; throw e; }
+      const r = await fetch("/api/upload", { method:"POST", headers: Object.assign({ "X-Uid": UID, "Content-Type": (opts&&opts.type) || file.type || "application/octet-stream" }, TOKEN ? { "Authorization":"Bearer "+TOKEN } : {}), body: file });
+      const j = await r.json().catch(() => ({}));
+      if(!r.ok){ const e = new Error(j.error || "upload failed"); e.code = j.error; throw e; }
+      return { id: j.id, url: j.url, name: file.name, type: file.type, size: file.size };
+    }
   };
 
-  window.claude = {
-    use: async (name) => ({ db, user, downloads, assets }[name] || null)
-  };
+  window.claude = { use: async (name) => ({ db, user, downloads, assets }[name] || null) };
+
+  /* ---------------- sign-in for school administration and staff ---------------- */
+  function logout(silent){
+    TOKEN = ""; ROLE = "";
+    LS.del("andalusTok"); LS.del("andalusRole"); LS.del("andalusName");
+    try{ sessionStorage.removeItem("admOK"); }catch(e){}
+    if(!silent) location.reload();
+  }
+  const css = `.anx-ov{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:16px;font-family:inherit}
+  .anx-box{background:#fff;color:#0f172a;border-radius:16px;max-width:400px;width:100%;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.25);direction:rtl;text-align:right}
+  .anx-box h3{margin:0 0 6px;font-size:1.15rem}.anx-box p{margin:0 0 14px;color:#475569;font-size:.9rem;line-height:1.6}
+  .anx-box label{display:block;font-size:.85rem;font-weight:600;margin:10px 0 4px}
+  .anx-box input{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;font-size:1rem;direction:ltr;text-align:left}
+  .anx-row{display:flex;gap:8px;margin-top:16px}.anx-row button{flex:1;padding:10px;border-radius:10px;border:0;font-size:.95rem;cursor:pointer;font-family:inherit}
+  .anx-pri{background:#14532d;color:#fff}.anx-sec{background:#e2e8f0;color:#0f172a}
+  .anx-msg{color:#b91c1c;font-size:.85rem;margin-top:10px;min-height:1em}
+  .anx-bar{position:fixed;bottom:12px;left:12px;z-index:2147482000;display:flex;gap:6px;direction:rtl;font-family:inherit}
+  .anx-bar button{background:#0f172a;color:#fff;border:0;border-radius:999px;padding:7px 14px;font-size:.8rem;cursor:pointer;opacity:.85;font-family:inherit}`;
+  function addCss(){ if(document.getElementById("anxCss")) return; const s = document.createElement("style"); s.id = "anxCss"; s.textContent = css; document.head.appendChild(s); }
+
+  function showLogin(){
+    if(document.getElementById("anxLogin")) return;
+    addCss();
+    const ov = document.createElement("div"); ov.className = "anx-ov"; ov.id = "anxLogin";
+    ov.innerHTML = `<form class="anx-box" autocomplete="on">
+      <h3>دخول الإدارة والمعلمين</h3>
+      <p>الإدارة: رقم الجوال المسجّل + كلمة مرور الإدارة.<br>المعلمون: كلمة مرور المعلمين فقط (اترك الجوال فارغاً).</p>
+      <label>رقم الجوال</label><input id="anxPh" inputmode="tel" placeholder="05xxxxxxxx" autocomplete="username">
+      <label>كلمة المرور</label><input id="anxPw" type="password" autocomplete="current-password">
+      <div class="anx-msg" id="anxMsg" role="alert"></div>
+      <div class="anx-row"><button class="anx-pri" type="submit">دخول</button><button class="anx-sec" type="button" id="anxX">إلغاء</button></div></form>`;
+    document.body.appendChild(ov);
+    const f = ov.querySelector("form");
+    ov.querySelector("#anxX").onclick = () => { ov.remove(); if(/^#(login)/.test(location.hash)) history.replaceState(null, "", location.pathname); };
+    f.onsubmit = async (e) => {
+      e.preventDefault();
+      const msg = ov.querySelector("#anxMsg"); msg.textContent = "جارٍ التحقق…";
+      try{
+        const j = await api("/api/login", { phone: ov.querySelector("#anxPh").value, password: ov.querySelector("#anxPw").value });
+        TOKEN = j.token; ROLE = j.role;
+        LS.set("andalusTok", TOKEN); LS.set("andalusRole", ROLE); LS.set("andalusName", j.name || "");
+        if(j.hash){ try{ sessionStorage.setItem("admOK", j.hash); }catch(err){} }
+        if(/^#login/.test(location.hash)) location.hash = ROLE === "admin" ? "#admin" : "";
+        location.reload();
+      }catch(err){
+        msg.textContent = err.message === "phone" ? "رقم الجوال غير مسجّل ضمن مستخدمي بوابة الإدارة." :
+          err.message === "password" ? "كلمة المرور غير صحيحة." : "تعذّر الدخول: " + err.message;
+      }
+    };
+    setTimeout(() => ov.querySelector("#anxPh").focus(), 30);
+  }
+
+  function bar(){
+    if(!TOKEN) return;
+    addCss();
+    const b = document.createElement("div"); b.className = "anx-bar";
+    b.innerHTML = `<button type="button" id="anxOut">خروج (${ROLE === "admin" ? "الإدارة" : "المعلمون"})</button>` + (ROLE === "admin" ? `<button type="button" id="anxImp">استيراد نسخة</button>` : "");
+    document.body.appendChild(b);
+    b.querySelector("#anxOut").onclick = () => logout(false);
+    const imp = b.querySelector("#anxImp"); if(imp) imp.onclick = importBackup;
+  }
+
+  /* ---------------- one-time import of the backup exported from Claude ---------------- */
+  function importBackup(){
+    const inp = document.createElement("input"); inp.type = "file"; inp.accept = ".json,application/json";
+    inp.onchange = async () => {
+      const file = inp.files[0]; if(!file) return;
+      addCss();
+      const ov = document.createElement("div"); ov.className = "anx-ov";
+      ov.innerHTML = `<div class="anx-box"><h3>استيراد البيانات</h3><p id="anxSt">جارٍ قراءة الملف…</p></div>`;
+      document.body.appendChild(ov);
+      const st = ov.querySelector("#anxSt");
+      try{
+        const bk = JSON.parse(await file.text());
+        const docs = bk.docs || []; const assetsIn = bk.assets || {};
+        let done = 0;
+        for(let i = 0; i < docs.length; i += 50){
+          await api("/api/import", { docs: docs.slice(i, i+50) });
+          done = Math.min(i+50, docs.length); st.textContent = `السجلات: ${done} من ${docs.length}`;
+        }
+        const ids = Object.keys(assetsIn); let a = 0, failed = 0;
+        for(const id of ids){
+          try{ await api("/api/import", { asset: { id, type: assetsIn[id].type, b64: assetsIn[id].b64 } }); }catch(e){ failed++; }
+          a++; st.textContent = `السجلات: ${done} ✓ — الصور والملفات: ${a} من ${ids.length}`;
+        }
+        st.innerHTML = `✅ تم استيراد ${done} سجلاً و${ids.length - failed} صورة/ملف.${failed ? `<br>تعذّر ${failed} ملفاً.` : ""}<br><br><button class="anx-pri" style="padding:10px 18px;border:0;border-radius:10px;cursor:pointer" onclick="location.reload()">تحديث الصفحة</button>`;
+      }catch(e){
+        st.innerHTML = "❌ تعذّر الاستيراد: " + String(e.message || e).replace(/[<>&]/g, "") + `<br><br><button class="anx-sec" style="padding:10px 18px;border:0;border-radius:10px;cursor:pointer" onclick="this.closest('.anx-ov').remove()">إغلاق</button>`;
+      }
+    };
+    inp.click();
+  }
+
+  function onRoute(){
+    if(!TOKEN && /^#(login|admin)/.test(location.hash)) showLogin();
+  }
+  window.addEventListener("hashchange", onRoute);
+  const start = () => { bar(); onRoute(); };
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
 })();
 </script>
 <title>المراكز التنافسية</title>

@@ -1,0 +1,14 @@
+{
+  "name": "andalus-school-platform",
+  "main": "worker.js",
+  "compatibility_date": "2025-11-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*", "/_blob/*"]
+  },
+  "vars": {
+    "SUPABASE_URL": "https://nvvmnyosywxvxgbhqhst.supabase.co"
+  },
+  "observability": { "enabled": true }
+}
