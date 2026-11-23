@@ -1,8 +1,9 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body><script>
 (function(){
-  const SB_URL = "https://rlnxsdvvkabbpkjuqavc.supabase.co";
-  const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJsbnhzZHZ2a2FiYnBranVxYXZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUzNjcwNjksImV4cCI6MjExMDk0MzA2OX0.mVk6GWmZs7bZbQYO09AypgafE8mQe5MHliXv1uvlcYM_هنا";
-  const H = { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY, "Content-Type": "application/json" };
+  const SB_URL = "https://nvvmnyosywxvxgbhqhst.supabase.co";
+  const SB_KEY = "sb_publishable_H2pTXfO_cQLld6G1r7VNVg_Bo5teYZT";
+  const H = { "apikey": SB_KEY, "Content-Type": "application/json" };
+  if (SB_KEY.startsWith("eyJ")) H["Authorization"] = "Bearer " + SB_KEY;
   const listeners = new Set();
   const notify = () => listeners.forEach(fn => { try { fn(); } catch(e){} });
 
