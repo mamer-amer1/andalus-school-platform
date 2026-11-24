@@ -1,4 +1,8 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body><script>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}.adm-pick{display:none}
+/* phones: nothing may push the page wider than the screen (rows wrap, grids shrink) */
+@media (max-width:760px){html,body{overflow-x:hidden}#app .tabs,#app .subtabs,#app .chips,#app .row{flex-wrap:wrap}#app .stack>*,#app .grid2>*,#app .kpis>*{min-width:0}#app .kpis{grid-template-columns:repeat(auto-fit,minmax(min(140px,100%),1fr))!important}#app .tabs>button,#app .subtabs>button{flex:1 1 auto}#app .admin .rail{flex-wrap:nowrap}}
+@media (max-width:900px){.adm-pick{display:block;margin:0 0 10px}.adm-pick select{width:100%;font-weight:700;min-height:46px}}
+</style></head><body><script>
 (function(){
   /* Andalus platform data layer: everything goes through this site's own /api (Cloudflare Worker).
      No database key is in this page. Access rules are checked on the server. */
@@ -273,7 +277,8 @@ html[data-motion="off"] .al84>.r,html[data-motion="off"] .herocard::after{animat
   .anx-pri{background:#14532d;color:#fff}.anx-sec{background:#e2e8f0;color:#0f172a}
   .anx-msg{color:#b91c1c;font-size:.85rem;margin-top:10px;min-height:1em}
   .anx-bar{position:fixed;bottom:12px;left:12px;z-index:2147482000;display:flex;gap:6px;direction:rtl;font-family:inherit}
-  .anx-bar button{background:#0f172a;color:#fff;border:0;border-radius:999px;padding:7px 14px;font-size:.8rem;cursor:pointer;opacity:.85;font-family:inherit}`;
+  .anx-bar button{background:#0f172a;color:#fff;border:0;border-radius:999px;padding:7px 14px;font-size:.8rem;cursor:pointer;opacity:.85;font-family:inherit}
+  @media (max-width:760px){.anx-bar{bottom:6px;left:6px}.anx-bar button{padding:4px 10px;font-size:.7rem;opacity:.6}#anxImp{display:none}}`;
   function addCss(){ if(document.getElementById("anxCss")) return; const s = document.createElement("style"); s.id = "anxCss"; s.textContent = css; document.head.appendChild(s); }
 
   window.andalusLogout = () => logout(false);
@@ -541,7 +546,7 @@ table.plan tr.hl td{background:#fde2e2}
 .rail a{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-radius:.7rem;text-decoration:none;color:var(--fg);font-weight:700;font-size:.92rem}
 .rail a.on{background:var(--green);color:#fff}
 .rail a:not(.on):hover{background:var(--sunk)}
-@media (max-width:900px){.admin{grid-template-columns:1fr}.rail{position:static;display:flex;overflow-x:auto}.rail a{white-space:nowrap}}
+@media (max-width:900px){.admin{grid-template-columns:1fr}.rail{position:static;display:flex;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}.rail a{white-space:nowrap}}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
 .kpi{padding:14px 16px;text-decoration:none;color:inherit}
 .kpi b{display:block;font-size:1.8rem;font-weight:900;color:var(--green-dd)}
@@ -1304,7 +1309,15 @@ window.addEventListener("hashchange",()=>{
   window.scrollTo(0,0);
 });
 const route=()=>(location.hash||"#home").slice(1)||"home";
-function render(){
+/* keep where the user scrolled sideways in tab bars when the page refreshes its data */
+const HSCROLL_SEL=".admin .rail, #app .tabs, #app .subtabs, #app .chips, #app .tbl-wrap, #app .tbl";
+function hScrollSnap(){ const m=new Map(); try{ document.querySelectorAll(HSCROLL_SEL).forEach((e,i)=>{ if(e.scrollWidth>e.clientWidth+2) m.set(e.className+"#"+i,e.scrollLeft); }); }catch(e){} return m; }
+function hScrollRestore(m){ if(!m||!m.size) return; try{ document.querySelectorAll(HSCROLL_SEL).forEach((e,i)=>{ const v=m.get(e.className+"#"+i); if(v!=null) e.scrollLeft=v; }); }catch(e){} }
+/* while a finger is on the screen (swiping a list or tabs), hold background refreshes for a moment */
+["touchstart","touchmove","wheel","pointerdown"].forEach(ev=>document.addEventListener(ev,()=>{ window.__lastTouch=Date.now(); },{passive:true,capture:true}));
+document.addEventListener("scroll",()=>{ window.__lastTouch=Date.now(); },{passive:true,capture:true});
+function render(){ const __hs=hScrollSnap(); try{ render0(); } finally{ hScrollRestore(__hs); } }
+function render0(){
   if(route()==="admin-qz"){ location.replace("#qzm-c-tamkeen"); return; }
   const r=route(), app=$("#app"); updateAcctNav(); try{ document.querySelectorAll("[data-staffonly]").forEach(a=>a.hidden=!isStaff()); document.querySelectorAll("[data-adminonly]").forEach(a=>a.hidden=!S.admin); }catch(e){} if(!/^(rev|tsk)-(my|subj|design)$/.test(r)) S.ppDirty=false; try{ useTick(); }catch(e){} try{ gsFabSync(); }catch(e){}
   if(!r.startsWith("qzr-")&&typeof qzUnsubRoom==="function"&&QZ.roomCode){ qzUnsubRoom(); QZ.roomCode=null; QZ.roomView=false; }
@@ -1949,8 +1962,10 @@ function updateBadge(){ const n=allRequests().filter(r=>r.status==="جديد").l
 function renderAdmin(tab){
   const urgent=dashAlerts().filter(a=>a.lvl==="bad").length+S.alerts.filter(a=>!a.done&&a.level==="عاجل").length;
   const rail=TABS.map(([k,l])=>{ const n=k==="requests"?allRequests().filter(r=>r.status==="جديد").length:k==="dash"?urgent:0; return `<a href="#admin-${k}" class="${k===tab?"on":""}">${l}${n?`<span class="badge">${n}</span>`:""}</a>`; }).join("");
-  $("#app").innerHTML=`<div class="admin"><nav class="rail surface" aria-label="أقسام الإدارة">${S.site.logo?`<div class="rail-logo"><img alt="شعار مدارس الأندلس الأهلية" src="${blob(S.site.logo)}"></div>`:""}${rail}<button class="btn sm ghost" type="button" onclick="location.reload()" style="margin-top:8px" title="إعادة تحميل المنصة بآخر البيانات">🔄 تحديث المنصة</button></nav><div id="adm" class="stack" style="min-width:0;gap:18px"></div></div>`;
+  const pick=`<label class="adm-pick"><select class="in" aria-label="اختر قسم الإدارة" onchange="location.hash='#admin-'+this.value">${TABS.map(([k,l])=>`<option value="${k}" ${k===tab?"selected":""}>${"📂 "+String(l).replace(/<[^>]*>/g,"")}</option>`).join("")}</select></label>`;
+  $("#app").innerHTML=`${pick}<div class="admin"><nav class="rail surface" aria-label="أقسام الإدارة">${S.site.logo?`<div class="rail-logo"><img alt="شعار مدارس الأندلس الأهلية" src="${blob(S.site.logo)}"></div>`:""}${rail}<button class="btn sm ghost" type="button" onclick="location.reload()" style="margin-top:8px" title="إعادة تحميل المنصة بآخر البيانات">🔄 تحديث المنصة</button></nav><div id="adm" class="stack" style="min-width:0;gap:18px"></div></div>`;
   ({dash:admDash,ctl:admCtl,ann:annAdmin,tp:admTP,stats:admStats,comps:admComps,requests:admRequests,students:admStudents,ach:admAch,train:admTrain,msg:admMsg,commap:admCommap,calendar:el=>renderCalendar(el),media:admMedia,accounts:admAccounts,usage:admUsage,resets:admResets,posters:el=>fxStudio(el,true),exams:el=>{ exCssOnce(); exManage(el); },rl:el=>{ el.innerHTML='<div class="stack" style="gap:14px" id="rlBody"></div>'; rlAdmin(el.querySelector("#rlBody")); },downloads:admDownloads,theme:admTheme,settings:admSettings}[tab]||admDash)($("#adm"));
+  if(S.lastAdmTab!==tab){ S.lastAdmTab=tab; const r=document.querySelector(".admin .rail"), on=r&&r.querySelector("a.on"); if(r&&on&&r.scrollWidth>r.clientWidth){ requestAnimationFrame(()=>{ const rr=r.getBoundingClientRect(), oo=on.getBoundingClientRect(); r.scrollLeft+=(oo.left+oo.width/2)-(rr.left+rr.width/2); }); } }
 }
 /* ---------- admin: command dashboard ---------- */
 S.alerts=S.alerts||[]; S.dashRange=S.dashRange||14;
@@ -8378,7 +8393,7 @@ function qzBoot(db){
 }
 
 /* ---------- data wiring ---------- */
-function rerender(){ updateBadge(); if(S.admin){ try{ ppAutoSync(); }catch(e){} } if(S.ppDirty&&/^(rev|tsk)-(my|subj|design)$/.test(route())) return; if(S.admin){ maybeSync(); maybePubCounts(); } if(S.editing) return; if(/^ga(-|$)/.test(route())&&S.gaReady){ gaRe(); return; } if(route()==="tt"&&document.querySelector("#ttHost")) return; if(/^(quiz$|qzplay$|qzr-|qzh-)/.test(route())) return; if(document.querySelector(".modal")) return; if([...document.querySelectorAll("#app [data-csq]")].some(i=>i.value.trim())) return; const ae=document.activeElement; if(ae&&ae.matches&&ae.matches("input,textarea,select")&&$("#app").contains(ae)) return; render(); }
+function rerender(){ if(Date.now()-(window.__lastTouch||0)<1500){ clearTimeout(S.rrT); S.rrT=setTimeout(rerender,1600); return; } updateBadge(); if(S.admin){ try{ ppAutoSync(); }catch(e){} } if(S.ppDirty&&/^(rev|tsk)-(my|subj|design)$/.test(route())) return; if(S.admin){ maybeSync(); maybePubCounts(); } if(S.editing) return; if(/^ga(-|$)/.test(route())&&S.gaReady){ gaRe(); return; } if(route()==="tt"&&document.querySelector("#ttHost")) return; if(/^(quiz$|qzplay$|qzr-|qzh-)/.test(route())) return; if(document.querySelector(".modal")) return; if([...document.querySelectorAll("#app [data-csq]")].some(i=>i.value.trim())) return; const ae=document.activeElement; if(ae&&ae.matches&&ae.matches("input,textarea,select")&&$("#app").contains(ae)) return; render(); }
 function sub(path,cb){ return S.db.collection(path).onSnapshot(snap=>cb(snap.docs.map(d=>({...d.data(),_id:d.id}))),()=>{}); }
 (async()=>{
   render();
