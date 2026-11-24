@@ -1085,7 +1085,7 @@ input.qz-bigcode{font-size:2rem;text-align:center}
     <nav class="main" aria-label="التنقل الرئيسي">
       <a href="#home" data-nav="home">🏆 <span data-t="navPublic">المراكز التنافسية</span></a>
       <a href="#tp" data-nav="tp" data-staffonly hidden>👨‍🏫 بوابة المعلم</a>
-      <a href="#" id="navSubs" target="_blank" rel="noopener" hidden>⏱️ حصص الانتظار ↗</a>
+      <a href="#wp-subs" data-nav="wp-subs" id="navSubs" hidden>⏱️ حصص الانتظار</a>
       <a href="#ann" data-nav="ann" hidden>📣 الإعلانات<span class="badge an" id="annBadge" hidden>0</span></a>
       <a href="#wp" data-nav="wp">📅 الخطة الأسبوعية</a>
       <a href="#rev" data-nav="rev">📚 خطة المراجعة</a>
@@ -1309,7 +1309,7 @@ function render(){
   const r=route(), app=$("#app"); updateAcctNav(); try{ document.querySelectorAll("[data-staffonly]").forEach(a=>a.hidden=!isStaff()); document.querySelectorAll("[data-adminonly]").forEach(a=>a.hidden=!S.admin); }catch(e){} if(!/^(rev|tsk)-(my|subj|design)$/.test(r)) S.ppDirty=false; try{ useTick(); }catch(e){} try{ gsFabSync(); }catch(e){}
   if(!r.startsWith("qzr-")&&typeof qzUnsubRoom==="function"&&QZ.roomCode){ qzUnsubRoom(); QZ.roomCode=null; QZ.roomView=false; }
   if(!r.startsWith("qzh-")&&typeof qzUnsubHost==="function"&&QZ.hostCode){ qzUnsubHost(); QZ.hostCode=null; clearInterval(QZ.hostTick); }
-  document.querySelectorAll("nav.main a").forEach(a=>a.classList.toggle("on",r===a.dataset.nav||(a.dataset.nav==="admin"&&r.startsWith("admin"))||(a.dataset.nav==="cmap"&&r.startsWith("cmap"))||(a.dataset.nav==="rev"&&r.startsWith("rev"))||(a.dataset.nav==="exams"&&r.startsWith("exams"))||(a.dataset.nav==="rl"&&/^rl(-|$)/.test(r))||(a.dataset.nav==="tsk"&&r.startsWith("tsk"))||(a.dataset.nav==="home"&&(r.startsWith("c-")||r==="honor"))||(a.dataset.nav==="train"&&(r.startsWith("t-")||r==="quiz"||r==="nafs"||r.startsWith("qz")&&!r.startsWith("qzm-")))||(a.dataset.nav==="login"&&r==="me")||(a.dataset.nav==="cal"&&r==="cals")||(a.dataset.nav==="tp"&&r.startsWith("tp-"))||(a.dataset.nav==="ann"&&r.startsWith("ann-"))||(a.dataset.nav==="wp"&&r.startsWith("wp-"))));
+  document.querySelectorAll("nav.main a").forEach(a=>a.classList.toggle("on",r===a.dataset.nav||(a.dataset.nav==="admin"&&r.startsWith("admin"))||(a.dataset.nav==="cmap"&&r.startsWith("cmap"))||(a.dataset.nav==="rev"&&r.startsWith("rev"))||(a.dataset.nav==="exams"&&r.startsWith("exams"))||(a.dataset.nav==="rl"&&/^rl(-|$)/.test(r))||(a.dataset.nav==="tsk"&&r.startsWith("tsk"))||(a.dataset.nav==="home"&&(r.startsWith("c-")||r==="honor"))||(a.dataset.nav==="train"&&(r.startsWith("t-")||r==="quiz"||r==="nafs"||r.startsWith("qz")&&!r.startsWith("qzm-")))||(a.dataset.nav==="login"&&r==="me")||(a.dataset.nav==="cal"&&r==="cals")||(a.dataset.nav==="tp"&&r.startsWith("tp-"))||(a.dataset.nav==="ann"&&r.startsWith("ann-"))||(a.dataset.nav==="wp"&&r.startsWith("wp-")&&r!=="wp-subs"&&r!=="wp-admin-subs")||(a.dataset.nav==="wp-subs"&&(r==="wp-subs"||r==="wp-admin-subs"))));
   if(S.asParent&&r.startsWith("admin")) S.asParent=false; if(S.tpAs&&r.startsWith("admin")) S.tpAs=null;
   if(r==="cal"&&pubAsParent()&&!pubSecOn("cal")&&pubSecOn("calS")){ location.replace("#cals"); return; }
   if(!pubGate(r,app)) return; if(!tpGate(r,app)){ m30Nav(); return; }
@@ -3070,6 +3070,8 @@ const cmAdmin=()=>!!(S.admin&&adminUnlocked());
 const isStaff=()=>cmAdmin()||!!staffProf();
 /* one account for the whole platform: the weekly-plan module reads the signed-in staff member from here */
 window.platTeachers=()=>S.gotAccts?(S.accts||[]).filter(a=>["teacher","supervisor","principal","deputy"].includes(a.role)&&(!a.services||a.services.includes("wp"))).map(a=>({name:a.name||"",phone:a.phone||"",active:a.status==="active"})):null;
+window.platAcctCode=(phone,name)=>{ if(!cmAdmin()||!S.gotAccts) return null; const ph=intlPhone(phone||""); const L=(S.accts||[]).filter(a=>a.status==="active"&&a.code);
+  const a=(ph&&L.find(x=>intlPhone(x.phone)===ph))||(name?L.find(x=>String(x.name||"").replace(/\s+/g," ").trim()===String(name).replace(/\s+/g," ").trim()):null); return a?{phone:a.phone,code:normDigits(a.code).replace(/\D/g,"")}:null; };
 window.platStaff=()=>{ const tp=staffProf(); if(!tp) return null; const a=tpAttrs(tp); return {name:a.name||tp.name||"",role:a.role,lead:LEAD_R.includes(a.role),phone:(S.session&&S.session.phone)||""}; };
 const cmFull=()=>cmAdmin(); /* m23: admin areas need the unified platform admin code */
 const cmWho=()=>cmAdmin()?admMe():((staffProf()||{}).name||"معلم");
@@ -6006,26 +6008,22 @@ function m30Boot(db){ db.doc("site/tportal").onSnapshot(d=>{ S.tpCfg=d.exists?d.
 function m30Nav(){ try{ tpNav(); }catch(e){} try{ annBadge(); }catch(e){} const c=document.querySelector('nav.main a[data-nav="cal"]'); if(c&&pubAsParent()) c.hidden=!(pubOn("cal")||pubOn("calS")); }
 
 /* ================= بوابة المعلم ================= */
-const TP_SVC=[["wp","الخطة الأسبوعية","cal","#wp-teacher","إدخال خطتك الأسبوعية وتسليمها ومتابعة ملاحظات الإدارة"],["tt","جدولي الدراسي","grid","#tp-tt","حصصك الأسبوعية من الجدول الدراسي المعتمد"],["subs","حصص الانتظار وتبديل الحصص","clock","","تكليفات حصص الانتظار وطلبات تبديل الحصص (النظام الخارجي)"],["gaent","إدخال الدرجات","pen","#ga-ent","إدخال درجات الاختبارات ومكونات التقويم خلال الفترة المفتوحة"],["ga","تحليل درجات الاختبارات","chart","#ga","تحليل نتائج فصولك والخطط العلاجية والإثرائية"],["rev","خطط المراجعة","book","#rev-my","إعداد خطط المراجعة لموادك ومتابعتها"],["tsk","المهام الأدائية","tasks","#tsk-my","المهام الأدائية لطلابك ومواعيد تسليمها"],["ann","الإعلانات والتعاميم","mega","#ann","إعلانات الإدارة والتعاميم الموجّهة لك"],["cal","الأجندة المدرسية","cal","#cal","مواعيد الاختبارات والفعاليات والاجتماعات"],["rl","التعليم عن بُعد","laptop","#rl-teacher","روابط حصصك عن بُعد ومتابعة دخول الطلاب"],["exams","جداول الاختبارات","file","#exams","جداول الاختبارات المعتمدة"],["rep","التقارير والمتابعة","trend","#tp-rep","ملخص حصصك وردودك وروابط التقارير"],["comps","مسابقاتي وطلابي","trophy","#tp-comps","المسابقات المسندة إليك وطلابها وحصص التدريب"],["cmap","خريطة التواصل","map","#cmap","خطة التواصل مع أولياء الأمور"],["studio","استوديو التصميم","brush","#studio","تصميم الشهادات والإعلانات"]];
+const TP_SVC=[["wp","الخطة الأسبوعية","cal","#wp-teacher","إدخال خطتك الأسبوعية وتسليمها ومتابعة ملاحظات الإدارة"],["tt","جدولي الدراسي","grid","#tp-tt","حصصك الأسبوعية من الجدول الدراسي المعتمد"],["subs","حصص الانتظار وتبديل الحصص","clock","#wp-subs","تكليفات حصص الانتظار وطلبات تبديل الحصص"],["gaent","إدخال الدرجات","pen","#ga-ent","إدخال درجات الاختبارات ومكونات التقويم خلال الفترة المفتوحة"],["ga","تحليل درجات الاختبارات","chart","#ga","تحليل نتائج فصولك والخطط العلاجية والإثرائية"],["rev","خطط المراجعة","book","#rev-my","إعداد خطط المراجعة لموادك ومتابعتها"],["tsk","المهام الأدائية","tasks","#tsk-my","المهام الأدائية لطلابك ومواعيد تسليمها"],["ann","الإعلانات والتعاميم","mega","#ann","إعلانات الإدارة والتعاميم الموجّهة لك"],["cal","الأجندة المدرسية","cal","#cal","مواعيد الاختبارات والفعاليات والاجتماعات"],["rl","التعليم عن بُعد","laptop","#rl-teacher","روابط حصصك عن بُعد ومتابعة دخول الطلاب"],["exams","جداول الاختبارات","file","#exams","جداول الاختبارات المعتمدة"],["rep","التقارير والمتابعة","trend","#tp-rep","ملخص حصصك وردودك وروابط التقارير"],["comps","مسابقاتي وطلابي","trophy","#tp-comps","المسابقات المسندة إليك وطلابها وحصص التدريب"],["cmap","خريطة التواصل","map","#cmap","خطة التواصل مع أولياء الأمور"],["studio","استوديو التصميم","brush","#studio","تصميم الشهادات والإعلانات"]];
 const TP_ICONS=["link","book","file","chart","cal","users","star","flag","target","folder","video","globe","msg","clip","award","school","bulb"];
 const tpCfg=()=>S.tpCfg||{};
 function tpRuleOK(c,V){ if(!c) return true; if(c.on===false) return false; if((c.deny||[]).some(n=>sameName(n,V.name))) return false; if((c.allow||[]).some(n=>sameName(n,V.name))) return true;
   if((c.roles||[]).length&&!c.roles.includes(V.trole)) return false; if((c.subj||[]).length&&!c.subj.some(s=>(V.subjects||[]).some(t=>gaSubjEq(s,t)))) return false; if((c.grades||[]).length&&!c.grades.some(g=>(V.grades||[]).includes(g))) return false; return true; }
 function tpAcctSvc(V){ if(S.tpAs){ const a=(S.accts||[]).find(x=>sameName(x.name||"",V.name)); return a&&Array.isArray(a.services)?a.services:null; } const tp=staffProf(); return tp&&Array.isArray(tp.svc)?tp.svc:null; }
 function tpOn(k,V){ V=V||viewer(); if(V.k!=="tea") return true; const c=(tpCfg().svcs||{})[k]; if(!tpRuleOK(c,V)) return false; const sv=tpAcctSvc(V); const map={wp:"wp",subs:"wp",rl:"rl",rev:"rev",tsk:"tsk",cmap:"cmap"}; return !(sv&&map[k]&&!sv.includes(map[k])); }
-const subsUrl=()=>{ const u=String((S.site&&S.site.subsUrl)||"").trim(); return /^https:\/\//i.test(u)?u:""; };
-function tpSvcs(V){ const C=tpCfg(); const ord=C.order||[]; const L=TP_SVC.filter(s=>tpOn(s[0],V)).map(s=>{ const href=s[0]==="subs"?subsUrl():s[3]; return {k:s[0],label:((C.svcs||{})[s[0]]||{}).label||s[1],icon:s[2],href,desc:s[4],ext:/^https?:/.test(href)}; }).filter(x=>x.href);
+function tpSvcs(V){ const C=tpCfg(); const ord=C.order||[]; const L=TP_SVC.filter(s=>tpOn(s[0],V)).map(s=>({k:s[0],label:((C.svcs||{})[s[0]]||{}).label||s[1],icon:s[2],href:s[3],desc:s[4]}));
   (C.custom||[]).filter(c=>tpRuleOK(c,V)&&c.label&&c.href).forEach(c=>L.push({k:c.id,label:c.label,icon:c.icon||"link",href:c.href,desc:c.desc||"",ext:/^https?:/.test(c.href)}));
   return L.sort((a,b)=>{ const i=ord.indexOf(a.k), j=ord.indexOf(b.k); return (i<0?99:i)-(j<0?99:j); }); }
 function tpProf(){ if(S.tpAs&&cmAdmin()) return {name:S.tpAs.name,rk:S.tpAs.rk,title:(T_ROLES.find(r=>r[0]===S.tpAs.rk)||[,"معلم"])[1],comps:[],preview:true}; return staffProf(); }
-const TP_ROUTE=[[/^wp-teacher/,["wp"]],[/^ga-ent$/,["gaent"]],[/^ga(-|$)/,["ga","gaent"]],[/^rev-(my|subj|design)/,["rev"]],[/^tsk-(my|subj|design)/,["tsk"]],[/^rl-teacher/,["rl"]],[/^cmap/,["cmap"]],[/^studio$/,["studio"]],[/^tp-tt$/,["tt"]],[/^tp-rep$/,["rep"]],[/^tp-comps$/,["comps"]]];
+const TP_ROUTE=[[/^wp-subs$/,["subs"]],[/^wp-teacher/,["wp"]],[/^ga-ent$/,["gaent"]],[/^ga(-|$)/,["ga","gaent"]],[/^rev-(my|subj|design)/,["rev"]],[/^tsk-(my|subj|design)/,["tsk"]],[/^rl-teacher/,["rl"]],[/^cmap/,["cmap"]],[/^studio$/,["studio"]],[/^tp-tt$/,["tt"]],[/^tp-rep$/,["rep"]],[/^tp-comps$/,["comps"]]];
 function tpGate(r,app){ const V=viewer(); if(V.k!=="tea") return true; const m=TP_ROUTE.find(x=>x[0].test(r)); if(!m||m[1].some(k=>tpOn(k,V))) return true;
   app.innerHTML=`<section class="panel stack" style="gap:10px;max-width:640px;margin:auto;text-align:center"><h2 class="sec-title" style="margin:0;justify-content:center">${ic("lock")} هذا القسم غير مفعّل لحسابك</h2><p class="muted" style="margin:0">حدّدت إدارة المنصة الأقسام المتاحة لكل معلم. تواصل مع الإدارة إذا احتجت إليه.</p><div><a class="btn" href="#tp">العودة إلى بوابة المعلم</a></div></section>`; return false; }
 function tpNav(){ const V=viewer(); const nav=k=>document.querySelector(`nav.main a[data-nav="${k}"]`); const tp=nav("tp"); if(tp) tp.hidden=!(V.k==="tea"||cmAdmin());
-  const sb=document.getElementById("navSubs"); if(sb){ const u=subsUrl(), adm=cmAdmin(); sb.hidden=!(adm||(V.k==="tea"&&tpOn("subs",V)));
-    sb.textContent=adm?"⏱️ إدارة حصص الانتظار ↗":"⏱️ حصص الانتظار ↗";
-    if(u){ sb.setAttribute("href",u); sb.setAttribute("target","_blank"); sb.onclick=null; }
-    else { sb.removeAttribute("target"); sb.setAttribute("href",adm?"#admin-settings":"#tp"); sb.onclick=adm?()=>{ toast("ضع رابط نظام حصص الانتظار في «نظام حصص الانتظار (خارجي)» ثم احفظ"); setTimeout(()=>document.getElementById("stSubsUrl")?.focus(),400); }:e=>{ e.preventDefault(); toast("لم تُضف الإدارة رابط نظام حصص الانتظار بعد"); }; } }
+  const sb=document.getElementById("navSubs"); if(sb){ const adm=cmAdmin(); sb.hidden=!(adm||(V.k==="tea"&&tpOn("subs",V))); sb.setAttribute("href",adm?"#wp-admin-subs":"#wp-subs"); sb.textContent=adm?"⏱️ إدارة حصص الانتظار":"⏱️ حصص الانتظار"; }
   if(V.k!=="tea") return; const st=nav("studio"); if(st) st.hidden=!tpOn("studio",V); const ga=nav("ga"); if(ga) ga.hidden=!(tpOn("ga",V)||tpOn("gaent",V)); const cm=nav("cmap"); if(cm&&!tpOn("cmap",V)) cm.hidden=true; }
 function tpBar(){ return S.tpAs&&cmAdmin()?`<div class="tp-prev"><span>${ic("eye")} معاينة بوابة المعلم كما يراها: <b>${esc(S.tpAs.name)}</b></span><span class="row" style="gap:6px"><a class="btn sm white" href="#admin-tp">إعدادات البوابة</a><button class="btn sm white" type="button" data-tpx>إنهاء المعاينة</button></span></div>`:""; }
 document.addEventListener("click",e=>{ if(!e.target.closest("[data-tpx]")) return; S.tpAs=null; location.hash="#admin-tp"; });
@@ -7238,9 +7236,6 @@ function admSettings(el){
       <div><b class="small">شعار صفحة الدخول (الشعار الرأسي)</b><div class="thumbs" style="margin:6px 0">${s.logoSq?`<figure><img alt="" src="${blob(s.logoSq)}" style="object-fit:contain;background:#fff"></figure>`:'<span class="muted small">يُستخدم الشعار الرئيسي</span>'}</div><input type="file" id="stLogoSq" accept="image/*" ${S.assets?"":"disabled"}>${s.logoSq?' <button class="btn sm danger" id="rmLogoSq">إزالة</button>':""}</div>
       <div><b class="small">صورة مبنى المدرسة (خلفية الشريط العلوي)</b><div class="thumbs" style="margin:6px 0">${s.headerImg?`<figure><img alt="" src="${blob(s.headerImg)}"></figure>`:'<span class="muted small">لم تُرفع بعد</span>'}</div><input type="file" id="stHead" accept="image/*" ${S.assets?"":"disabled"}>${s.headerImg?' <button class="btn sm danger" id="rmHead">إزالة</button>':""}</div>
     </div></div>
-  <div class="panel stack" style="gap:10px"><h3 class="sec-title" style="font-size:1.05rem">نظام حصص الانتظار (خارجي)</h3>
-    <p class="muted small" style="margin:0">حصص الانتظار وتبديل الحصص تُدار من نظام خارجي. ضع رابطه هنا ليظهر زر «حصص الانتظار» في القائمة الرئيسية وفي بوابة المعلم، ويدخل فيه كل معلم بحسابه الخاص. اتركه فارغاً لإخفاء الزر.</p>
-    <div class="row"><input class="in" id="stSubsUrl" dir="ltr" placeholder="https://..." value="${esc(s.subsUrl||"")}" style="max-width:520px"><button class="btn primary sm" id="stSubsSave">حفظ الرابط</button></div></div>
   <div class="panel stack" style="gap:14px"><h3 class="sec-title" style="font-size:1.05rem">التواصل</h3><div class="grid2">
     <label class="f">رقم واتساب الإدارة<span class="h">تصل إليه طلبات أولياء الأمور الذين لا يملكون حساباً في المنصة</span><input class="in num" id="stWa" dir="ltr" value="${esc(s.whatsapp)}"></label>
     <label class="f">رقم التواصل الظاهر في التذييل<input class="in num" id="stPh" dir="ltr" value="${esc(s.phone)}"></label></div>
@@ -7250,7 +7245,6 @@ function admSettings(el){
   $("#stTxt").onclick=startEditTexts;
   $("#txSave").onclick=async()=>{ const texts={}; el.querySelectorAll("[data-tx]").forEach(i=>{ const v=i.value.trim(); if(v&&v!==DEFAULT_TEXTS[i.dataset.tx]) texts[i.dataset.tx]=v; }); try{ await saveSite({texts}); applyTexts(); toast("تم حفظ النصوص"); }catch(e){ toast("تعذّر الحفظ","bad"); } };
   $("#txReset").onclick=e=>confirmBtn(e.target,"تأكيد الاسترجاع",async()=>{ try{ await saveSite({texts:{}}); applyTexts(); admSettings(el); toast("تمت استعادة النصوص الأصلية"); }catch(err){ toast("تعذّر الحفظ","bad"); } });
-  $("#stSubsSave").onclick=async()=>{ const u=$("#stSubsUrl").value.trim(); if(u&&!/^https:\/\/[^\s]+$/i.test(u)){ toast("اكتب رابطاً كاملاً يبدأ بـ https://","bad"); return; } try{ await saveSite({subsUrl:u}); toast(u?"حُفظ الرابط وظهر زر «حصص الانتظار»":"أُزيل الرابط وأُخفي الزر"); render(); }catch(e){ toast("تعذّر الحفظ","bad"); } };
   $("#stSave").onclick=async()=>{ try{ await saveSite({whatsapp:normDigits($("#stWa").value.trim()),phone:normDigits($("#stPh").value.trim())}); applyTexts(); toast("تم الحفظ"); }catch(e){ toast("تعذّر الحفظ","bad"); } };
   const upImg=async(input,key)=>{ const f=input.files[0]; if(!f) return; toast("جارٍ رفع الصورة…"); try{ const r=await S.assets.upload(f); const old=S.site[key]; await saveSite({[key]:r.id}); if(old) try{ await S.assets.delete(old);}catch(e){} toast("تم رفع الصورة"); applyTexts(); admSettings(el); }catch(e){ toast("تعذّر رفع الصورة","bad"); } };
   $("#stLogo").onchange=e=>upImg(e.target,"logo"); $("#stLogoSq").onchange=e=>upImg(e.target,"logoSq"); $("#stHead").onchange=e=>upImg(e.target,"headerImg");
@@ -8833,10 +8827,11 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const DAYS=["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس"];
 const GR={1:"الأول",2:"الثاني",3:"الثالث"};
 const thaw=x=>x==null?x:JSON.parse(JSON.stringify(x));
-const S={db:null,user:null,uid:null,canEdit:false,dl:null,ai:null,cfg:{},tt:{},weeks:{},pubs:{},teachers:[],auth:null,tdocs:[],myDocs:[],log:[],loaded:{},me:null};
+const S={subs:{},subcfg:{},inbox:[],swaps:{},db:null,user:null,uid:null,canEdit:false,dl:null,ai:null,cfg:{},tt:{},weeks:{},pubs:{},teachers:[],auth:null,tdocs:[],myDocs:[],log:[],loaded:{},me:null};
 const normDigits=s=>String(s||"").replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d));
 function intlPhone(p){ let d=normDigits(p).replace(/\D/g,""); if(d.startsWith("00"))d=d.slice(2); if(d.startsWith("05"))d="966"+d.slice(1); else if(d.startsWith("5")&&d.length===9)d="966"+d; return d; }
 const normName=s=>String(s||"").replace(/\s+/g," ").trim().replace(/^اسلام /,"إسلام ");
+async function sha256(s){ const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join(""); }
 
 const uidGen=(p="")=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 function toast(m,k){ const t=document.createElement("div"); t.className="toast "+(k||""); t.textContent=m; t.setAttribute("role","status"); WBOX().append(t); setTimeout(()=>t.remove(),2600); }
@@ -9086,7 +9081,8 @@ function shell(){ const app=document.getElementById("app"); if(app.querySelector
 function render(){ if(S.ttHost&&!isWp()&&wpTTDraw()) return; if(!isWp()) return; if(!S.booted){ S.booted=true; boot(); } shell(); const r=route(); $$(".wp-tabs a").forEach(a=>a.classList.toggle("on",r===a.dataset.nav||r.startsWith(a.dataset.nav+"-")));
   if(S.raw&&S.modeReady){ const w=wantMode(r); if(w!==S.mode) switchMode(w); }
   modeLook();
-  if(r==="teacher") renderTeacher(); else if(r.startsWith("admin")) renderAdmin(r.split("-")[1]||"dash"); else renderHome();
+  try{ const isSub=r==="subs"||r==="admin-subs"; const bt=document.querySelector(".wpx .wp-bt b"); if(bt&&bt.firstChild&&bt.firstChild.nodeType===3) bt.firstChild.nodeValue=isSub?"حصص الانتظار ":"الخطة الأسبوعية "; const ic0=document.querySelector(".wpx .wp-ic"); if(ic0) ic0.textContent=isSub?"⏱️":"📅"; const tb=document.querySelector(".wpx .wp-tabs"); if(tb) tb.hidden=(r==="subs"); }catch(e){}
+  if(r==="teacher") renderTeacher(); else if(r==="subs") renderTeacherSubs(); else if(r.startsWith("admin")) renderAdmin(r.split("-")[1]||"dash"); else renderHome();
   try{ modeBar(r); }catch(e){ console.error(e); } }
 let rT=null,rDirty=false; const typing=()=>document.activeElement&&/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)&&route()!=="home"||!!document.querySelector(".modal,.ai-sug")||(typeof pend!=="undefined"&&Object.keys(pend).length>0);
 function rerender(){ if(S.ttHost&&!isWp()){ if(typing()){ rDirty=true; return; } clearTimeout(rT); rT=setTimeout(render,60); return; } if(!isWp()) return; if(typing()){ rDirty=true; return; } clearTimeout(rT); rT=setTimeout(render,60); }
@@ -9133,6 +9129,19 @@ function renderHome(){ const C=cfg(); const pick=lsGet("wpPick",{}); const secs=
 
 /* ================= TEACHER ================= */
 
+/* حصص الانتظار للمعلم: صفحة مستقلة عن الخطة الأسبوعية */
+function renderTeacherSubs(){ const app=$("#wpApp"); const me=S.me;
+  if(!S.db||!S.uid){ app.innerHTML=`<div class="login panel stack"><h2 class="h2">حصص الانتظار</h2><div class="note warn">يلزم الدخول بحساب المعلم.</div></div>`; return; }
+  if(!me) return teacherLogin();
+  ensureIb();
+  const adm=typeof window.platAdminOK==="function"&&window.platAdminOK();
+  const box=inboxPanel();
+  app.innerHTML=`<div class="stack">
+    <div class="row" style="justify-content:space-between"><div><h2 class="h2">⏱️ حصص الانتظار وتبديل الحصص</h2><div class="small muted">مرحباً أ. ${esc(me.name)}</div></div>
+      <div class="row">${adm?'<a class="btn sm primary" href="#wp-admin-subs">إدارة حصص الانتظار</a>':""}<a class="btn sm ghost" href="#tp">👨‍🏫 بوابة المعلم</a><button class="btn sm ghost" id="out">تسجيل الخروج</button></div></div>
+    ${box||'<section class="panel"><div class="empty">لا توجد لديك تكليفات انتظار أو تبديل حالياً. ستظهر هنا فور إسنادها من الإدارة.</div></section>'}
+    <p class="small muted" style="margin:0">تكليفات الانتظار وتبديل الحصص تُسنَد وتُعتمد من الإدارة، وتظهر لك هنا مع زر «تم الاطلاع».</p></div>`;
+  wireInbox(); $("#out").onclick=logoutTeacher; }
 function renderTeacher(){ const app=$("#wpApp"); const me=S.me;
   if(!S.db||!S.uid){ app.innerHTML=`<div class="login panel stack"><h2 class="h2">دخول المعلمين</h2><div class="note warn">لحفظ الخطة يلزم فتح المنصة بحساب يملك صلاحية الاستخدام. تواصل مع الإدارة.</div></div>`; return; }
   if(!me) return teacherLogin();
@@ -9160,6 +9169,7 @@ function renderTeacher(){ const app=$("#wpApp"); const me=S.me;
   app.innerHTML=`<div class="stack">
     <div class="row" style="justify-content:space-between"><div><h2 class="h2">مرحباً أ. ${esc(t.name)}</h2><div class="small muted">${secs.length} فصول • ${pr.total} حصة أسبوعياً</div></div>
       <div class="row"><label class="small" for="tw">الأسبوع</label><select class="in" id="tw" style="width:auto">${wks.map(w=>`<option value="${w.no}" ${w.no===wk?"selected":""}>الأسبوع ${w.no} (${fmtGs(D0(w.start))})</option>`).join("")}</select><button class="btn sm ghost" id="out">تسجيل الخروج</button></div></div>
+    ${inboxPanel()}
     <section class="panel stack" style="gap:10px"><div class="row" style="justify-content:space-between"><div class="row"><span class="pill ${ST_CLS[st.k]}">${st.txt}</span>${st.late?'<span class="pill bad">متأخر</span>':""}<span class="small muted">آخر موعد: ${fmtDT(W.dueAt)}</span></div><b class="num">${pr.pct}% مكتمل (${pr.done} من ${pr.total})</b></div>
       <div class="bar ${pr.pct<50?"lo":pr.pct<100?"mid":""}"><span style="width:${pr.pct}%"></span></div>
       ${notes.map(([k,m])=>`<div class="note ${k} small">🔔 ${esc(m)}</div>`).join("")}
@@ -9174,7 +9184,7 @@ function renderTeacher(){ const app=$("#wpApp"); const me=S.me;
             <label class="f">ملاحظات أو متطلبات<input class="in" data-f="n" value="${esc(c.n||"")}" ${R?"readonly":""}></label>
             <label class="f">رابط مصدر تعليمي<input class="in" data-f="u" dir="ltr" placeholder="https://" value="${esc(c.u||"")}" ${R?"readonly":""}></label></div>
           <div class="row" style="justify-content:space-between"><label class="row small" style="font-weight:700"><input type="checkbox" data-f="ex" ${c.ex?"checked":""} ${R?"disabled":""}> 📝 يوجد اختبار في هذه الحصة (يُلوَّن اليوم لولي الأمر)</label>${!R&&(c.h||[]).length?`<button type="button" class="btn sm ghost" data-undo title="${esc("النسخة السابقة: "+(c.h[c.h.length-1].l||""))}">↶ تراجع للنسخة السابقة</button>`:""}</div></article>`; }).join("")}`; }).join("")||'<div class="empty">لا توجد حصص مسندة إليك في الجدول.</div>'}</div></div>`;
-  $("#out").onclick=logoutTeacher; $("#tw").onchange=e=>{ lsSet("wpTWeek",+e.target.value); render(); };
+  ensureIb(); wireInbox(); $("#out").onclick=logoutTeacher; $("#tw").onchange=e=>{ lsSet("wpTWeek",+e.target.value); render(); };
   $$("[data-fs]").forEach(b=>b.onclick=()=>{ lsSet("wpTSec",b.dataset.fs); render(); });
   $("#goMiss")?.addEventListener("click",()=>{ const el=$(".cell.miss"); if(el){ el.scrollIntoView({behavior:"smooth",block:"center"}); el.querySelector("textarea")?.focus(); } });
   $("#prev").onclick=()=>previewTeacher(t,wk,secs);
@@ -9195,10 +9205,10 @@ async function teacherLogin(){ const app=$("#wpApp"); const st=typeof window.pla
   const t=T.find(x=>x.phone&&ph&&intlPhone(x.phone)===ph)||T.find(x=>normName(x.name)===normName(st.name));
   if(!t){ app.innerHTML=`<div class="login panel stack"><h2 class="h2">دخول المعلمين</h2><div class="note warn small">لم نجد «${esc(st.name)}» ضمن معلمي الجداول الدراسية، لذلك لا توجد حصص لتخطيطها. تواصل مع الإدارة لإضافتك في «إدارة الجداول الدراسية».</div></div>`; return; }
   try{ await bindMe(t.id,t.name); }catch(x){ if(x&&x.code==="other"){ app.innerHTML=`<div class="login panel stack"><h2 class="h2">دخول المعلمين</h2><div class="note bad small">هذا الجهاز مرتبط بخطة المعلم «${esc(x.name)}». سجّل الخروج ثم ادخل بحسابك.</div></div>`; return; } throw x; }
-  lsSet("wpMe",{tid:t.id,name:t.name}); render(); }
+  const ib=await myIb(); S.me.ib=ib; lsSet("wpMe",{tid:t.id,name:t.name,ib}); subInbox(); render(); }
 async function bindMe(tid,name){ const d=await S.db.doc("wpt/"+S.uid).get(); if(d.exists&&thaw(d.data()).tid&&thaw(d.data()).tid!==tid) throw {code:"other",name:thaw(d.data()).name}; S.me={id:tid,name}; await myRef(); subMyDocs(); }
 async function myRef(){ const ref=S.db.doc("wpt/"+S.uid); if(S.myDocs.some(d=>d._id===S.uid)) return ref; const d=await ref.get(); if(!d.exists) await ref.set({tid:S.me.id,name:S.me.name,uid:S.uid,cells:{},meta:{},createdAt:new Date().toISOString()}); else if(thaw(d.data()).tid!==S.me.id) throw new Error("other"); return ref; }
-function logoutTeacher(){ try{ window.andalusDropStaff&&window.andalusDropStaff(); }catch(e){} lsSet("wpMe",null); S.me=null; S.myDocs=[]; if(S.unMy) S.unMy(); render(); }
+function logoutTeacher(){ try{ window.andalusDropStaff&&window.andalusDropStaff(); }catch(e){} lsSet("wpMe",null); if(S.unIb) S.unIb(); S.inbox=[]; S.me=null; S.myDocs=[]; if(S.unMy) S.unMy(); render(); }
 const pend={}; let saveT=null;
 function queueSave(k,el){ const v={}; el.querySelectorAll("[data-f]").forEach(i=>v[i.dataset.f]=i.type==="checkbox"?i.checked:i.value.trim()); pend[k]=v; el.classList.toggle("miss",!v.l); el.classList.toggle("exam",!!v.ex);
   $("#saveSt").textContent="جارٍ الحفظ…"; clearTimeout(saveT); saveT=setTimeout(flushSave,700); }
@@ -9237,7 +9247,7 @@ function previewTeacher(t,wk,secs){ const W=S.weeks[wk]; const docs=S.tdocs.leng
 const allDocsForPreview=()=>{ const m=new Map(); [...S.tdocs,...S.myDocs].forEach(d=>m.set(d._id,d)); return [...m.values()]; };
 
 /* ================= ADMIN ================= */
-const ADM_TABS=[["dash","لوحة التحكم"],["review","المراجعة والنشر"],["teachers","المعلمون"],["weeks","الأسابيع والإجازات والأرشيف"],["brand","تصميم ملف الخطة"],["news","الإعلانات"],["reports","التقارير"],["log","السجل"]];
+const ADM_TABS=[["dash","لوحة التحكم"],["review","المراجعة والنشر"],["teachers","المعلمون"],["subs","إدارة حصص الانتظار"],["weeks","الأسابيع والإجازات والأرشيف"],["brand","تصميم ملف الخطة"],["news","الإعلانات"],["reports","التقارير"],["log","السجل"]];
 const SUP_TABS=["dash","review","reports","log"]; 
 function adminUser(){ if(typeof window.platAdminOK==="function"&&window.platAdminOK()) return {name:(window.platAdminName&&window.platAdminName())||"الإدارة",role:"admin"};
   const st=typeof window.platStaff==="function"?window.platStaff():null; return st&&st.lead?{name:st.name,role:"sup"}:null; }
@@ -9247,17 +9257,18 @@ function renderAdmin(tab){ const app=$("#wpApp");
   const U=adminUser(); if(!U){ app.innerHTML=`<div class="login panel stack"><h2 class="h2">إدارة الخطط</h2><div class="note warn small">هذا القسم لمديري المنصة والمشرفين. ادخل من «بوابة الإدارة»، أو بحساب المشرف الموحّد من زر «دخول».</div></div>`; return; }
   if(S.mode==="r"&&!S.cfgExists){ app.innerHTML='<div id="rsx" class="stack"></div>'; remoteSetup($("#rsx"),U); return; }
   const isSup=U.role==="sup"; const ALLOW=SUP_TABS; if(isSup&&!ALLOW.includes(tab)) tab=ALLOW[0];
+  if(tab==="subs"&&!S.canEdit) tab="dash";
   const wks=weekList(); const live=wks.filter(w=>!w.archived); const wk=S.admWk&&S.weeks[S.admWk]?S.admWk:(live.find(w=>Date.parse(w.start)<=now()+7*864e5)||live[0]||wks[0]||{}).no;
   app.innerHTML=`<div class="stack"><div class="row" style="justify-content:space-between"><div><h2 class="h2">بوابة الإدارة <span class="mtag ${S.mode}">${MODES[S.mode].icon} ${MODES[S.mode].name}</span></h2><div class="small muted">${esc(U.name)} • ${isSup?"مشرف":"مدير"}</div></div>
       <div class="row"><input class="in" id="q" placeholder="🔍 بحث: درس، مادة، معلم، أسبوع" style="width:min(320px,70vw)"><label class="small" for="aw">الأسبوع</label><select class="in" id="aw" style="width:auto">${wks.map(w=>`<option value="${w.no}" ${w.no===wk?"selected":""}>الأسبوع ${w.no}${w.archived?" (مؤرشف)":""}</option>`).join("")||"<option>—</option>"}</select>${S.weeks[wk]?`<button class="btn sm ghost" id="agate" title="التحكم في فتح الخطة وإغلاقها للمعلمين" style="padding:2px 4px">${gatePill(S.weeks[wk])}</button>`:""}</div></div>
-    <div class="subtabs" role="tablist">${ADM_TABS.filter(([k])=>!isSup||ALLOW.includes(k)).map(([k,l])=>`<button role="tab" aria-selected="${k===tab}" class="${k===tab?"on":""}" data-wt="${k}">${l}</button>`).join("")}</div><div id="adm" class="stack"></div></div>`;
+    <div class="subtabs" role="tablist">${ADM_TABS.filter(([k])=>(!isSup||ALLOW.includes(k))&&(k!=="subs"||S.canEdit)).map(([k,l])=>`<button role="tab" aria-selected="${k===tab}" class="${k===tab?"on":""}" data-wt="${k}">${l}</button>`).join("")}</div><div id="adm" class="stack"></div></div>`;
   $$("[data-wt]").forEach(b=>b.onclick=()=>{ location.hash="#wp-admin-"+b.dataset.wt; });
   $("#aw").onchange=e=>{ S.admWk=+e.target.value; render(); };
   $("#agate")?.addEventListener("click",()=>gateModal(+$("#aw").value));
   $("#q").onkeydown=e=>{ if(e.key==="Enter"&&e.target.value.trim()) adminSearch(e.target.value.trim()); };
-  const el=$("#adm"); const f={dash:admDash,review:admReview,teachers:admTeachers,weeks:admWeeks,brand:admBrand,news:admNews,reports:admReports,log:admLog}[tab]||admDash;
-  if(wk&&S.weeks[wk]&&S.weeks[wk].archived&&!["weeks","brand","teachers","news","log"].includes(tab)) el.insertAdjacentHTML("beforebegin",`<div class="note warn small">🗄 الأسبوع ${wk} مؤرشف: لا يظهر لأولياء الأمور ولا للمعلمين، وبياناته محفوظة. <a href="#wp-admin-weeks">استعادته من «الأسابيع والإجازات والأرشيف»</a>.</div>`);
-  if(!wk&&!["weeks","brand","teachers","news","log"].includes(tab)){ el.innerHTML=`<div class="empty">لا توجد أسابيع بعد. <a href="#wp-admin-weeks">افتح أسبوعاً جديداً</a>.</div>`; return; }
+  const el=$("#adm"); const f={dash:admDash,review:admReview,subs:admSubs,teachers:admTeachers,weeks:admWeeks,brand:admBrand,news:admNews,reports:admReports,log:admLog}[tab]||admDash;
+  if(wk&&S.weeks[wk]&&S.weeks[wk].archived&&!["weeks","brand","teachers","news","log","subs"].includes(tab)) el.insertAdjacentHTML("beforebegin",`<div class="note warn small">🗄 الأسبوع ${wk} مؤرشف: لا يظهر لأولياء الأمور ولا للمعلمين، وبياناته محفوظة. <a href="#wp-admin-weeks">استعادته من «الأسابيع والإجازات والأرشيف»</a>.</div>`);
+  if(!wk&&!["weeks","brand","teachers","news","log","subs"].includes(tab)){ el.innerHTML=`<div class="empty">لا توجد أسابيع بعد. <a href="#wp-admin-weeks">افتح أسبوعاً جديداً</a>.</div>`; return; }
   f(el,wk,U); }
 
 async function addLog(what){ const U=adminUser(); const item={at:new Date().toISOString(),who:U?U.name:"الإدارة",what}; S.log=[item,...S.log].slice(0,400); try{ await S.db.doc("wplog/main").set({items:S.log}); }catch(e){} }
@@ -9270,7 +9281,8 @@ function admDash(el,wk){ const W=S.weeks[wk]; const rows=teacherRows(wk); const 
   const bySub={}; rows.forEach(r=>r.st.pr.slots.forEach(x=>{ bySub[x.s]=bySub[x.s]||[0,0]; bySub[x.s][1]++; if(filled(cellOf(r.t.id,ckey(wk,x.sec,x.d,x.p)))) bySub[x.s][0]++; }));
   const late=rows.filter(r=>r.st.late); const ready=rd.filter(x=>x.r.pct===100&&!S.pubs[wk+"_"+x.s.id]);
   const wd=weekDates(W); const sst=secs.map(s=>secStatus(s.id,wk)); const cnt=k=>sst.filter(x=>x.k===k).length; const arcN=weekList().filter(w=>w.archived).length; const offs=offMap(W);
-  el.innerHTML=`<section class="panel stack" style="gap:10px"><b>حالة خطط الفصول – الأسبوع ${W.no}</b><div class="kpis">${[["مسودة",cnt("draft"),""],["قيد الإعداد",cnt("prog"),"warn"],["جاهزة للمراجعة",cnt("ready"),"warn"],["معتمدة بانتظار النشر",cnt("ok"),""],["مجدولة",cnt("sch"),""],["منشورة",cnt("pub"),""],["أسابيع مؤرشفة",arcN,""]].map(([l,v,k])=>`<div class="kpi ${v&&k?k:""}"><b class="num">${v}</b><small>${l}</small></div>`).join("")}</div>
+  const sdx=S.subs[iso(new Date())]; const sAct=sdx?(sdx.items||[]).filter(i=>i.status!=="cancelled"):[];
+  el.innerHTML=`${sdx&&sAct.length?`<a class="note ${sAct.some(i=>i.status!=="assigned")?"warn":"ok"} small" href="#wp-admin-subs" style="display:block;text-decoration:none">⏱ حصص الانتظار اليوم: غائبون ${(sdx.absent||[]).length} • حصص ${sAct.length} • مُسندة ${sAct.filter(i=>i.status==="assigned").length} • غير مسندة ${sAct.filter(i=>i.status!=="assigned").length}${sdx.approved?" • معتمد":" • غير معتمد"} ←</a>`:""}<section class="panel stack" style="gap:10px"><b>حالة خطط الفصول – الأسبوع ${W.no}</b><div class="kpis">${[["مسودة",cnt("draft"),""],["قيد الإعداد",cnt("prog"),"warn"],["جاهزة للمراجعة",cnt("ready"),"warn"],["معتمدة بانتظار النشر",cnt("ok"),""],["مجدولة",cnt("sch"),""],["منشورة",cnt("pub"),""],["أسابيع مؤرشفة",arcN,""]].map(([l,v,k])=>`<div class="kpi ${v&&k?k:""}"><b class="num">${v}</b><small>${l}</small></div>`).join("")}</div>
       <div class="row small">${secs.map((s,i)=>`<span class="pill ${sst[i].c}">${esc(s.id)}: ${sst[i].t}</span>`).join("")}</div>${Object.keys(offs).length?`<div class="note info small">🌴 أيام إجازة هذا الأسبوع: ${esc(Object.entries(offs).map(([d,o])=>DAYS[d]+(o.mode==="hide"?" (مخفي)":" (إجازة رسمية)")).join("، "))}</div>`:""}</section>
     <div class="note info small">الأسبوع ${W.no}: من ${fmtG(wd.from)} إلى ${fmtG(wd.to)} • فتح التخطيط ${fmtDT(W.openAt)} • آخر موعد ${fmtDT(W.dueAt)} • إغلاق التعديل ${fmtDT(W.lockAt)}</div>
     <div class="kpis">${[["إجمالي المعلمين",n],["أدخلوا خططهم",started],["لم يبدؤوا",n-started,n-started?"warn":""],["خطط مكتملة",complete],["غير مكتملة",n-complete,n-complete?"warn":""],["مرسلة للمراجعة",sent],["معتمدة",ok],["فصول منشورة",pubN+" / "+secs.length],["نسبة الإنجاز العامة",overall+"%"]].map(([l,v,k])=>`<div class="kpi ${k||""}"><b class="num">${v}</b><small>${l}</small></div>`).join("")}</div>
@@ -9527,6 +9539,273 @@ function ctGroupMessage(wk){ const W=S.weeks[wk]||{}; const C=cfg(); const wd=W.
 
 
 
+/* =============== SUBSTITUTION (حصص الانتظار) =============== */
+/* inbox key = hash of the teacher's unified login (phone + code). Teacher side: kept from sign-in. Admin side: from the unified accounts. */
+const ibKey=(ph,code)=>sha256("inbox|"+intlPhone(ph)+"|"+normDigits(code).replace(/\D/g,""));
+async function myIb(){ let c=null; try{ c=JSON.parse(sessionStorage.getItem("uc")||"null")||JSON.parse(sessionStorage.getItem("gaK")||"null"); }catch(e){} if(!c||!c.p||!c.c) return "";
+  const st=typeof window.platStaff==="function"?window.platStaff():null; if(st&&st.phone&&intlPhone(st.phone)!==intlPhone(c.p)) return ""; return ibKey(c.p,c.c); }
+function ensureIb(){ if(!S.me||S.me.ib||S.ibTry===S.me.id) return; S.ibTry=S.me.id; myIb().then(ib=>{ if(!ib||!S.me) return; S.me.ib=ib; lsSet("wpMe",{tid:S.me.id,name:S.me.name,ib}); subInbox(); rerender(); }).catch(()=>{}); }
+async function tIb(t){ if(!t) return ""; const a=typeof window.platAcctCode==="function"?window.platAcctCode(t.phone,t.name):null; return a&&a.code?ibKey(a.phone,a.code):""; }
+function subInbox(){ if(S.unIb) S.unIb(); S.inbox=[]; if(!S.db||!S.me||!S.me.ib) return; S.unIb=S.db.doc("wpinbox/"+S.me.ib).onSnapshot(d=>{ S.inbox=(d.exists&&thaw(d.data()).msgs)||[]; rerender(); },()=>{}); }
+function myAcks(){ const a={}; S.myDocs.forEach(d=>Object.assign(a,d.acks||{})); return a; }
+function inboxPanel(){ if(!S.me) return ""; if(!S.me.ib) return `<div class="note info small">📬 لاستقبال تكليفات حصص الانتظار داخل المنصة سجّل الخروج من زر «دخول» ثم ادخل مرة أخرى برقم جوالك ورمز الدخول.</div>`;
+  const today=iso(new Date()); const msgs=(S.inbox||[]).slice().sort((a,b)=>String(b.at).localeCompare(String(a.at))); const cancelled=new Set(msgs.filter(m=>m.kind==="cancel").map(m=>m.item+"|"+m.date));
+  const cur=msgs.filter(m=>m.date>=today); const ack=myAcks(); if(!msgs.length) return "";
+  return `<section class="panel stack" style="gap:8px;border:2px solid var(--gold,#b7791f)"><b>📬 تكليفات حصص الانتظار والتبديل${cur.filter(m=>(m.kind==="assign"||m.kind==="swapc")&&!ack[m.id]&&!cancelled.has(m.item+"|"+m.date)).length?` <span class="pill warn">جديد</span>`:""}</b>
+    ${cur.length?cur.map(m=>{ if(m.kind==="swapc") return `<div class="row" style="justify-content:space-between;border-top:1px solid var(--line);padding-top:6px"><span>🔁 <b>تبديل حصص</b> • ${esc(fmtGs(D0(m.date)))}: ${esc(m.text||"")}</span>${ack[m.id]?'<span class="pill ok">✓ تم الاطلاع</span>':`<button class="btn sm primary" data-ack="${m.id}">تم الاطلاع</button>`}</div>`; const c=m.kind==="cancel", gone=!c&&msgs.some(x=>x.kind==="cancel"&&x.item===m.item&&x.date===m.date&&x.at>m.at); return `<div class="row" style="justify-content:space-between;border-top:1px solid var(--line);padding-top:6px;${gone?"opacity:.5;text-decoration:line-through":""}"><span>${c?"❌ <b>إلغاء تكليف</b>":m.swap?"🔄 <b>تكليف معدّل (تبديل)</b>":"📌 <b>تكليف</b>"}: ${esc(fmtDT(m.date+"T08:00").split("،")[0])} ${esc(fmtGs(D0(m.date)))} • الحصة ${m.p+1} <span class="num small">(${esc(m.time)})</span> • ${esc(m.label)}${m.subject?" • "+esc(m.subject):""}</span>${c||gone?"":ack[m.id]?'<span class="pill ok">✓ تم الاطلاع</span>':`<button class="btn sm primary" data-ack="${m.id}">تم الاطلاع</button>`}</div>`; }).join(""):'<span class="small muted">لا توجد تكليفات قادمة.</span>'}</section>`; }
+function wireInbox(){ $$("[data-ack]").forEach(b=>b.onclick=async()=>{ try{ await (await myRef()).update({acks:{[b.dataset.ack]:new Date().toISOString()}}); toast("شكراً، تم تسجيل الاطلاع"); }catch(e){ toast("تعذّر الحفظ","bad"); } }); }
+
+const SUB_RANGES=[["day","اليوم"],["w1","أسبوع"],["w2","أسبوعان"],["w3","3 أسابيع"],["m1","شهر"],["custom","فترة محددة"]];
+const subDayIdx=date=>{ const g=D0(date).getDay(); return g<=4?g:-1; };
+function nextSchoolDay(d){ let x=new Date(d); while(x.getDay()>4) x=addDays(x,1); return iso(x); }
+function subRange(key,date){ if(key==="custom") return [S.subFrom||date,S.subTo||date]; if(key==="day") return [date,date]; const n={w1:7,w2:14,w3:21,m1:30}[key]||7; return [iso(addDays(D0(date),-(n-1))),date]; }
+function subCounts(a,b,skip){ const c={}; Object.values(S.subs).forEach(doc=>{ if(doc.date<a||doc.date>b) return; (doc.items||[]).forEach(it=>{ if(it.status==="assigned"&&it.sub&&!(skip&&doc.date===skip)) c[it.sub]=(c[it.sub]||0)+1; }); }); return c; }
+const tDay=(t,d)=>slotsOf(t.name).filter(x=>x.d===d).sort((a,b)=>a.p-b.p);
+function effSlots(tid,date,o={}){ const t=S.teachers.find(x=>x.id===tid); const d=subDayIdx(date); if(!t||d<0) return []; const sts=o.pending?["pending","approved"]:["approved"];
+  let out=tDay(t,d).map(x=>({p:x.p,sec:x.sec,s:x.s,src:"tt"}));
+  Object.values(S.swaps||{}).forEach(w=>{ if(w.id===o.ignore||!sts.includes(w.status)) return; const rm=(sl)=>{ out=out.filter(x=>!(x.p===sl.p&&x.sec===sl.sec)); };
+    if(w.a===tid&&w.date===date) rm(w.pa);
+    if(w.mode==="mutual"){ if(w.b===tid&&w.dateB===date) rm(w.pb); if(w.a===tid&&w.dateB===date) out.push({...w.pb,src:"swap",wid:w.id}); if(w.b===tid&&w.date===date) out.push({...w.pa,src:"swap",wid:w.id}); }
+    else if(w.b===tid&&w.date===date) out.push({...w.pa,src:"swap",wid:w.id}); });
+  if(!o.noSub){ const sd=S.subs[date]; if(sd) (sd.items||[]).forEach(i=>{ if(i.status==="assigned"&&i.sub===tid) out.push({p:i.p,sec:i.sec,s:i.s,src:"sub"}); }); }
+  return out.sort((a,b)=>a.p-b.p); }
+const isAbsentOn=(tid,date)=>((S.subs[date]||{}).absent||[]).includes(tid);
+function swapCheck(w){ const r=[]; const A=S.teachers.find(x=>x.id===w.a), B=S.teachers.find(x=>x.id===w.b); if(!A||!B){ r.push("اختر المعلمَين"); return r; } if(w.a===w.b){ r.push("لا يمكن التبديل مع المعلم نفسه"); return r; }
+  if(subDayIdx(w.date)<0) r.push("تاريخ الحصة ليس يوم دراسة"); if(w.mode==="mutual"&&subDayIdx(w.dateB)<0) r.push("تاريخ حصة المعلم الآخر ليس يوم دراسة");
+  const o={pending:true,ignore:w.id}; const hasA=effSlots(w.a,w.date,{...o,noSub:true}).some(x=>x.p===w.pa.p&&x.sec===w.pa.sec); if(!hasA) r.push(`الحصة ${w.pa.p+1} (${secLabel(w.pa.sec)}) لم تعد في جدول أ. ${A.name} – ربما بُدّلت من قبل`);
+  if(w.mode==="mutual"){ const hasB=effSlots(w.b,w.dateB,{...o,noSub:true}).some(x=>x.p===w.pb.p&&x.sec===w.pb.sec); if(!hasB) r.push(`الحصة ${w.pb.p+1} (${secLabel(w.pb.sec)}) لم تعد في جدول أ. ${B.name}`); }
+  const busy=(tid,date,p,give)=>effSlots(tid,date,o).find(x=>x.p===p&&!(give&&x.p===give.p&&x.sec===give.sec&&x.src!=="sub"));
+  const bb=busy(w.b,w.date,w.pa.p,w.mode==="mutual"&&w.dateB===w.date?w.pb:null); if(bb) r.push(`أ. ${B.name} لديه ${bb.src==="sub"?"حصة انتظار":"حصة"} في الحصة ${w.pa.p+1} (${secLabel(bb.sec)}) – تعارض`);
+  if(isAbsentOn(w.b,w.date)) r.push(`أ. ${B.name} مسجّل غائباً يوم ${fmtGs(D0(w.date))}`);
+  if(w.mode==="mutual"){ const ab=busy(w.a,w.dateB,w.pb.p,w.dateB===w.date?w.pa:null); if(ab) r.push(`أ. ${A.name} لديه ${ab.src==="sub"?"حصة انتظار":"حصة"} في الحصة ${w.pb.p+1} (${secLabel(ab.sec)}) – تعارض`); if(isAbsentOn(w.a,w.dateB)) r.push(`أ. ${A.name} مسجّل غائباً يوم ${fmtGs(D0(w.dateB))}`); }
+  return r; }
+const swapDesc=w=>{ const d1=`${DAYS[subDayIdx(w.date)]||""} ${fmtGs(D0(w.date))}`, d2=w.dateB?`${DAYS[subDayIdx(w.dateB)]||""} ${fmtGs(D0(w.dateB))}`:"";
+  return w.mode==="mutual"?`أ. ${tName(w.a)} (${d1} ح${w.pa.p+1} ${secLabel(w.pa.sec)}) ⇄ أ. ${tName(w.b)} (${d2} ح${w.pb.p+1} ${secLabel(w.pb.sec)})`:`حصة أ. ${tName(w.a)} (${d1} ح${w.pa.p+1} ${secLabel(w.pa.sec)}) ← أ. ${tName(w.b)}`; };
+function swapMsgs(w,cancel){ const d=dt=>`${DAYS[subDayIdx(dt)]||""} ${fmtG(D0(dt))}`; const sl=(x,dt)=>`${d(dt)} – الحصة ${x.p+1} (${periodTime(x.p)}) – ${secLabel(x.sec)}${x.s?" – "+x.s:""}`; const pre=cancel?"❌ أُلغي التبديل التالي ويعود الجدول كما كان: ":"";
+  if(w.mode==="mutual") return [{tid:w.a,text:pre+`تبديل حصص مع أ. ${tName(w.b)}: تُدرِّس ${sl(w.pb,w.dateB)} بدلاً من ${sl(w.pa,w.date)}.`},{tid:w.b,text:pre+`تبديل حصص مع أ. ${tName(w.a)}: تُدرِّس ${sl(w.pa,w.date)} بدلاً من ${sl(w.pb,w.dateB)}.`}];
+  return [{tid:w.a,text:pre+`تُعفى من ${sl(w.pa,w.date)}، ويتولاها أ. ${tName(w.b)}.`},{tid:w.b,text:pre+`تكليف بتدريس ${sl(w.pa,w.date)} بدلاً من أ. ${tName(w.a)}.`}]; }
+async function notifyTeachers(list,via,subj,after){ const at=new Date().toISOString(); const res=[];
+  if(via==="inbox"){ for(const n of list){ const t=S.teachers.find(x=>x.id===n.tid); const ib=await tIb(t); if(!ib){ res.push({tid:n.tid,ok:false,err:"لا يوجد صندوق رسائل – لا يوجد حساب موحّد مفعّل برمز دخول لهذا المعلم"}); continue; }
+      try{ const ref=S.db.doc("wpinbox/"+ib); const cur=await ref.get(); const msgs=(cur.exists&&thaw(cur.data()).msgs)||[]; const id=uidGen("m"); await ref.set({tid:n.tid,msgs:[...msgs.filter(m=>m.date>=iso(addDays(new Date(),-60))),{id,at,kind:"swapc",date:n.date,text:n.text}].slice(-200)}); res.push({tid:n.tid,ok:true,msg:id}); }catch(e){ res.push({tid:n.tid,ok:false,err:"تعذّر الإرسال"}); } }
+    after&&after(res); return res; }
+  const M=modal(`إرسال إشعار التبديل عبر ${via==="email"?"البريد":"واتساب"}`,`<div class="stack"><div class="note info small">اضغط زر كل معلم لفتح الرسالة جاهزة ثم أرسلها.</div>${list.map(n=>{ const t=S.teachers.find(x=>x.id===n.tid)||{}; const msg=[`السلام عليكم أ. ${t.name||""}`,"",n.text,"",`شاكرين تعاونكم،`,`إدارة ${cfg().school}`].join("\n"); const href=via==="email"?(t.email?mailURL(t.email,subj,msg):""):(t.phone?waURL(t.phone,msg):"");
+      return `<div class="row" style="justify-content:space-between;border-top:1px solid var(--line);padding-top:6px"><span><b>${esc(t.name||"")}</b><br><span class="small muted">${esc(n.text)}</span></span>${href?`<a class="btn sm primary" target="_blank" rel="noopener" href="${esc(href)}" data-nsd="${n.tid}">${via==="email"?"✉️ بريد":"💬 واتساب"}</a>`:`<span class="pill bad">${via==="email"?"لا يوجد بريد":"لا يوجد جوال"}</span>`}</div>`; }).join("")}</div>`,true);
+  M.el.querySelectorAll("[data-nsd]").forEach(a=>a.addEventListener("click",()=>{ a.textContent="✓ "+a.textContent; a.classList.remove("primary"); after&&after([{tid:a.dataset.nsd,ok:true}]); })); return res; }
+function subExcluded(tid,date,p){ return (S.subcfg.exclude||[]).find(e=>e.tid===tid&&(!e.from||e.from<=date)&&(!e.to||e.to>=date)&&(!(e.periods||[]).length||e.periods.includes(p))); }
+function subCands(doc,item){ const why={absent:0,busy:0,taken:0,excl:0}; const list=[];
+  S.teachers.filter(t=>t.active!==false).forEach(t=>{ if((doc.absent||[]).includes(t.id)){ why.absent++; return; } if(effSlots(t.id,doc.date,{noSub:true}).some(x=>x.p===item.p)){ why.busy++; return; }
+    if((doc.items||[]).some(o=>o.id!==item.id&&o.status==="assigned"&&o.sub===t.id)){ why.taken++; return; } if(subExcluded(t.id,doc.date,item.p)){ why.excl++; return; } list.push({...t}); });
+  const [a,b]=subRange(S.subRng||"w1",doc.date); const cnt=subCounts(a,b,doc.date); const today={}; (doc.items||[]).forEach(o=>{ if(o.status==="assigned"&&o.sub) today[o.sub]=(today[o.sub]||0)+1; });
+  list.forEach(t=>{ t._n=(cnt[t.id]||0)+(today[t.id]||0); t._d=effSlots(t.id,doc.date,{noSub:true}).length; }); list.sort((x,y)=>x._n-y._n||x._d-y._d||x.name.localeCompare(y.name,"ar")); return {list,why}; }
+const whyTxt=w=>`لا يوجد معلم متاح: ${[w.busy?w.busy+" لديهم حصة في التوقيت":"",w.taken?w.taken+" أُسند لهم انتظار اليوم":"",w.excl?w.excl+" مستثنون":"",w.absent?w.absent+" غائبون":""].filter(Boolean).join("، ")}`;
+function subBuild(doc){ const old=new Map((doc.items||[]).map(x=>[x.id,x])); const items=[];
+  (doc.absent||[]).forEach(tid=>{ const t=S.teachers.find(x=>x.id===tid); if(!t) return; effSlots(tid,doc.date,{noSub:true}).forEach(x=>{ const id=`${tid}_${x.sec}_${x.p}`; const o=old.get(id); items.push(o&&o.status!=="cancelled"?o:{id,sec:x.sec,p:x.p,s:x.s,absent:tid,sub:"",status:"unassigned",sentTo:o?o.sentTo||"":""}); old.delete(id); }); });
+  old.forEach(o=>{ if(o.sentTo) items.push({...o,status:"cancelled",sub:""}); }); items.sort((a,b)=>a.p-b.p||a.sec.localeCompare(b.sec)); doc.items=items; return doc; }
+function subDoc(date){ return JSON.parse(JSON.stringify(S.subs[date]||{date,d:subDayIdx(date),absent:[],items:[],log:[],sendLog:[],approved:false})); }
+async function subSave(doc,what){ const U=adminUser(); doc.updatedAt=new Date().toISOString(); if(what){ doc.log=[{at:doc.updatedAt,by:U?U.name:"",what},...(doc.log||[])].slice(0,300); }
+  S.subs[doc.date]=doc; S.subPend=S.subPend||{}; S.subPend[doc.date]=doc.updatedAt;
+  try{ await Promise.race([S.db.doc("wpsub/"+doc.date).set(doc),new Promise((_,r)=>setTimeout(()=>r(new Error("انتهت مهلة الاتصال")),20000))]); }
+  catch(e){ console.error(e); toast("تعذّر حفظ جدول الانتظار: "+(e&&(e.code||e.message)||"خطأ غير معروف")+" – أعد المحاولة","bad"); }
+  finally{ if(S.subPend[doc.date]===doc.updatedAt) delete S.subPend[doc.date]; } }
+const tName=id=>(S.teachers.find(t=>t.id===id)||{}).name||"—";
+const pendingNotices=doc=>{ const out=[]; (doc.items||[]).forEach(it=>{ const want=it.status==="assigned"?it.sub:""; if(it.sentTo&&it.sentTo!==want) out.push({kind:"cancel",tid:it.sentTo,it}); if(want&&it.sentTo!==want) out.push({kind:"assign",tid:want,it}); }); return out; };
+function subAutoFill(doc,only){ let n=0; (doc.items||[]).filter(i=>i.status==="unassigned"&&(!only||i.absent===only)).sort((a,b)=>a.p-b.p).forEach(it=>{ const C=subCands(doc,it); if(C.list[0]){ it.sub=C.list[0].id; it.status="assigned"; n++; } }); return n; }
+function subSwapCheck(doc,aId,bId){ const x=JSON.parse(JSON.stringify(doc)); const A=(x.items||[]).find(i=>i.id===aId), B=(x.items||[]).find(i=>i.id===bId); const r=[];
+  if(!A||!B||A.status!=="assigned"||B.status!=="assigned") return {ok:false,r:["يجب أن تكون الحصتان مسندتين"]}; if(A.sub===B.sub) return {ok:false,r:["المعلم نفسه في الحصتين"]};
+  const ta=A.sub, tb=B.sub; A.sub=tb; B.sub=ta;
+  const chk=(it,tid)=>{ const t=S.teachers.find(y=>y.id===tid)||{id:tid,name:tName(tid)}; const busy=effSlots(t.id,x.date,{noSub:true}).find(z=>z.p===it.p);
+    if((x.absent||[]).includes(tid)) r.push(`أ. ${t.name} مسجّل غائباً`);
+    else if(busy) r.push(`أ. ${t.name} لديه حصة في جدوله الحصة ${it.p+1} (${secLabel(busy.sec)})`);
+    else if(subExcluded(tid,x.date,it.p)) r.push(`أ. ${t.name} مستثنى من الانتظار في الحصة ${it.p+1}`);
+    const n=x.items.filter(o=>o.status==="assigned"&&o.sub===tid).length; if(n>1) r.push(`أ. ${t.name} سيصبح لديه ${n} حصص انتظار (الحد الأقصى واحدة يومياً)`); };
+  chk(B,ta); chk(A,tb); return {ok:!r.length,r,doc:x,ta,tb,A,B}; }
+function subMsgText(tid,list,date){ const t=S.teachers.find(x=>x.id===tid)||{name:""}; const sw=list.some(n=>n.kind==="cancel")&&list.some(n=>n.kind==="assign"); return [`السلام عليكم أ. ${t.name}`,"",...(sw?["تم تعديل تكليفك بحصة الانتظار (تبديل):"]:[]),...list.map(n=>`${n.kind==="cancel"?"❌ إلغاء تكليف":"📌 تكليف"} حصة انتظار: ${DAYS[subDayIdx(date)]} ${fmtG(D0(date))} – الحصة ${n.it.p+1} (${periodTime(n.it.p)}) – ${secLabel(n.it.sec)}${n.it.s?" – "+n.it.s:""}`),"",`شاكرين تعاونكم،`,`إدارة ${cfg().school}`].join("\n"); }
+
+function admSubs(el,wk,U){ S.subDate=S.subDate||nextSchoolDay(new Date()); S.subView=S.subView||"day"; S.subRng=S.subRng||"w1";
+  const V=[["day","📋 جدول اليوم"],["swap","🔁 تبديل الحصص"+(Object.values(S.swaps||{}).some(w=>w.status==="pending")?` (${Object.values(S.swaps).filter(w=>w.status==="pending").length})`:"")],["rep","📊 التقارير والعدالة"],["ex","🚫 الاستثناءات"],["log","🗂 السجل"]];
+  el.innerHTML=`<div class="chips" role="tablist">${V.map(([k,l])=>`<button class="chip ${S.subView===k?"on":""}" data-sv="${k}">${l}</button>`).join("")}</div><div id="sv" class="stack"></div>`;
+  el.querySelectorAll("[data-sv]").forEach(b=>b.onclick=()=>{ S.subView=b.dataset.sv; admSubs(el,wk,U); });
+  ({day:subDay,swap:swapView,rep:subReport,ex:subExcl,log:subLog}[S.subView]||subDay)(el.querySelector("#sv"),U); }
+function swapView(el,U){ try{ swapView0(el,U); }catch(e){ console.error(e); el.innerHTML=`<div class="note bad stack"><b>تعذّر عرض تبديل الحصص</b><span class="small" dir="ltr">${esc(String(e&&e.message||e))}</span></div>`; } }
+function swapView0(el,U){ const isAdm=!U||!U.role||U.role==="admin"; const F=S.swF=S.swF||{date:S.subDate||nextSchoolDay(new Date()),a:"",pa:null,mode:"mutual",b:"",pb:null,dateB:"",q:"",qb:"",st:"pending"}; if(!F.dateB) F.dateB=F.date;
+  const d=subDayIdx(F.date); const T=S.teachers.filter(t=>t.active!==false).slice().sort((x,y)=>x.name.localeCompare(y.name,"ar"));
+  const stat=t=>isAbsentOn(t.id,F.date)?'<span class="pill bad">غائب</span>':'<span class="pill ok">حاضر</span>';
+  const A=T.find(t=>t.id===F.a); const aSlots=A&&d>=0?effSlots(A.id,F.date,{pending:true,noSub:true}):[];
+  const pa=F.pa&&aSlots.find(x=>x.p===F.pa.p&&x.sec===F.pa.sec)?F.pa:null;
+  const draft=pa&&F.b?{id:"",a:F.a,b:F.b,mode:F.mode,date:F.date,dateB:F.mode==="mutual"?F.dateB:"",pa,pb:F.mode==="mutual"?F.pb:null}:null;
+  const errs=draft&&(F.mode!=="mutual"||draft.pb)?swapCheck(draft):null;
+  // replacement candidates
+  let cands=[]; if(pa){ cands=T.filter(t=>t.id!==F.a).map(t=>{ const w={id:"",a:F.a,b:t.id,mode:F.mode,date:F.date,dateB:F.dateB,pa,pb:null};
+      if(F.mode==="mutual"){ const sl=subDayIdx(F.dateB)<0?[]:effSlots(t.id,F.dateB,{pending:true,noSub:true}); const ok=sl.filter(x=>!swapCheck({...w,pb:x}).length); return {t,n:ok.length,same:ok.some(x=>x.sec===pa.sec),abs:isAbsentOn(t.id,F.date)}; }
+      const e=swapCheck(w); return {t,n:e.length?0:1,same:false,abs:isAbsentOn(t.id,F.date),e}; });
+    cands.sort((x,y)=>(y.n>0)-(x.n>0)||(y.same-x.same)||x.t.name.localeCompare(y.t.name,"ar")); }
+  const B=T.find(t=>t.id===F.b); const bSlots=B&&F.mode==="mutual"&&pa&&subDayIdx(F.dateB)>=0?effSlots(B.id,F.dateB,{pending:true,noSub:true}):[];
+  const list=Object.values(S.swaps||{}).filter(w=>F.st==="all"||w.status===F.st).sort((x,y)=>String(y.createdAt).localeCompare(String(x.createdAt)));
+  const stTxt={pending:'<span class="pill warn">بانتظار الاعتماد</span>',approved:'<span class="pill ok">معتمد</span>',rejected:'<span class="pill bad">مرفوض</span>',cancelled:'<span class="pill">ملغى</span>'};
+  const cnt=k=>Object.values(S.swaps||{}).filter(w=>w.status===k).length;
+  el.innerHTML=`<section class="panel stack" style="gap:10px"><div class="row" style="justify-content:space-between"><b>🔁 طلب تبديل حصة</b><label class="small">التاريخ <input class="in" type="date" id="swD" value="${F.date}" style="width:auto"></label></div>
+    ${d<0?'<div class="note warn small">التاريخ المختار ليس يوم دراسة.</div>':`
+    <div class="stack" style="gap:6px"><b class="small">١) المعلم الذي يرغب في تبديل حصته</b><div class="sbabs"><input class="in" id="swQ" placeholder="🔍 ابحث باسم المعلم" value="${esc(F.q)}" style="max-width:240px"><select class="in" id="swA"><option value="">— اختر المعلم —</option>${T.map(t=>`<option value="${t.id}" ${t.id===F.a?"selected":""} ${F.q&&!t.name.includes(F.q)&&t.id!==F.a?"hidden":""}>${esc(t.name)} — ${isAbsentOn(t.id,F.date)?"غائب":"حاضر"} • ${effSlots(t.id,F.date,{pending:true,noSub:true}).length} حصص</option>`).join("")}</select>${A?stat(A):""}</div></div>
+    ${A?`<div class="stack" style="gap:6px"><b class="small">٢) جدول أ. ${esc(A.name)} يوم ${DAYS[d]} – اختر الحصة المراد تبديلها</b>${aSlots.length?`<div class="swgrid">${aSlots.map(x=>`<button class="swslot ${pa&&pa.p===x.p&&pa.sec===x.sec?"on":""}" data-pa="${x.p}|${esc(x.sec)}"><b>الحصة ${x.p+1}</b><span class="small muted num">${esc(periodTime(x.p))}</span><span class="small">${esc(secLabel(x.sec))}</span><span class="small muted">${esc(x.s||"")}${x.src==="swap"?" • 🔁 مبدّلة":""}</span></button>`).join("")}</div>`:'<div class="empty small" style="padding:10px">لا توجد حصص لهذا المعلم في هذا اليوم.</div>'}</div>`:""}
+    ${pa?`<div class="stack" style="gap:6px"><b class="small">٣) نوع التبديل والمعلم البديل</b>
+      <div class="chips"><button class="chip sm ${F.mode==="mutual"?"on":""}" data-swm="mutual">⇄ تبديل متبادل (حصة مقابل حصة)</button><button class="chip sm ${F.mode==="give"?"on":""}" data-swm="give">← إسناد الحصة لمعلم بديل</button></div>
+      <div class="sbabs">${F.mode==="mutual"?`<label class="small">تاريخ حصة المعلم الآخر <input class="in" type="date" id="swDB" value="${F.dateB}" style="width:auto"></label>`:""}<input class="in" id="swQB" placeholder="🔍 ابحث عن المعلم البديل" value="${esc(F.qb)}" style="max-width:220px">
+        <select class="in" id="swB"><option value="">— اختر المعلم البديل —</option>${cands.map(c=>`<option value="${c.t.id}" ${c.t.id===F.b?"selected":""} ${c.n?"":"disabled"} ${F.qb&&!c.t.name.includes(F.qb)&&c.t.id!==F.b?"hidden":""}>${esc(c.t.name)} — ${c.abs?"غائب":c.n?(F.mode==="mutual"?`${c.n} ${c.n>2&&c.n<11?"حصص متاحة":"حصة متاحة"} للتبديل${c.same?" • يدرّس الفصل نفسه":""}`:"متاح"):(F.mode==="mutual"?"لا توجد حصة مناسبة":"غير متاح")}</option>`).join("")}</select></div>
+      <span class="small muted">تظهر القائمة مرتبة: المتاحون أولاً، ثم من يدرّس الفصل نفسه. غير المتاحين معطّلون.</span>
+      ${B&&F.mode==="mutual"?`<b class="small">حصص أ. ${esc(B.name)} يوم ${DAYS[subDayIdx(F.dateB)]||"—"} – اختر الحصة المقابلة</b>${bSlots.length?`<div class="swgrid">${bSlots.map(x=>{ const e=swapCheck({id:"",a:F.a,b:F.b,mode:"mutual",date:F.date,dateB:F.dateB,pa,pb:x}); const on=F.pb&&F.pb.p===x.p&&F.pb.sec===x.sec; return `<button class="swslot ${on?"on":e.length?"no":"ok"}" data-pb="${x.p}|${esc(x.sec)}" ${e.length?"disabled":""}><b>الحصة ${x.p+1}</b><span class="small muted num">${esc(periodTime(x.p))}</span><span class="small">${esc(secLabel(x.sec))}</span><span class="small muted">${esc(x.s||"")}</span>${e.length?`<span class="why">${esc(e[0])}</span>`:""}</button>`; }).join("")}</div>`:'<div class="empty small" style="padding:10px">لا توجد حصص لهذا المعلم في هذا اليوم.</div>'}`:""}</div>`:""}
+    ${draft&&errs?`<div class="swsum stack" style="gap:6px"><b>٤) ملخص التبديل</b><div>${esc(swapDesc(draft))}</div>${errs.length?`<div class="note bad small">${errs.map(esc).join("<br>")}</div>`:'<div class="small" style="color:var(--ok)">✓ لا يوجد تعارض في الجداول، ولا تكليف بحصتين في الوقت نفسه.</div>'}
+      <label class="f small">ملاحظة (اختياري)<input class="in" id="swN" placeholder="سبب التبديل"></label>
+      <div class="row"><button class="btn ${isAdm?"":"primary"}" id="swSave" ${errs.length?"disabled":""}>📝 حفظ الطلب – بانتظار اعتماد الإدارة</button>${isAdm?`<button class="btn primary" id="swSaveAp" ${errs.length?"disabled":""}>✓ حفظ واعتماد مباشرة</button>`:""}</div></div>`:""}`}</section>
+  <section class="panel stack" style="gap:8px"><div class="row" style="justify-content:space-between"><b>🗂 طلبات وسجل التبديل</b><div class="row"><div class="chips">${[["pending","بانتظار الاعتماد"],["approved","المعتمدة"],["rejected","المرفوضة"],["cancelled","الملغاة"],["all","الكل"]].map(([k,l])=>`<button class="chip sm ${F.st===k?"on":""}" data-swst="${k}">${l}${k!=="all"?` (${cnt(k)})`:""}</button>`).join("")}</div>
+      <label class="small">الإشعار عبر <select class="in" id="swVia" style="width:auto"><option value="inbox" ${(S.subVia||"inbox")==="inbox"?"selected":""}>المنصة</option><option value="email" ${S.subVia==="email"?"selected":""}>البريد</option><option value="wa" ${S.subVia==="wa"?"selected":""}>واتساب</option></select></label></div></div>
+    ${list.length?`<div class="tbl"><table><thead><tr><th>التاريخ</th><th>المعلم السابق</th><th>الحصة</th><th>المعلم البديل</th><th>الحصة المقابلة</th><th>الحالة</th><th>السجل</th><th></th></tr></thead><tbody>${list.map(w=>{ const live=w.status==="pending"?swapCheck(w):[]; return `<tr><td class="small num">${fmtGs(D0(w.date))}</td><td><b>${esc(tName(w.a))}</b></td><td class="small">ح${w.pa.p+1} • ${esc(secLabel(w.pa.sec))}<br><span class="muted">${esc(w.pa.s||"")}</span></td><td><b>${esc(tName(w.b))}</b></td><td class="small">${w.mode==="mutual"?`${w.dateB!==w.date?fmtGs(D0(w.dateB))+" • ":""}ح${w.pb.p+1} • ${esc(secLabel(w.pb.sec))}<br><span class="muted">${esc(w.pb.s||"")}</span>`:'<span class="muted">إسناد دون مقابل</span>'}</td>
+      <td>${stTxt[w.status]||""}${live.length?`<div class="small" style="color:var(--bad)">${esc(live[0])}</div>`:""}${w.notified?'<div class="small muted">✓ أُشعر المعلمان</div>':""}</td>
+      <td class="small">${(w.hist||[]).map(h=>`${esc(h.what)} – ${esc(h.by||"")} <span class="num muted">${fmtDT(h.at)}</span>`).join("<br>")}${w.note?`<br><span class="muted">ملاحظة: ${esc(w.note)}</span>`:""}</td>
+      <td class="row" style="gap:4px">${w.status==="pending"&&isAdm?`<button class="btn sm primary" data-swap-ok="${w.id}" ${live.length?"disabled":""}>✓ اعتماد</button><button class="btn sm ghost" data-swap-no="${w.id}">رفض</button>`:""}${w.status==="approved"?`${w.notified?"":`<button class="btn sm" data-swap-nt="${w.id}">📨 إشعار</button>`}${isAdm?`<button class="btn sm ghost" data-swap-cx="${w.id}">إلغاء التبديل</button>`:""}`:""}${isAdm&&w.status!=="approved"?`<button class="btn sm ghost" data-swap-del="${w.id}" title="حذف من السجل">🗑</button>`:""}</td></tr>`; }).join("")}</tbody></table></div>`:'<div class="empty" style="padding:12px">لا توجد عمليات تبديل في هذا التصنيف.</div>'}
+    <p class="small muted" style="margin:0">لا يُطبَّق التبديل إلا بعد اعتماد الإدارة. بعد الاعتماد يُحتسب في جداول المعلمين وفي توزيع حصص الانتظار لذلك اليوم.</p></section>`;
+  const g=q=>el.querySelector(q); const re=()=>swapView(el,U);
+  g("#swD").onchange=e=>{ if(e.target.value){ F.date=e.target.value; F.dateB=e.target.value; F.pa=null; F.pb=null; F.b=""; re(); } };
+  g("#swQ")?.addEventListener("input",e=>{ F.q=e.target.value.trim(); const sel=g("#swA"); const cur=sel.value; [...sel.options].forEach(o=>{ if(o.value) o.hidden=!!F.q&&!o.text.includes(F.q)&&o.value!==cur; }); });
+  g("#swA")?.addEventListener("change",e=>{ F.a=e.target.value; F.pa=null; F.pb=null; F.b=""; re(); });
+  el.querySelectorAll("[data-pa]").forEach(b=>b.onclick=()=>{ const [pp,sec]=b.dataset.pa.split("|"); const x=aSlots.find(y=>y.p===+pp&&y.sec===sec); F.pa={p:x.p,sec:x.sec,s:x.s||""}; F.pb=null; F.b=""; re(); });
+  el.querySelectorAll("[data-swm]").forEach(b=>b.onclick=()=>{ F.mode=b.dataset.swm; F.b=""; F.pb=null; re(); });
+  g("#swDB")?.addEventListener("change",e=>{ if(e.target.value){ F.dateB=e.target.value; F.b=""; F.pb=null; re(); } });
+  g("#swQB")?.addEventListener("input",e=>{ F.qb=e.target.value.trim(); const sel=g("#swB"); const cur=sel.value; [...sel.options].forEach(o=>{ if(o.value) o.hidden=!!F.qb&&!o.text.includes(F.qb)&&o.value!==cur; }); });
+  g("#swB")?.addEventListener("change",e=>{ F.b=e.target.value; F.pb=null; re(); });
+  el.querySelectorAll("[data-pb]").forEach(b=>b.onclick=()=>{ const [pp,sec]=b.dataset.pb.split("|"); const x=bSlots.find(y=>y.p===+pp&&y.sec===sec); F.pb={p:x.p,sec:x.sec,s:x.s||""}; re(); });
+  el.querySelectorAll("[data-swst]").forEach(b=>b.onclick=()=>{ F.st=b.dataset.swst; re(); });
+  g("#swVia").onchange=e=>{ S.subVia=e.target.value; };
+  const by=()=>U?U.name:"الإدارة"; const put=async w=>{ S.swaps[w.id]=w; try{ await S.db.doc("wpswap/"+w.id).set(w); return true; }catch(e){ toast("تعذّر الحفظ: "+(e.code||e.message||""),"bad"); return false; } };
+  const notify=async w=>{ const via=g("#swVia")?.value||S.subVia||"inbox"; const L=swapMsgs(w,w.status==="cancelled").map(n=>({...n,date:n.tid===w.b&&w.mode==="mutual"?w.dateB:w.date}));
+    await notifyTeachers(L,via,`تبديل حصص – ${fmtGs(D0(w.date))}`,async res=>{ const ok=res.filter(r=>r.ok).length; const w2={...(S.swaps[w.id]||w)}; w2.sendLog=[...res.map(r=>({...r,at:new Date().toISOString(),via})),...(w2.sendLog||[])].slice(0,50); if(ok) w2.notified=w2.status; w2.hist=[...(w2.hist||[]),{at:new Date().toISOString(),by:by(),what:ok?`إشعار ${ok} معلم (${{inbox:"المنصة",email:"البريد",wa:"واتساب"}[via]})`:"تعذّر الإشعار"}]; await put(w2); if(via==="inbox") toast(ok===res.length?"أُشعر المعلمان بالتبديل":`أُشعر ${ok} وتعذّر ${res.length-ok} (لا يوجد صندوق رسائل – استخدم البريد أو واتساب)`,ok===res.length?"":"bad"); re(); }); };
+  const save=async approve=>{ const w={...draft,id:uidGen("sw"),status:approve?"approved":"pending",createdAt:new Date().toISOString(),by:by(),note:(g("#swN")?.value||"").trim(),hist:[{at:new Date().toISOString(),by:by(),what:"إنشاء الطلب"}]};
+    const e=swapCheck(w); if(e.length){ toast(e[0],"bad"); re(); return; }
+    if(approve){ w.approvedAt=w.createdAt; w.approvedBy=by(); w.hist.push({at:w.createdAt,by:by(),what:"اعتماد"}); }
+    if(!await put(w)) return; addLog(`${approve?"اعتماد":"طلب"} تبديل حصص: ${swapDesc(w)}`); Object.assign(F,{pa:null,pb:null,b:"",st:approve?"approved":"pending"});
+    toast(approve?"اعتُمد التبديل":"حُفظ طلب التبديل بانتظار اعتماد الإدارة"); re(); if(approve) await notify(w); };
+  g("#swSave")?.addEventListener("click",()=>save(false)); g("#swSaveAp")?.addEventListener("click",()=>save(true));
+  el.querySelectorAll("[data-swap-ok]").forEach(b=>b.onclick=async()=>{ const w={...S.swaps[b.dataset.swapOk]}; const e=swapCheck(w); if(e.length){ modal("لا يمكن الاعتماد",`<div class="note bad">${e.map(esc).join("<br>")}</div>`); return; }
+    if(!await ask(`اعتماد التبديل؟\n${swapDesc(w)}`,"اعتماد")) return; w.status="approved"; w.approvedAt=new Date().toISOString(); w.approvedBy=by(); w.hist=[...(w.hist||[]),{at:w.approvedAt,by:by(),what:"اعتماد"}]; if(!await put(w)) return; addLog(`اعتماد تبديل حصص: ${swapDesc(w)}`); re(); await notify(w); });
+  el.querySelectorAll("[data-swap-no]").forEach(b=>b.onclick=async()=>{ const w={...S.swaps[b.dataset.swapNo]}; if(!await ask("رفض طلب التبديل؟","رفض")) return; w.status="rejected"; w.hist=[...(w.hist||[]),{at:new Date().toISOString(),by:by(),what:"رفض"}]; if(await put(w)){ addLog(`رفض تبديل حصص: ${swapDesc(w)}`); re(); } });
+  el.querySelectorAll("[data-swap-nt]").forEach(b=>b.onclick=()=>notify(S.swaps[b.dataset.swapNt]));
+  el.querySelectorAll("[data-swap-cx]").forEach(b=>b.onclick=async()=>{ const w={...S.swaps[b.dataset.swapCx]}; if(!await ask(`إلغاء التبديل المعتمد وإعادة الجدول كما كان؟${w.notified?"\nسيُشعَر المعلمان بالإلغاء.":""}`,"إلغاء التبديل")) return; const wasN=!!w.notified; w.status="cancelled"; w.notified=""; w.hist=[...(w.hist||[]),{at:new Date().toISOString(),by:by(),what:"إلغاء التبديل"}]; if(!await put(w)) return; addLog(`إلغاء تبديل حصص: ${swapDesc(w)}`); re(); if(wasN) await notify(w); });
+  el.querySelectorAll("[data-swap-del]").forEach(b=>b.onclick=async()=>{ if(!await ask("حذف هذه العملية من سجل التبديل نهائياً؟","حذف")) return; const id=b.dataset.swapDel; delete S.swaps[id]; try{ await S.db.doc("wpswap/"+id).delete(); toast("حُذف من السجل"); }catch(e){ toast("تعذّر الحذف","bad"); } re(); }); }
+
+function subDay(el,U){ const live=document.querySelector("#sv"); if(live&&!el.isConnected) el=live; if(!el||!el.isConnected){ rerender(); return; }
+  try{ subDay0(el,U); }catch(e){ console.error(e); el.innerHTML=`<div class="note bad stack"><b>تعذّر عرض شاشة الانتظار</b><span class="small num" dir="ltr">${esc(String(e&&e.message||e))}</span><div><button class="btn sm" id="sbRe">إعادة المحاولة</button></div></div>`; const b=el.querySelector("#sbRe"); if(b) b.onclick=()=>subDay(el,U); } }
+function subDay0(el,U){ const date=S.subDate; const d=subDayIdx(date); const doc=subDoc(date); const W=weekList().find(w=>{ const a=D0(w.start); return D0(date)>=a&&D0(date)<=addDays(a,4); });
+  const items=doc.items||[]; const act=items.filter(i=>i.status!=="cancelled"); const asg=act.filter(i=>i.status==="assigned").length; const pend=pendingNotices(doc);
+  const absT=(doc.absent||[]).map(id=>S.teachers.find(t=>t.id===id)).filter(Boolean);
+  el.innerHTML=`<section class="panel stack" style="gap:10px"><div class="row" style="justify-content:space-between"><div class="row"><label class="small" for="sbD"><b>التاريخ</b></label><input class="in" type="date" id="sbD" value="${date}" style="width:auto"><span class="pill">${d>=0?DAYS[d]:"عطلة نهاية الأسبوع"}</span>${W?`<span class="small muted">${esc(W.title||"الأسبوع "+W.no)}</span>`:""}</div>
+      <div class="row">${doc.approved?`<span class="pill ok">✓ معتمد ${fmtDT(doc.approvedAt)}</span>`:items.length?'<span class="pill warn">مسودة – غير معتمد</span>':""}</div></div>
+    ${d<0?'<div class="note warn small">التاريخ المختار ليس يوم دراسة.</div>':W&&isOff(W,d)?`<div class="note warn small">هذا اليوم ${offMap(W)[d].mode==="holiday"?"إجازة رسمية":"مخفي"} في خطة الأسبوع.</div>`:""}
+    <div class="kpis">${[["المعلمون الغائبون",absT.length,""],["حصص تحتاج تغطية",act.length,""],["مُسندة",asg,""],["غير مسندة",act.length-asg,act.length-asg?"warn":""],["إشعارات بانتظار الإرسال",pend.length,pend.length?"warn":""],...((doc.swaps||[]).length?[["تبديلات",doc.swaps.length,""]]:[])].map(([l,v,k])=>`<div class="kpi ${k}"><b class="num">${v}</b><small>${l}</small></div>`).join("")}</div></section>
+    ${d<0?"":`<section class="panel stack" style="gap:8px"><b>١) تسجيل الغياب</b><div class="sbabs"><select class="in" id="sbQ" aria-label="المعلم الغائب"><option value="">— اختر المعلم الغائب —</option>${S.teachers.filter(t=>t.active!==false&&!(doc.absent||[]).includes(t.id)).map(t=>[t,tDay(t,d).length]).sort((a,b)=>a[0].name.localeCompare(b[0].name,"ar")).map(([t,n])=>`<option value="${t.id}">${esc(t.name)} — ${n?n+" حصص اليوم":"لا حصص اليوم"}</option>`).join("")}</select><button class="btn sm primary" id="sbA">+ تسجيل غائب</button></div><span class="small muted">يُسجَّل الغائب فور اختياره، وتُوزَّع حصصه تلقائياً على المتاحين بعدالة، ثم يمكنك تعديل أي بديل يدوياً في الخطوة ٢.</span>
+      <div class="chips">${absT.map(t=>`<span class="chip on">${esc(t.name)} <span class="num small">(${tDay(t,d).length} حصص)</span> <button class="btn sm ghost" data-unab="${t.id}" aria-label="إزالة ${esc(t.name)}" style="padding:0 6px">✕</button></span>`).join("")||'<span class="small muted">لم يُسجَّل غياب لهذا اليوم.</span>'}</div></section>
+    <section class="panel stack" style="gap:8px"><div class="row" style="justify-content:space-between"><b>٢) توزيع الحصص</b><div class="row"><label class="small">الترتيب حسب عدد الانتظار خلال <select class="in" id="sbR" style="width:auto">${SUB_RANGES.filter(r=>r[0]!=="custom").map(([k,l])=>`<option value="${k}" ${S.subRng===k?"selected":""}>${l}</option>`).join("")}</select></label><button class="btn sm" id="sbAuto" ${act.length?"":"disabled"}>⚡ توزيع تلقائي عادل للحصص غير المسندة</button></div></div>
+      ${act.length||items.length?`<div class="sbcards">${items.map(it=>{ if(it.status==="cancelled") return `<div class="sbc off"><div class="sbh"><b class="num">الحصة ${it.p+1}</b><span class="pill">ملغاة – يُشعَر ${esc(tName(it.sentTo))}</span></div><div class="small">${esc(secLabel(it.sec))} • ${esc(it.s)} • الغائب: ${esc(tName(it.absent))}</div></div>`;
+        const C=subCands(doc,it); const curOk=!it.sub||C.list.some(t=>t.id===it.sub);
+        return `<div class="sbc ${it.status==="assigned"?(curOk?"ok":"bad"):""}"><div class="sbh"><b class="num">الحصة ${it.p+1}</b><span class="small muted num">${esc(periodTime(it.p))}</span><span style="margin-inline-start:auto">${it.status==="assigned"?(curOk?'<span class="pill ok">مسندة</span>':'<span class="pill bad">مخالفة للشروط</span>'):'<span class="pill warn">غير مسندة</span>'}${it.sentTo&&it.sentTo===it.sub?' <span class="pill info">أُرسل</span>':""}</span></div>
+          <div class="small"><b>${esc(secLabel(it.sec))}</b> • ${esc(it.s)} • الغائب: ${esc(tName(it.absent))}</div>
+          <label class="small muted" for="as_${it.id}">المعلم البديل — ${C.list.length?`${C.list.length} معلم متاح (الأقل انتظاراً أولاً)`:"لا يوجد متاح"}</label>
+          <div class="row" style="gap:6px;flex-wrap:nowrap"><select class="in" id="as_${it.id}" data-asg="${it.id}"><option value="">— اختر البديل —</option>${it.sub&&!curOk?`<option value="${it.sub}" selected>⚠️ ${esc(tName(it.sub))} (لم يعد متاحاً)</option>`:""}${C.list.map(t=>`<option value="${t.id}" ${t.id===it.sub?"selected":""}>${esc(t.name)} • انتظار ${t._n} • حصصه اليوم ${t._d}</option>`).join("")}</select><button class="btn sm ghost" data-sch="${it.id}" title="جداول المتاحين لهذا اليوم" aria-label="جداول المتاحين">📅</button></div>${it.status==="assigned"&&curOk?`<div><button class="btn sm" data-swp="${it.id}" title="تبديل هذه الحصة مع معلم انتظار آخر">🔄 تبديل مع معلم انتظار آخر</button></div>`:""}
+          ${it.swapped?`<div class="small" style="color:var(--info,#0369a1)">🔄 ${esc(it.swapped)}</div>`:""}
+          ${C.list.length?"":`<div class="small" style="color:var(--bad)">${esc(whyTxt(C.why))}</div>`}</div>`; }).join("")}</div>`:'<div class="empty" style="padding:14px">سجّل المعلمين الغائبين لتظهر حصصهم هنا.</div>'}
+      <p class="small muted" style="margin:0">يستبعد النظام تلقائياً: الغائب، ومن لديه حصة في التوقيت نفسه، ومن أُسندت إليه حصة انتظار اليوم (الحد الأقصى حصة واحدة يومياً)، والمستثنين. والقائمة مرتبة بدءاً بالأقل انتظاراً.</p></section>
+    <section class="panel stack" style="gap:8px"><b>٣) الاعتماد والإرسال</b><div class="row"><button class="btn primary" id="sbAp" ${act.length?"":"disabled"}>${doc.approved?"✓ معتمد – إعادة الاعتماد":"✓ اعتماد جدول الانتظار"}</button>${doc.approved?'<button class="btn ghost" id="sbUnap">إلغاء الاعتماد</button>':""}
+        <label class="small">الإرسال عبر <select class="in" id="sbVia" style="width:auto"><option value="inbox" ${S.subVia==="inbox"||!S.subVia?"selected":""}>رسالة خاصة داخل المنصة</option><option value="email" ${S.subVia==="email"?"selected":""}>البريد الإلكتروني</option><option value="wa" ${S.subVia==="wa"?"selected":""}>واتساب</option></select></label>
+        <button class="btn" id="sbSend" ${doc.approved&&pend.length?"":"disabled"}>📨 إرسال ${pend.length?`(${pend.length} إشعار)`:""}</button><button class="btn ghost" id="sbPdf" ${items.length?"":"disabled"}>🖨️ معاينة / PDF</button></div>
+      ${!doc.approved&&pend.length?'<div class="note info small">اعتمد الجدول أولاً ثم أرسل. التعديل بعد الاعتماد يعيده مسودة حتى تعتمده من جديد.</div>':""}
+      ${(doc.sendLog||[]).length?`<details><summary class="small" style="cursor:pointer;font-weight:700">سجل الإرسال (${doc.sendLog.length})</summary><div class="tbl"><table><thead><tr><th>الوقت</th><th>المعلم</th><th>النوع</th><th>الوسيلة</th><th>الحالة</th></tr></thead><tbody>${doc.sendLog.map(l=>{ const ack=l.msg&&S.tdocs.some(x=>x.tid===l.tid&&(x.acks||{})[l.msg]); return `<tr><td class="small num">${fmtDT(l.at)}</td><td>${esc(tName(l.tid))}</td><td>${l.kind==="cancel"?"إلغاء":"تكليف"}</td><td>${{inbox:"داخل المنصة",email:"البريد",wa:"واتساب"}[l.via]||l.via}</td><td>${l.ok?(ack?'<span class="pill ok">✓ اطّلع</span>':`<span class="pill info">${l.via==="inbox"?"وصلت":"فُتح للإرسال"}</span>`):`<span class="pill bad">${esc(l.err||"تعذّر")}</span>`}</td></tr>`; }).join("")}</tbody></table></div></details>`:""}</section>`}`;
+  const g=q=>el.querySelector(q);
+  g("#sbD").onchange=e=>{ if(e.target.value){ S.subDate=e.target.value; subDay(el,U); } };
+  if(d<0) return;
+  const change=async(doc,what)=>{ if(doc.approved){ doc.approved=false; doc.reapprove=true; } const pr=subSave(doc,what); try{ document.activeElement&&document.activeElement.blur&&document.activeElement.blur(); }catch(e){} subDay(el,U); await pr; subDay(el,U); };
+  const addAbs=async()=>{ const v=g("#sbQ").value; const t=S.teachers.find(x=>x.id===v); if(!t){ toast("اختر المعلم الغائب من القائمة","bad"); return; } const doc2=subDoc(date); if((doc2.absent||[]).includes(t.id)){ toast("مسجّل غائباً مسبقاً"); return; } doc2.absent=[...(doc2.absent||[]),t.id]; subBuild(doc2); const n=tDay(t,d).length; const a=subAutoFill(doc2,t.id); await change(doc2,`تسجيل غياب أ. ${t.name} (${n} حصص)${a?` وتوزيع تلقائي لـ${a} حصة`:""}`); toast(!n?`سُجّل غياب أ. ${t.name} – ليس له حصص هذا اليوم`:a===n?`سُجّل الغياب ووُزّعت حصصه (${n}) تلقائياً – يمكنك تعديل أي بديل يدوياً`:`سُجّل الغياب ووُزّعت ${a} من ${n} تلقائياً – أكمل الباقي يدوياً`,a<n?"bad":""); };
+  g("#sbA").onclick=addAbs; g("#sbQ").onchange=()=>{ if(g("#sbQ").value) addAbs(); };
+  el.querySelectorAll("[data-unab]").forEach(b=>b.onclick=async()=>{ const doc2=subDoc(date); const t=S.teachers.find(x=>x.id===b.dataset.unab); if(!await ask(`إزالة غياب أ. ${t.name}؟ تُلغى إسنادات حصصه${(doc2.items||[]).some(i=>i.absent===t.id&&i.sentTo)?"، ويُشعَر من أُرسل له التكليف بالإلغاء":""}.`,"إزالة")) return; doc2.absent=doc2.absent.filter(x=>x!==t.id); subBuild(doc2); await change(doc2,`إلغاء غياب أ. ${t.name}`); });
+  g("#sbR").onchange=e=>{ S.subRng=e.target.value; subDay(el,U); };
+  el.querySelectorAll("[data-asg]").forEach(sel=>sel.onchange=async()=>{ const doc2=subDoc(date); const it=doc2.items.find(i=>i.id===sel.dataset.asg); const v=sel.value; const old=it.sub;
+    if(v){ const C=subCands(doc2,it); if(!C.list.some(t=>t.id===v)){ toast("هذا المعلم غير متاح لهذه الحصة","bad"); subDay(el,U); return; } }
+    it.sub=v; it.status=v?"assigned":"unassigned"; await change(doc2,v?`${old?"تعديل":"إسناد"} الحصة ${it.p+1} (${it.sec}) إلى أ. ${tName(v)}${old?` بدلاً من أ. ${tName(old)}`:""}`:`إلغاء إسناد الحصة ${it.p+1} (${it.sec}) من أ. ${tName(old)}`); });
+  el.querySelectorAll("[data-sch]").forEach(b=>b.onclick=()=>{ const it=doc.items.find(i=>i.id===b.dataset.sch); const C=subCands(doc,it); const per=cfg().periods;
+    modal(`المتاحون للحصة ${it.p+1} – ${secLabel(it.sec)} • جداولهم يوم ${DAYS[d]}`,C.list.length?`<div class="tbl"><table><thead><tr><th>المعلم</th><th>انتظار</th>${per.map((_,i)=>`<th class="num">${i+1}</th>`).join("")}</tr></thead><tbody>${C.list.map(t=>{ const day=tDay(t,d); return `<tr><td><b>${esc(t.name)}</b></td><td class="num">${t._n}</td>${per.map((_,i)=>{ const x=day.find(y=>y.p===i); return `<td class="small" style="${i===it.p?"background:#dcfce7":x?"background:#f1f5f9":""}">${x?esc(x.sec):i===it.p?"✓ متاح":""}</td>`; }).join("")}</tr>`; }).join("")}</tbody></table></div><p class="small muted">العمود الأخضر توقيت الحصة المطلوبة. الخانات الرمادية حصص المعلم في ذلك اليوم.</p>`:`<div class="note warn">${esc(whyTxt(C.why))}</div>`,true); });
+  el.querySelectorAll("[data-swp]").forEach(b=>b.onclick=()=>{ const doc2=subDoc(date); const it=doc2.items.find(i=>i.id===b.dataset.swp); if(!it) return;
+    const others=doc2.items.filter(o=>o.id!==it.id&&o.status==="assigned"&&o.sub).map(o=>({o,c:subSwapCheck(doc2,it.id,o.id)})).sort((a,b)=>(b.c.ok-a.c.ok)||a.o.p-b.o.p);
+    const via=S.subVia||"inbox"; const sentAny=x=>!!(x.sentTo);
+    const M=modal(`تبديل حصة الانتظار – الحصة ${it.p+1} • ${secLabel(it.sec)}`,`<div class="stack" style="gap:8px"><div class="note info small">المكلَّف حالياً: <b>أ. ${esc(tName(it.sub))}</b>. اختر حصة انتظار أخرى لتبديل المعلمَين بينهما. يتحقق النظام من جدول كل معلم، والاستثناءات، والحد الأقصى حصة انتظار واحدة يومياً.</div>
+      ${others.length?others.map(({o,c})=>`<div class="sbc ${c.ok?"ok":"bad"}" style="gap:4px"><div class="sbh"><b class="num">الحصة ${o.p+1}</b><span class="small muted num">${esc(periodTime(o.p))}</span><span class="small">${esc(secLabel(o.sec))} • ${esc(o.s||"")}</span><span style="margin-inline-start:auto">${c.ok?'<span class="pill ok">✓ تبديل ممكن</span>':'<span class="pill bad">✗ غير ممكن</span>'}</span></div>
+        <div class="small">أ. <b>${esc(tName(it.sub))}</b> ← الحصة ${o.p+1}، و أ. <b>${esc(tName(o.sub))}</b> ← الحصة ${it.p+1}</div>${c.ok?"":`<div class="small" style="color:var(--bad)">${c.r.map(esc).join("<br>")}</div>`}
+        <div><button class="btn sm ${c.ok?"primary":""}" data-dosw="${o.id}" ${c.ok?"":"disabled"}>🔄 تبديل</button></div></div>`).join(""):'<div class="empty" style="padding:12px">لا توجد حصص انتظار مسندة أخرى في هذا اليوم للتبديل معها. لاستبدال المعلم بمعلم متاح استخدم قائمة «المعلم البديل».</div>'}
+      ${doc2.approved?`<label class="small row" style="gap:6px"><input type="checkbox" id="swN" checked> إرسال إشعار التعديل للمعلمين المعنيين فوراً عبر <b>${{inbox:"المنصة",email:"البريد",wa:"واتساب"}[via]}</b></label><div class="small muted">الجدول معتمد: يبقى معتمداً بعد التبديل الصحيح، ويُسجَّل التعديل في السجل.</div>`:'<div class="small muted">الجدول غير معتمد بعد: تُرسل الإشعارات بعد الاعتماد.</div>'}</div>`,true);
+    M.el.querySelectorAll("[data-dosw]").forEach(btn=>btn.onclick=async()=>{ const c=subSwapCheck(subDoc(date),it.id,btn.dataset.dosw); if(!c.ok){ toast(c.r[0]||"التبديل غير ممكن","bad"); return; }
+      const x=c.doc; const at=new Date().toISOString(); const wasAp=!!x.approved;
+      c.A.swapped=`تبديل مع الحصة ${c.B.p+1} (${secLabel(c.B.sec)}) – كان أ. ${tName(c.ta)}`; c.B.swapped=`تبديل مع الحصة ${c.A.p+1} (${secLabel(c.A.sec)}) – كان أ. ${tName(c.tb)}`;
+      x.swaps=[{at,by:U?U.name:"",a:c.A.id,b:c.B.id,ta:c.ta,tb:c.tb,afterApproval:wasAp},...(x.swaps||[])].slice(0,100);
+      const notify=wasAp&&M.el.querySelector("#swN")?.checked; M.close();
+      await subSave(x,`تبديل${wasAp?" بعد الاعتماد":""}: أ. ${tName(c.ta)} إلى الحصة ${c.B.p+1} (${c.B.sec})، وأ. ${tName(c.tb)} إلى الحصة ${c.A.p+1} (${c.A.sec})`);
+      if(wasAp) addLog(`تبديل حصص انتظار ${date}: ${tName(c.ta)} ↔ ${tName(c.tb)}`);
+      subDay(el,U);
+      const need=pendingNotices(x).filter(n=>n.tid===c.ta||n.tid===c.tb);
+      if(notify&&need.length){ await subSend(date,via,()=>subDay(el,U),[c.ta,c.tb]); }
+      else toast(wasAp?(need.length?"تم التبديل – الإشعارات بانتظار الإرسال":"تم التبديل"):"تم التبديل – اعتمد الجدول ثم أرسل الإشعارات"); }); });
+  g("#sbAuto").onclick=async()=>{ const doc2=subDoc(date); const n=subAutoFill(doc2); if(!n){ toast("لا يوجد معلمون متاحون للحصص المتبقية","bad"); return; } await change(doc2,`توزيع تلقائي: إسناد ${n} حصة`); toast(`أُسندت ${n} حصة؛ راجعها ثم اعتمد`); };
+  g("#sbAp").onclick=async()=>{ const doc2=subDoc(date); const errs=[]; const per={};
+    doc2.items.filter(i=>i.status==="assigned").forEach(it=>{ per[it.sub]=(per[it.sub]||0)+1; const C=subCands(doc2,it); if(!C.list.some(t=>t.id===it.sub)) errs.push(`الحصة ${it.p+1} (${it.sec}): أ. ${tName(it.sub)} غير متاح`); });
+    Object.entries(per).forEach(([k,v])=>{ if(v>1) errs.push(`أ. ${tName(k)} لديه ${v} حصص انتظار (الحد الأقصى واحدة يومياً)`); });
+    if(errs.length){ modal("لا يمكن الاعتماد",`<div class="note bad">${errs.map(esc).join("<br>")}</div>`); return; }
+    const un=doc2.items.filter(i=>i.status==="unassigned").length; if(un&&!await ask(`توجد ${un} حصة غير مسندة. اعتماد الجدول رغم ذلك؟`,"اعتماد")) return;
+    doc2.approved=true; doc2.approvedAt=new Date().toISOString(); doc2.approvedBy=U?U.name:""; doc2.reapprove=false; await subSave(doc2,`اعتماد جدول الانتظار (${doc2.items.filter(i=>i.status==="assigned").length} مسندة${un?`، ${un} غير مسندة`:""})`); addLog(`اعتماد جدول حصص الانتظار ${date}`); toast("اعتُمد جدول الانتظار"); subDay(el,U); };
+  g("#sbUnap")?.addEventListener("click",async()=>{ const doc2=subDoc(date); doc2.approved=false; await subSave(doc2,"إلغاء اعتماد جدول الانتظار"); subDay(el,U); });
+  g("#sbVia").onchange=e=>{ S.subVia=e.target.value; };
+  g("#sbSend").onclick=()=>subSend(date,g("#sbVia").value,()=>subDay(el,U));
+  g("#sbPdf").onclick=()=>subPrint(date); }
+
+async function subSend(date,via,after,only){ const doc=subDoc(date); const pend=pendingNotices(doc).filter(n=>!only||only.includes(n.tid)); if(!pend.length) return; const by={}; pend.forEach(n=>(by[n.tid]=by[n.tid]||[]).push(n)); const at=new Date().toISOString();
+  const mark=(list,ok,err,msgIds)=>{ list.forEach((n,i)=>{ if(ok){ const it=doc.items.find(x=>x.id===n.it.id); if(it) it.sentTo=n.kind==="assign"?n.tid:(it.sentTo===n.tid?"":it.sentTo); if(it&&it.status==="cancelled"&&!it.sentTo) doc.items=doc.items.filter(x=>x!==it); } doc.sendLog=[{at,tid:n.tid,kind:n.kind,via,ok,err:err||"",msg:msgIds?msgIds[i]:""},...(doc.sendLog||[])].slice(0,300); }); };
+  if(via==="inbox"){ let ok=0, bad=0;
+    for(const [tid,list] of Object.entries(by)){ const t=S.teachers.find(x=>x.id===tid); const ib=await tIb(t); if(!ib){ mark(list,false,"لا يوجد صندوق رسائل – لا يوجد حساب موحّد مفعّل برمز دخول لهذا المعلم، أرسل بالبريد/واتساب"); bad++; continue; }
+      try{ const ref=S.db.doc("wpinbox/"+ib); const cur=await ref.get(); const msgs=(cur.exists&&thaw(cur.data()).msgs)||[]; const ids=list.map(()=>uidGen("m"));
+        const sw=list.some(n=>n.kind==="cancel")&&list.some(n=>n.kind==="assign"); const nm=list.map((n,i)=>({id:ids[i],at,kind:n.kind,swap:sw,date,item:n.it.id,p:n.it.p,time:periodTime(n.it.p),sec:n.it.sec,label:secLabel(n.it.sec),subject:n.it.s}));
+        await ref.set({tid,msgs:[...msgs.filter(m=>m.date>=iso(addDays(new Date(),-60))),...nm].slice(-200)}); mark(list,true,"",ids); ok++; }catch(e){ mark(list,false,"تعذّر الإرسال"); bad++; } }
+    await subSave(doc,`إرسال الإشعارات داخل المنصة: ${ok} معلم${bad?`، تعذّر ${bad}`:""}`); toast(bad?`أُرسل إلى ${ok} وتعذّر ${bad} (انظر سجل الإرسال)`:`أُرسلت التكليفات إلى ${ok} معلم`,bad?"bad":""); after(); return; }
+  const M=modal(`إرسال التكليفات عبر ${via==="email"?"البريد":"واتساب"}`,`<div class="stack"><div class="note info small">لكل معلم رسالة خاصة بتكليفه فقط. اضغط زر كل معلم لفتح الرسالة جاهزة ثم أرسلها.</div>${Object.entries(by).map(([tid,list])=>{ const t=S.teachers.find(x=>x.id===tid)||{}; const msg=subMsgText(tid,list,date); const href=via==="email"?(t.email?mailURL(t.email,`حصة انتظار – ${fmtGs(D0(date))}`,msg):""):(t.phone?waURL(t.phone,msg):"");
+      return `<div class="row" style="justify-content:space-between;border-top:1px solid var(--line);padding-top:6px"><span><b>${esc(t.name||"")}</b> <span class="small muted">${list.map(n=>(n.kind==="cancel"?"إلغاء ":"")+"ح"+(n.it.p+1)+" "+n.it.sec).join("، ")}</span></span>${href?`<a class="btn sm primary" target="_blank" rel="noopener" href="${esc(href)}" data-snd="${tid}">${via==="email"?"✉️ بريد":"💬 واتساب"}</a>`:`<span class="pill bad">${via==="email"?"لا يوجد بريد":"لا يوجد جوال"}</span>`}</div>`; }).join("")}</div>`,true);
+  M.el.querySelectorAll("[data-snd]").forEach(a=>a.addEventListener("click",async()=>{ mark(by[a.dataset.snd],true); a.textContent="✓ "+a.textContent; a.classList.remove("primary"); await subSave(doc,`إرسال تكليف أ. ${tName(a.dataset.snd)} عبر ${via==="email"?"البريد":"واتساب"}`); after(); })); }
+
+function subHTML(date){ const doc=subDoc(date); const items=(doc.items||[]).filter(i=>i.status!=="cancelled"); const C=cfg(); const asg=items.filter(i=>i.status==="assigned").length;
+  return `<div class="nt"><div class="hd"><div><h1>جدول حصص الانتظار</h1><div style="font-weight:800">${DAYS[subDayIdx(date)]||""} ${fmtG(D0(date))}</div></div>${C.logoUrl?`<img src="${esc(C.logoUrl)}" alt="">`:""}<div class="m">${esc(C.school)}<br>${esc(C.stage)}<br>${doc.approved?"معتمد "+fmtDT(doc.approvedAt):"مسودة غير معتمدة"}</div></div>
+    <div class="meta"><span>الغائبون: ${(doc.absent||[]).length}</span><span>الحصص: ${items.length}</span><span>مسندة: ${asg}</span><span>غير مسندة: ${items.length-asg}</span></div>
+    <div class="nt-blk"><table><tr><th>الحصة</th><th>التوقيت</th><th>الصف والفصل</th><th>المادة</th><th>المعلم الغائب</th><th>المعلم البديل</th><th>التوقيع</th></tr>${items.map(i=>`<tr><td class="p">${i.p+1}</td><td class="p">${esc(periodTime(i.p))}</td><td>${esc(secLabel(i.sec))}</td><td>${esc(i.s)}</td><td>${esc(tName(i.absent))}</td><td style="font-weight:800">${i.status==="assigned"?esc(tName(i.sub)):'<span style="color:#b91c1c">غير مسندة</span>'}</td><td style="width:90px"></td></tr>`).join("")}</table></div>
+    <div class="ft">${doc.approvedBy?"اعتمده: "+esc(doc.approvedBy)+" • ":""}أُنشئ ${fmtDT(new Date().toISOString())}</div></div>`; }
+function subPrint(date){ const M=modal("معاينة جدول الانتظار",`<div class="stack"><div class="row"><button class="btn primary" id="spD">⬇️ تنزيل PDF</button>${canPrint()?'<button class="btn" id="spP">🖨️ طباعة</button>':""}</div><div style="border:1px solid var(--line);border-radius:10px;overflow:auto;background:#fff"><style>${PDF_CSS}</style>${subHTML(date)}</div></div>`,true);
+  M.el.querySelector("#spD").onclick=async e=>{ e.target.disabled=true; try{ const b=await noticePdf(subHTML(date),platCss(PDF_CSS)); const name=`جدول الانتظار ${date}.pdf`; if(S.dl) await S.dl.save({filename:name,data:b}); else { const a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download=name; a.click(); } }catch(err){ toast("تعذّر إنشاء PDF","bad"); } e.target.disabled=false; };
+  M.el.querySelector("#spP")?.addEventListener("click",()=>{ const w=window.open("","_blank"); if(!w) return; w.document.write(`<html dir="rtl"><head><meta charset="utf-8"><title>جدول الانتظار</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800&display=swap"><style>${PDF_CSS}@page{size:A4;margin:10mm}.nt{width:auto;padding:0}</style></head><body>${subHTML(date)}<script>setTimeout(()=>print(),600)<\/script></body></html>`); w.document.close(); }); }
+
+function subReport(el){ const key=S.subRepRng||"w1"; const date=S.subDate||iso(new Date()); const [a,b]=key==="custom"?[S.subFrom||date,S.subTo||date]:subRange(key,date);
+  const docs=Object.values(S.subs).filter(x=>x.date>=a&&x.date<=b); const rows=S.teachers.filter(t=>t.active!==false).map(t=>{ let sub=0,abs=0,days=new Set(),last=""; docs.forEach(x=>{ (x.items||[]).forEach(i=>{ if(i.status==="assigned"&&i.sub===t.id){ sub++; if(x.date>last) last=x.date; } if(i.absent===t.id&&i.status!=="cancelled") abs++; }); if((x.absent||[]).includes(t.id)) days.add(x.date); }); return {t,sub,abs,days:days.size,last}; });
+  const tot=docs.reduce((s,x)=>s+(x.items||[]).filter(i=>i.status!=="cancelled").length,0), cov=docs.reduce((s,x)=>s+(x.items||[]).filter(i=>i.status==="assigned").length,0);
+  const mx=Math.max(1,...rows.map(r=>r.sub));
+  el.innerHTML=`<section class="panel stack" style="gap:10px"><div class="row"><b>الفترة:</b><div class="chips">${SUB_RANGES.map(([k,l])=>`<button class="chip sm ${key===k?"on":""}" data-rr="${k}">${l}</button>`).join("")}</div>${key==="custom"?`<input class="in" type="date" id="rf" value="${a}" style="width:auto"> إلى <input class="in" type="date" id="rt" value="${b}" style="width:auto">`:`<span class="small muted num">${fmtGs(D0(a))} – ${fmtGs(D0(b))}</span>`}<span style="flex:1"></span><button class="btn sm" id="rx">⬇️ Excel</button></div>
+    <div class="kpis">${[["أيام مسجلة",docs.length],["حصص احتاجت تغطية",tot],["مُسندة",cov],["نسبة التغطية",tot?Math.round(cov/tot*100)+"%":"—"],["التبديلات",docs.reduce((s,x)=>s+(x.swaps||[]).length,0)]].map(([l,v])=>`<div class="kpi"><b class="num">${v}</b><small>${l}</small></div>`).join("")}</div></section>
+    <div class="tbl"><table><thead><tr><th>المعلم</th><th>حصص الانتظار</th><th></th><th>أيام الغياب</th><th>حصص غيابه</th><th>آخر انتظار</th></tr></thead><tbody>${rows.sort((x,y)=>y.sub-x.sub||x.t.name.localeCompare(y.t.name,"ar")).map(r=>`<tr><td><b>${esc(r.t.name)}</b></td><td class="num">${r.sub}</td><td style="min-width:120px"><div class="bar"><span style="width:${Math.round(r.sub/mx*100)}%"></span></div></td><td class="num">${r.days}</td><td class="num">${r.abs}</td><td class="small num">${r.last?fmtGs(D0(r.last)):"—"}</td></tr>`).join("")}</tbody></table></div>`;
+  el.querySelectorAll("[data-rr]").forEach(x=>x.onclick=()=>{ S.subRepRng=x.dataset.rr; subReport(el); });
+  el.querySelector("#rf")?.addEventListener("change",e=>{ S.subFrom=e.target.value; subReport(el); }); el.querySelector("#rt")?.addEventListener("change",e=>{ S.subTo=e.target.value; subReport(el); });
+  el.querySelector("#rx").onclick=()=>xlsx(`حصص الانتظار ${a} إلى ${b}`,["المعلم","حصص الانتظار","أيام الغياب","حصص غيابه","آخر انتظار"],rows.map(r=>[r.t.name,r.sub,r.days,r.abs,r.last||""])); }
+
+function subExcl(el){ const ex=(S.subcfg.exclude||[]); const today=iso(new Date());
+  el.innerHTML=`<section class="panel stack" style="gap:10px"><b>استثناء معلم من حصص الانتظار</b><div class="grid2"><label class="f small">المعلم<select class="in" id="xT">${S.teachers.filter(t=>t.active!==false).sort((a,b)=>a.name.localeCompare(b.name,"ar")).map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join("")}</select></label>
+      <label class="f small">المدة<select class="in" id="xK"><option value="perm">دائم</option><option value="range">فترة محددة</option></select></label>
+      <label class="f small" id="xFw" style="display:none">من<input class="in" type="date" id="xF" value="${today}"></label><label class="f small" id="xTw" style="display:none">إلى<input class="in" type="date" id="xTo" value="${iso(addDays(new Date(),7))}"></label></div>
+    <div class="stack" style="gap:4px"><span class="small" style="font-weight:700">حصص محددة فقط (اختياري – لتكليف أو مهمة في توقيت معين)</span><div class="chips">${cfg().periods.map((_,i)=>`<label class="chip sm"><input type="checkbox" value="${i}"> الحصة ${i+1}</label>`).join("")}</div></div>
+    <label class="f small">السبب (اختياري)<input class="in" id="xN" placeholder="مثال: مهمة إشرافية، تكليف إداري، ظرف صحي"></label><div><button class="btn primary" id="xG">+ إضافة الاستثناء</button></div></section>
+    <div class="tbl"><table><thead><tr><th>المعلم</th><th>المدة</th><th>الحصص</th><th>السبب</th><th>الحالة</th><th></th></tr></thead><tbody>${ex.map((e,i)=>{ const active=(!e.from||e.from<=today)&&(!e.to||e.to>=today); return `<tr><td><b>${esc(tName(e.tid))}</b></td><td class="small">${e.from||e.to?`${e.from?fmtGs(D0(e.from)):""} – ${e.to?fmtGs(D0(e.to)):""}`:"دائم"}</td><td class="small">${(e.periods||[]).length?e.periods.map(p=>p+1).join("، "):"كل الحصص"}</td><td class="small">${esc(e.note||"")}</td><td>${active?'<span class="pill ok">ساري</span>':'<span class="pill">غير ساري</span>'}</td><td><button class="btn sm danger" data-xd="${i}">حذف</button></td></tr>`; }).join("")||'<tr><td colspan="6" class="muted">لا توجد استثناءات.</td></tr>'}</tbody></table></div>`;
+  const g=q=>el.querySelector(q); g("#xK").onchange=()=>{ const r=g("#xK").value==="range"; g("#xFw").style.display=g("#xTw").style.display=r?"":"none"; };
+  const save=async list=>{ await S.db.doc("wpsubcfg/main").set({...S.subcfg,exclude:list}); S.subcfg={...S.subcfg,exclude:list}; subExcl(el); };
+  g("#xG").onclick=async()=>{ const r=g("#xK").value==="range"; const e={tid:g("#xT").value,from:r?g("#xF").value:"",to:r?g("#xTo").value:"",periods:[...el.querySelectorAll(".chips input:checked")].map(x=>+x.value),note:g("#xN").value.trim()}; if(r&&e.from>e.to){ toast("تاريخ البداية بعد النهاية","bad"); return; }
+    try{ await save([...ex,e]); addLog(`استثناء أ. ${tName(e.tid)} من حصص الانتظار ${r?`(${e.from} إلى ${e.to})`:"(دائم)"}`); toast("أُضيف الاستثناء"); }catch(err){ toast("تعذّر الحفظ","bad"); } };
+  el.querySelectorAll("[data-xd]").forEach(b=>b.onclick=async()=>{ const e=ex[+b.dataset.xd]; await save(ex.filter((_,i)=>i!==+b.dataset.xd)); addLog(`إلغاء استثناء أ. ${tName(e.tid)} من حصص الانتظار`); }); }
+
 function logTools(el,canDel,onDel,label){ if(!canDel) return; const boxes=()=>[...el.querySelectorAll("[data-lsel]")]; const upd=()=>{ const n=boxes().filter(b=>b.checked).length; const b=el.querySelector("#lgDel"); if(b){ b.disabled=!n; b.textContent=`🗑 حذف المحدد${n?` (${n})`:""}`; } };
   el.querySelector("#lgAll")?.addEventListener("change",e=>{ boxes().forEach(b=>b.checked=e.target.checked); upd(); }); boxes().forEach(b=>b.onchange=upd);
   el.querySelectorAll("[data-ldel1]").forEach(b=>b.onclick=async()=>{ if(!await ask("حذف هذا السطر من السجل نهائياً؟","حذف")) return; await onDel([b.dataset.ldel1]); });
@@ -9534,6 +9813,13 @@ function logTools(el,canDel,onDel,label){ if(!canDel) return; const boxes=()=>[.
   el.querySelector("#lgClr")?.addEventListener("click",async()=>{ const ids=boxes().map(b=>b.dataset.lsel); if(!ids.length) return; if(!await ask(`مسح ${label} بالكامل (${ids.length} سطر)؟ لا يمكن التراجع. لا يؤثر ذلك على جداول الانتظار أو الخطط نفسها.`,"مسح السجل")) return; await onDel(ids); }); upd(); }
 const logBar=(canDel,n)=>canDel&&n?`<div class="row" style="gap:6px"><label class="small row" style="gap:4px"><input type="checkbox" id="lgAll"> تحديد الكل</label><button class="btn sm danger" id="lgDel" disabled>🗑 حذف المحدد</button><button class="btn sm ghost" id="lgClr">مسح السجل بالكامل</button></div>`:"";
 
+function subLog(el,U){ U=U||adminUser(); const canDel=!!U&&U.role!=="sup"; const ev=[]; Object.values(S.subs).forEach(x=>{ (x.log||[]).forEach((l,i)=>ev.push({...l,date:x.date,key:`${x.date}|log|${i}`})); (x.sendLog||[]).forEach((l,i)=>ev.push({at:l.at,by:"",date:x.date,key:`${x.date}|send|${i}`,what:`${l.ok?"إرسال":"تعذّر إرسال"} ${l.kind==="cancel"?"إلغاء":"تكليف"} إلى أ. ${tName(l.tid)} (${{inbox:"داخل المنصة",email:"البريد",wa:"واتساب"}[l.via]||l.via})`})); });
+  ev.sort((a,b)=>String(b.at).localeCompare(String(a.at)));
+  const L=ev.slice(0,400);
+  el.innerHTML=`${logBar(canDel,L.length)}<div class="tbl"><table><thead><tr>${canDel?"<th></th>":""}<th>الوقت</th><th>يوم الانتظار</th><th>المستخدم</th><th>العملية</th>${canDel?"<th></th>":""}</tr></thead><tbody>${L.map(e=>`<tr>${canDel?`<td><input type="checkbox" data-lsel="${e.key}" aria-label="تحديد"></td>`:""}<td class="small num">${fmtDT(e.at)}</td><td class="small num">${esc(e.date)}</td><td class="small">${esc(e.by||"—")}</td><td>${esc(e.what)}</td>${canDel?`<td><button class="btn sm ghost" data-ldel1="${e.key}" title="حذف السطر" aria-label="حذف السطر">🗑</button></td>`:""}</tr>`).join("")||`<tr><td colspan="${canDel?6:4}" class="muted">لا عمليات بعد.</td></tr>`}</tbody></table></div>${canDel?'<p class="small muted">حذف سطور السجل لا يغيّر جداول الانتظار ولا التكليفات المرسلة.</p>':""}`;
+  logTools(el,canDel,async keys=>{ const by={}; keys.forEach(k=>{ const [d,t,i]=k.split("|"); ((by[d]=by[d]||{log:new Set(),send:new Set()})[t]).add(+i); });
+    for(const [d,x] of Object.entries(by)){ if(!S.subs[d]) continue; const doc=subDoc(d); doc.log=(doc.log||[]).filter((_,i)=>!x.log.has(i)); doc.sendLog=(doc.sendLog||[]).filter((_,i)=>!x.send.has(i)); await subSave(doc,""); }
+    toast(`حُذف ${keys.length} سطر من السجل`); subLog(el,U); },"سجل حصص الانتظار"); }
 function admTeachers(el,wk){ syncRoster();
   const list=S.teachers.slice().sort((a,b)=>a.name.localeCompare(b.name,"ar")); const A=typeof window.platTeachers==="function"?window.platTeachers():null;
   const accOf=t=>A&&A.find(a=>(a.phone&&t.phone&&intlPhone(a.phone)===intlPhone(t.phone))||normName(a.name)===normName(t.name));
@@ -9960,7 +10246,7 @@ const MODES={f:{k:"f",name:"الحضوري",long:"الخطة الأسبوعية 
 const activeMode=()=>(S.modeDoc&&S.modeDoc.active==="r"&&S.modeDoc.remoteReady)?"r":"f";
 function wantMode(r){ const ready=!!(S.modeDoc&&S.modeDoc.remoteReady);
   if(r.startsWith("admin")){ let w=null; try{ w=sessionStorage.getItem("wpWs"); }catch(e){ w=S.wsMem; } return w==="r"||w==="f"?w:activeMode(); }
-  if(r==="teacher"){ let w=null; try{ w=localStorage.getItem("wpTMode"); }catch(e){} return ready&&(w==="r"||w==="f")?w:activeMode(); }
+  if(r==="teacher"||r==="subs"){ let w=null; try{ w=localStorage.getItem("wpTMode"); }catch(e){} return ready&&(w==="r"||w==="f")?w:activeMode(); }
   return activeMode(); }
 function mdb(raw,m){ const pre=m==="r"?"r":""; const P=p=>pre&&/^wp/.test(p)?pre+p:p;
   const wrap=ref=>{ if(!ref||typeof ref!=="object") return ref; return new Proxy({},{get:(_,k)=>{ const v=ref[k]; if(typeof v!=="function") return v;
@@ -9969,8 +10255,8 @@ function mdb(raw,m){ const pre=m==="r"?"r":""; const P=p=>pre&&/^wp/.test(p)?pre
     return (...a)=>v.apply(ref,a); }}); };
   return {mode:m,doc:p=>wrap(raw.doc(P(p))),collection:p=>wrap(raw.collection(P(p)))}; }
 function switchMode(m){ S.mode=m; S.gen=(S.gen||0)+1; (S.unsubs||[]).forEach(u=>{ try{ u(); }catch(e){} }); S.unsubs=[];
-  [S.unMy].forEach(u=>{ try{ u&&u(); }catch(e){} }); S.unMy=null;
-  Object.assign(S,{cfg:{},cfgExists:false,tt:{},weeks:{},pubs:{},teachers:[],tdocs:[],myDocs:[],log:[],loaded:{},me:null,subPub:{},admWk:null});
+  [S.unMy,S.unIb].forEach(u=>{ try{ u&&u(); }catch(e){} }); S.unMy=null; S.unIb=null;
+  Object.assign(S,{subs:{},subcfg:{},inbox:[],swaps:{},subPend:{},cfg:{},cfgExists:false,tt:{},weeks:{},pubs:{},teachers:[],tdocs:[],myDocs:[],log:[],loaded:{},me:null,subPub:{},admWk:null});
   if(!S.raw){ S.loaded.boot=true; S.loaded.pubs=true; return; }
   S.db=mdb(S.raw,m); subscribeAll(); }
 function modeLook(){ const box=document.querySelector(".wpx"); if(box) box.classList.toggle("remote",S.mode==="r"); const tag=document.getElementById("wpModeTag"); if(tag){ tag.hidden=S.mode!=="r"; tag.textContent="💻 التعليم عن بُعد"; } }
@@ -10021,7 +10307,7 @@ function subscribeAll(){ const db=S.db;
   db.doc("wp/config").onSnapshot(d=>{ S.cfgExists=d.exists; S.cfg=d.exists?thaw(d.data()):{};  clearTimeout(t); S.loaded.boot=true; rerender(); },()=>{ S.loaded.boot=true; render(); });
   db.collection("wptt").onSnapshot(s=>{ S.tt={}; s.docs.forEach(d=>S.tt[d.id]={...thaw(d.data()),id:d.id}); rerender(); },()=>{});
   db.collection("wpweeks").onSnapshot(s=>{ S.weeks={}; s.docs.forEach(d=>S.weeks[thaw(d.data()).no]=thaw(d.data())); rerender(); },()=>{});
-  const me=lsGet("wpMe",null); if(me&&me.tid&&S.uid){ S.me={id:me.tid,name:me.name}; subMyDocs(); }
+  const me=lsGet("wpMe",null); if(me&&me.tid&&S.uid){ S.me={id:me.tid,name:me.name,ib:me.ib||""}; subMyDocs(); subInbox(); }
   const sup=!S.canEdit&&!!adminUser();
   if(S.canEdit||sup){
     if(S.canEdit) db.doc("wpsec/teachers").onSnapshot(d=>{ S.teachers=(d.exists&&thaw(d.data()).items)||[]; S.gotTeachers=true; syncRoster(); rerender(); },()=>{});
@@ -10029,6 +10315,11 @@ function subscribeAll(){ const db=S.db;
     db.collection("wpt").onSnapshot(s=>{ S.tdocs=s.docs.map(d=>({...thaw(d.data()),_id:d.id})); rerender(); },()=>{});
     db.collection("wppub").onSnapshot(s=>{ S.pubs={}; s.docs.forEach(d=>{ S.pubs[d.id]=thaw(d.data()); }); S.loaded.pubs=true; rerender(); },()=>{});
     db.doc("wplog/main").onSnapshot(d=>{ S.log=(d.exists&&thaw(d.data()).items)||[]; },()=>{});
+    if(S.canEdit){
+      db.collection("wpsub").onSnapshot(s=>{ const P=S.subPend||{}; const keep={}; Object.keys(P).forEach(k=>{ if(S.subs[k]) keep[k]=S.subs[k]; }); S.subs={}; s.docs.forEach(d=>{ const x=thaw(d.data()); const k=keep[d.id]; S.subs[d.id]=k&&(k.updatedAt||"")>(x.updatedAt||"")?k:x; }); Object.keys(keep).forEach(k=>{ if(!S.subs[k]) S.subs[k]=keep[k]; }); S.loaded.subs=true; rerender(); },()=>{ S.loaded.subs=true; });
+      db.doc("wpsubcfg/main").onSnapshot(d=>{ S.subcfg=d.exists?thaw(d.data()):{}; rerender(); },()=>{});
+      db.collection("wpswap").onSnapshot(s=>{ S.swaps={}; s.docs.forEach(d=>{ S.swaps[d.id]={...thaw(d.data()),id:d.id}; }); rerender(); },()=>{});
+    }
   } else {
     db.doc("wp/roster").onSnapshot(d=>{ if(!S.canEdit) S.teachers=(d.exists&&thaw(d.data()).items)||[]; rerender(); },()=>{});
   } }
