@@ -983,6 +983,7 @@ input.qz-bigcode{font-size:2rem;text-align:center}
     <nav class="main" aria-label="التنقل الرئيسي">
       <a href="#home" data-nav="home">🏆 <span data-t="navPublic">المراكز التنافسية</span></a>
       <a href="#tp" data-nav="tp" data-staffonly hidden>👨‍🏫 بوابة المعلم</a>
+      <a href="#wp-subs" data-nav="wp-subs" id="navSubs" hidden>⏱️ حصص الانتظار</a>
       <a href="#ann" data-nav="ann" hidden>📣 الإعلانات<span class="badge an" id="annBadge" hidden>0</span></a>
       <a href="#wp" data-nav="wp">📅 الخطة الأسبوعية</a>
       <a href="#rev" data-nav="rev">📚 خطة المراجعة</a>
@@ -1206,7 +1207,7 @@ function render(){
   const r=route(), app=$("#app"); updateAcctNav(); try{ document.querySelectorAll("[data-staffonly]").forEach(a=>a.hidden=!isStaff()); document.querySelectorAll("[data-adminonly]").forEach(a=>a.hidden=!S.admin); }catch(e){} if(!/^(rev|tsk)-(my|subj|design)$/.test(r)) S.ppDirty=false; try{ useTick(); }catch(e){} try{ gsFabSync(); }catch(e){}
   if(!r.startsWith("qzr-")&&typeof qzUnsubRoom==="function"&&QZ.roomCode){ qzUnsubRoom(); QZ.roomCode=null; QZ.roomView=false; }
   if(!r.startsWith("qzh-")&&typeof qzUnsubHost==="function"&&QZ.hostCode){ qzUnsubHost(); QZ.hostCode=null; clearInterval(QZ.hostTick); }
-  document.querySelectorAll("nav.main a").forEach(a=>a.classList.toggle("on",r===a.dataset.nav||(a.dataset.nav==="admin"&&r.startsWith("admin"))||(a.dataset.nav==="cmap"&&r.startsWith("cmap"))||(a.dataset.nav==="rev"&&r.startsWith("rev"))||(a.dataset.nav==="exams"&&r.startsWith("exams"))||(a.dataset.nav==="rl"&&/^rl(-|$)/.test(r))||(a.dataset.nav==="tsk"&&r.startsWith("tsk"))||(a.dataset.nav==="home"&&(r.startsWith("c-")||r==="honor"))||(a.dataset.nav==="train"&&(r.startsWith("t-")||r==="quiz"||r==="nafs"||r.startsWith("qz")&&!r.startsWith("qzm-")))||(a.dataset.nav==="login"&&r==="me")||(a.dataset.nav==="cal"&&r==="cals")||(a.dataset.nav==="tp"&&r.startsWith("tp-"))||(a.dataset.nav==="ann"&&r.startsWith("ann-"))||(a.dataset.nav==="wp"&&r.startsWith("wp-"))));
+  document.querySelectorAll("nav.main a").forEach(a=>a.classList.toggle("on",r===a.dataset.nav||(a.dataset.nav==="admin"&&r.startsWith("admin"))||(a.dataset.nav==="cmap"&&r.startsWith("cmap"))||(a.dataset.nav==="rev"&&r.startsWith("rev"))||(a.dataset.nav==="exams"&&r.startsWith("exams"))||(a.dataset.nav==="rl"&&/^rl(-|$)/.test(r))||(a.dataset.nav==="tsk"&&r.startsWith("tsk"))||(a.dataset.nav==="home"&&(r.startsWith("c-")||r==="honor"))||(a.dataset.nav==="train"&&(r.startsWith("t-")||r==="quiz"||r==="nafs"||r.startsWith("qz")&&!r.startsWith("qzm-")))||(a.dataset.nav==="login"&&r==="me")||(a.dataset.nav==="cal"&&r==="cals")||(a.dataset.nav==="tp"&&r.startsWith("tp-"))||(a.dataset.nav==="ann"&&r.startsWith("ann-"))||(a.dataset.nav==="wp"&&r.startsWith("wp-")&&r!=="wp-subs"&&r!=="wp-admin-subs")||(a.dataset.nav==="wp-subs"&&(r==="wp-subs"||r==="wp-admin-subs"))));
   if(S.asParent&&r.startsWith("admin")) S.asParent=false; if(S.tpAs&&r.startsWith("admin")) S.tpAs=null;
   if(r==="cal"&&pubAsParent()&&!pubSecOn("cal")&&pubSecOn("calS")){ location.replace("#cals"); return; }
   if(!pubGate(r,app)) return; if(!tpGate(r,app)){ m30Nav(); return; }
@@ -5900,7 +5901,7 @@ function m30Boot(db){ db.doc("site/tportal").onSnapshot(d=>{ S.tpCfg=d.exists?d.
 function m30Nav(){ try{ tpNav(); }catch(e){} try{ annBadge(); }catch(e){} const c=document.querySelector('nav.main a[data-nav="cal"]'); if(c&&pubAsParent()) c.hidden=!(pubOn("cal")||pubOn("calS")); }
 
 /* ================= بوابة المعلم ================= */
-const TP_SVC=[["wp","الخطة الأسبوعية","cal","#wp-teacher","إدخال خطتك الأسبوعية وتسليمها ومتابعة ملاحظات الإدارة"],["tt","جدولي الدراسي","grid","#tp-tt","حصصك الأسبوعية من الجدول الدراسي المعتمد"],["subs","حصص الانتظار وتبديل الحصص","clock","#wp-teacher","تكليفات حصص الانتظار وطلبات تبديل الحصص"],["gaent","إدخال الدرجات","pen","#ga-ent","إدخال درجات الاختبارات ومكونات التقويم خلال الفترة المفتوحة"],["ga","تحليل درجات الاختبارات","chart","#ga","تحليل نتائج فصولك والخطط العلاجية والإثرائية"],["rev","خطط المراجعة","book","#rev-my","إعداد خطط المراجعة لموادك ومتابعتها"],["tsk","المهام الأدائية","tasks","#tsk-my","المهام الأدائية لطلابك ومواعيد تسليمها"],["ann","الإعلانات والتعاميم","mega","#ann","إعلانات الإدارة والتعاميم الموجّهة لك"],["cal","الأجندة المدرسية","cal","#cal","مواعيد الاختبارات والفعاليات والاجتماعات"],["rl","التعليم عن بُعد","laptop","#rl-teacher","روابط حصصك عن بُعد ومتابعة دخول الطلاب"],["exams","جداول الاختبارات","file","#exams","جداول الاختبارات المعتمدة"],["rep","التقارير والمتابعة","trend","#tp-rep","ملخص حصصك وردودك وروابط التقارير"],["comps","مسابقاتي وطلابي","trophy","#tp-comps","المسابقات المسندة إليك وطلابها وحصص التدريب"],["cmap","خريطة التواصل","map","#cmap","خطة التواصل مع أولياء الأمور"],["studio","استوديو التصميم","brush","#studio","تصميم الشهادات والإعلانات"]];
+const TP_SVC=[["wp","الخطة الأسبوعية","cal","#wp-teacher","إدخال خطتك الأسبوعية وتسليمها ومتابعة ملاحظات الإدارة"],["tt","جدولي الدراسي","grid","#tp-tt","حصصك الأسبوعية من الجدول الدراسي المعتمد"],["subs","حصص الانتظار وتبديل الحصص","clock","#wp-subs","تكليفات حصص الانتظار وطلبات تبديل الحصص"],["gaent","إدخال الدرجات","pen","#ga-ent","إدخال درجات الاختبارات ومكونات التقويم خلال الفترة المفتوحة"],["ga","تحليل درجات الاختبارات","chart","#ga","تحليل نتائج فصولك والخطط العلاجية والإثرائية"],["rev","خطط المراجعة","book","#rev-my","إعداد خطط المراجعة لموادك ومتابعتها"],["tsk","المهام الأدائية","tasks","#tsk-my","المهام الأدائية لطلابك ومواعيد تسليمها"],["ann","الإعلانات والتعاميم","mega","#ann","إعلانات الإدارة والتعاميم الموجّهة لك"],["cal","الأجندة المدرسية","cal","#cal","مواعيد الاختبارات والفعاليات والاجتماعات"],["rl","التعليم عن بُعد","laptop","#rl-teacher","روابط حصصك عن بُعد ومتابعة دخول الطلاب"],["exams","جداول الاختبارات","file","#exams","جداول الاختبارات المعتمدة"],["rep","التقارير والمتابعة","trend","#tp-rep","ملخص حصصك وردودك وروابط التقارير"],["comps","مسابقاتي وطلابي","trophy","#tp-comps","المسابقات المسندة إليك وطلابها وحصص التدريب"],["cmap","خريطة التواصل","map","#cmap","خطة التواصل مع أولياء الأمور"],["studio","استوديو التصميم","brush","#studio","تصميم الشهادات والإعلانات"]];
 const TP_ICONS=["link","book","file","chart","cal","users","star","flag","target","folder","video","globe","msg","clip","award","school","bulb"];
 const tpCfg=()=>S.tpCfg||{};
 function tpRuleOK(c,V){ if(!c) return true; if(c.on===false) return false; if((c.deny||[]).some(n=>sameName(n,V.name))) return false; if((c.allow||[]).some(n=>sameName(n,V.name))) return true;
@@ -5911,10 +5912,11 @@ function tpSvcs(V){ const C=tpCfg(); const ord=C.order||[]; const L=TP_SVC.filte
   (C.custom||[]).filter(c=>tpRuleOK(c,V)&&c.label&&c.href).forEach(c=>L.push({k:c.id,label:c.label,icon:c.icon||"link",href:c.href,desc:c.desc||"",ext:/^https?:/.test(c.href)}));
   return L.sort((a,b)=>{ const i=ord.indexOf(a.k), j=ord.indexOf(b.k); return (i<0?99:i)-(j<0?99:j); }); }
 function tpProf(){ if(S.tpAs&&cmAdmin()) return {name:S.tpAs.name,rk:S.tpAs.rk,title:(T_ROLES.find(r=>r[0]===S.tpAs.rk)||[,"معلم"])[1],comps:[],preview:true}; return staffProf(); }
-const TP_ROUTE=[[/^wp-teacher/,["wp","subs"]],[/^ga-ent$/,["gaent"]],[/^ga(-|$)/,["ga","gaent"]],[/^rev-(my|subj|design)/,["rev"]],[/^tsk-(my|subj|design)/,["tsk"]],[/^rl-teacher/,["rl"]],[/^cmap/,["cmap"]],[/^studio$/,["studio"]],[/^tp-tt$/,["tt"]],[/^tp-rep$/,["rep"]],[/^tp-comps$/,["comps"]]];
+const TP_ROUTE=[[/^wp-subs$/,["subs"]],[/^wp-teacher/,["wp"]],[/^ga-ent$/,["gaent"]],[/^ga(-|$)/,["ga","gaent"]],[/^rev-(my|subj|design)/,["rev"]],[/^tsk-(my|subj|design)/,["tsk"]],[/^rl-teacher/,["rl"]],[/^cmap/,["cmap"]],[/^studio$/,["studio"]],[/^tp-tt$/,["tt"]],[/^tp-rep$/,["rep"]],[/^tp-comps$/,["comps"]]];
 function tpGate(r,app){ const V=viewer(); if(V.k!=="tea") return true; const m=TP_ROUTE.find(x=>x[0].test(r)); if(!m||m[1].some(k=>tpOn(k,V))) return true;
   app.innerHTML=`<section class="panel stack" style="gap:10px;max-width:640px;margin:auto;text-align:center"><h2 class="sec-title" style="margin:0;justify-content:center">${ic("lock")} هذا القسم غير مفعّل لحسابك</h2><p class="muted" style="margin:0">حدّدت إدارة المنصة الأقسام المتاحة لكل معلم. تواصل مع الإدارة إذا احتجت إليه.</p><div><a class="btn" href="#tp">العودة إلى بوابة المعلم</a></div></section>`; return false; }
 function tpNav(){ const V=viewer(); const nav=k=>document.querySelector(`nav.main a[data-nav="${k}"]`); const tp=nav("tp"); if(tp) tp.hidden=!(V.k==="tea"||cmAdmin());
+  const sb=document.getElementById("navSubs"); if(sb){ const adm=cmAdmin(); sb.hidden=!(adm||(V.k==="tea"&&tpOn("subs",V))); sb.setAttribute("href",adm?"#wp-admin-subs":"#wp-subs"); sb.textContent=adm?"⏱️ إدارة حصص الانتظار":"⏱️ حصص الانتظار"; }
   if(V.k!=="tea") return; const st=nav("studio"); if(st) st.hidden=!tpOn("studio",V); const ga=nav("ga"); if(ga) ga.hidden=!(tpOn("ga",V)||tpOn("gaent",V)); const cm=nav("cmap"); if(cm&&!tpOn("cmap",V)) cm.hidden=true; }
 function tpBar(){ return S.tpAs&&cmAdmin()?`<div class="tp-prev"><span>${ic("eye")} معاينة بوابة المعلم كما يراها: <b>${esc(S.tpAs.name)}</b></span><span class="row" style="gap:6px"><a class="btn sm white" href="#admin-tp">إعدادات البوابة</a><button class="btn sm white" type="button" data-tpx>إنهاء المعاينة</button></span></div>`:""; }
 document.addEventListener("click",e=>{ if(!e.target.closest("[data-tpx]")) return; S.tpAs=null; location.hash="#admin-tp"; });
@@ -8867,7 +8869,8 @@ function shell(){ const app=document.getElementById("app"); if(app.querySelector
 function render(){ if(S.ttHost&&!isWp()&&wpTTDraw()) return; if(!isWp()) return; if(!S.booted){ S.booted=true; boot(); } shell(); const r=route(); $$(".wp-tabs a").forEach(a=>a.classList.toggle("on",r===a.dataset.nav||r.startsWith(a.dataset.nav+"-")));
   if(S.raw&&S.modeReady){ const w=wantMode(r); if(w!==S.mode) switchMode(w); }
   modeLook();
-  if(r==="teacher") renderTeacher(); else if(r.startsWith("admin")) renderAdmin(r.split("-")[1]||"dash"); else renderHome();
+  try{ const isSub=r==="subs"||r==="admin-subs"; const bt=document.querySelector(".wpx .wp-bt b"); if(bt&&bt.firstChild&&bt.firstChild.nodeType===3) bt.firstChild.nodeValue=isSub?"حصص الانتظار ":"الخطة الأسبوعية "; const ic0=document.querySelector(".wpx .wp-ic"); if(ic0) ic0.textContent=isSub?"⏱️":"📅"; const tb=document.querySelector(".wpx .wp-tabs"); if(tb) tb.hidden=(r==="subs"); }catch(e){}
+  if(r==="teacher") renderTeacher(); else if(r==="subs") renderTeacherSubs(); else if(r.startsWith("admin")) renderAdmin(r.split("-")[1]||"dash"); else renderHome();
   try{ modeBar(r); }catch(e){ console.error(e); } }
 let rT=null,rDirty=false; const typing=()=>document.activeElement&&/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)&&route()!=="home"||!!document.querySelector(".modal,.ai-sug")||(typeof pend!=="undefined"&&Object.keys(pend).length>0);
 function rerender(){ if(S.ttHost&&!isWp()){ if(typing()){ rDirty=true; return; } clearTimeout(rT); rT=setTimeout(render,60); return; } if(!isWp()) return; if(typing()){ rDirty=true; return; } clearTimeout(rT); rT=setTimeout(render,60); }
@@ -8914,6 +8917,18 @@ function renderHome(){ const C=cfg(); const pick=lsGet("wpPick",{}); const secs=
 
 /* ================= TEACHER ================= */
 function myTeacher(){ const s=lsGet("wpMe",null); if(!s||!s.tid) return null; const t=S.teachers.find(x=>x.id===s.tid)||{id:s.tid,name:s.name}; return t; }
+/* حصص الانتظار للمعلم: صفحة مستقلة عن الخطة الأسبوعية */
+function renderTeacherSubs(){ const app=$("#wpApp"); const me=S.me;
+  if(!S.db||!S.uid){ app.innerHTML=`<div class="login panel stack"><h2 class="h2">حصص الانتظار</h2><div class="note warn">يلزم الدخول بحساب المعلم.</div></div>`; return; }
+  if(!me) return teacherLogin();
+  const adm=typeof window.platAdminOK==="function"&&window.platAdminOK();
+  const box=inboxPanel();
+  app.innerHTML=`<div class="stack">
+    <div class="row" style="justify-content:space-between"><div><h2 class="h2">⏱️ حصص الانتظار وتبديل الحصص</h2><div class="small muted">مرحباً أ. ${esc(me.name)}</div></div>
+      <div class="row">${adm?'<a class="btn sm primary" href="#wp-admin-subs">إدارة حصص الانتظار</a>':""}<a class="btn sm ghost" href="#tp">👨‍🏫 بوابة المعلم</a><button class="btn sm ghost" id="out">تسجيل الخروج</button></div></div>
+    ${box||'<section class="panel"><div class="empty">لا توجد لديك تكليفات انتظار أو تبديل حالياً. ستظهر هنا فور إسنادها من الإدارة.</div></section>'}
+    <p class="small muted" style="margin:0">تكليفات الانتظار وتبديل الحصص تُسنَد وتُعتمد من الإدارة، وتظهر لك هنا مع زر «تم الاطلاع».</p></div>`;
+  wireInbox(); $("#out").onclick=logoutTeacher; }
 function renderTeacher(){ const app=$("#wpApp"); const me=S.me;
   if(!S.db||!S.uid){ app.innerHTML=`<div class="login panel stack"><h2 class="h2">دخول المعلمين</h2><div class="note warn">لحفظ الخطة يلزم فتح المنصة بحساب يملك صلاحية الاستخدام. تواصل مع الإدارة.</div></div>`; return; }
   if(!me) return teacherLogin();
@@ -10057,7 +10072,7 @@ const MODES={f:{k:"f",name:"الحضوري",long:"الخطة الأسبوعية 
 const activeMode=()=>(S.modeDoc&&S.modeDoc.active==="r"&&S.modeDoc.remoteReady)?"r":"f";
 function wantMode(r){ const ready=!!(S.modeDoc&&S.modeDoc.remoteReady);
   if(r.startsWith("admin")){ let w=null; try{ w=sessionStorage.getItem("wpWs"); }catch(e){ w=S.wsMem; } return w==="r"||w==="f"?w:activeMode(); }
-  if(r==="teacher"){ let w=null; try{ w=localStorage.getItem("wpTMode"); }catch(e){} return ready&&(w==="r"||w==="f")?w:activeMode(); }
+  if(r==="teacher"||r==="subs"){ let w=null; try{ w=localStorage.getItem("wpTMode"); }catch(e){} return ready&&(w==="r"||w==="f")?w:activeMode(); }
   return activeMode(); }
 function mdb(raw,m){ const pre=m==="r"?"r":""; const P=p=>pre&&/^wp/.test(p)?pre+p:p;
   const wrap=ref=>{ if(!ref||typeof ref!=="object") return ref; return new Proxy({},{get:(_,k)=>{ const v=ref[k]; if(typeof v!=="function") return v;
