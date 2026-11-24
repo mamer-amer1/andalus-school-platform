@@ -15,12 +15,18 @@
   let TOKEN = LS.get("andalusTok") || "";
   let ROLE = LS.get("andalusRole") || "";
   const isAdmin = () => !!TOKEN && ROLE === "admin";
+  /* one sign-in covers the platform's own admin lock too (it keeps its key per tab) */
+  if(isAdmin()){
+    const h = LS.get("andalusAdmHash");
+    if(h){ try{ sessionStorage.setItem("admOK", h); }catch(e){} }
+    else { TOKEN = ""; ROLE = ""; LS.del("andalusTok"); LS.del("andalusRole"); }   // old sign-in made before the admin list existed
+  }
   const headers = (extra) => Object.assign({ "Content-Type":"application/json", "X-Uid": UID }, TOKEN ? { "Authorization": "Bearer "+TOKEN } : {}, extra||{});
 
   async function api(path, body){
     const r = await fetch(path, { method:"POST", headers: headers(), body: JSON.stringify(body||{}) });
     let j = null; try{ j = await r.json(); }catch(e){}
-    if(r.status === 401 && TOKEN && path !== "/api/login"){ logout(true); }
+    if(r.status === 401 && TOKEN && path !== "/api/login" && path !== "/api/acct"){ logout(true); }
     if(!r.ok){ const e = new Error((j&&j.error)||("HTTP "+r.status)); e.status = r.status; throw e; }
     return j;
   }
@@ -151,7 +157,7 @@
   /* ---------------- sign-in for school administration and staff ---------------- */
   function logout(silent){
     TOKEN = ""; ROLE = "";
-    LS.del("andalusTok"); LS.del("andalusRole"); LS.del("andalusName");
+    LS.del("andalusTok"); LS.del("andalusRole"); LS.del("andalusName"); LS.del("andalusAdmHash");
     try{ sessionStorage.removeItem("admOK"); }catch(e){}
     if(!silent) location.reload();
   }
@@ -167,20 +173,33 @@
   .anx-bar button{background:#0f172a;color:#fff;border:0;border-radius:999px;padding:7px 14px;font-size:.8rem;cursor:pointer;opacity:.85;font-family:inherit}`;
   function addCss(){ if(document.getElementById("anxCss")) return; const s = document.createElement("style"); s.id = "anxCss"; s.textContent = css; document.head.appendChild(s); }
 
+  window.andalusLogout = () => logout(false);
+  async function staffPass(body){
+    if(isAdmin()) return true;
+    try{
+      const j = await api("/api/acct", body);
+      TOKEN = j.token; ROLE = "staff";
+      LS.set("andalusTok", TOKEN); LS.set("andalusRole", ROLE); LS.set("andalusName", j.name || "");
+      return true;
+    }catch(e){ return false; }
+  }
+  window.andalusAcctLogin = (phone, code) => staffPass({ kind:"acct", phone, code });
+  window.andalusWpLogin = (ph, code) => staffPass({ kind:"wp", ph, code });
+  window.andalusDropStaff = () => { if(ROLE === "staff"){ TOKEN = ""; ROLE = ""; LS.del("andalusTok"); LS.del("andalusRole"); LS.del("andalusName"); } };
   function showLogin(){
     if(document.getElementById("anxLogin")) return;
     addCss();
     const ov = document.createElement("div"); ov.className = "anx-ov"; ov.id = "anxLogin";
     ov.innerHTML = `<form class="anx-box" autocomplete="on">
-      <h3>دخول الإدارة والمعلمين</h3>
-      <p>الإدارة: رقم الجوال المسجّل + كلمة مرور الإدارة.<br>المعلمون: كلمة مرور المعلمين فقط (اترك الجوال فارغاً).</p>
+      <h3>دخول بوابة الإدارة</h3>
+      <p>رقم الجوال المسجّل في بوابة الإدارة + كلمة مرور الإدارة.<br>المعلمون وأولياء الأمور: استخدموا زر «دخول» في القائمة العلوية.</p>
       <label>رقم الجوال</label><input id="anxPh" inputmode="tel" placeholder="05xxxxxxxx" autocomplete="username">
       <label>كلمة المرور</label><input id="anxPw" type="password" autocomplete="current-password">
       <div class="anx-msg" id="anxMsg" role="alert"></div>
       <div class="anx-row"><button class="anx-pri" type="submit">دخول</button><button class="anx-sec" type="button" id="anxX">إلغاء</button></div></form>`;
     document.body.appendChild(ov);
     const f = ov.querySelector("form");
-    ov.querySelector("#anxX").onclick = () => { ov.remove(); if(/^#(login)/.test(location.hash)) history.replaceState(null, "", location.pathname); };
+    ov.querySelector("#anxX").onclick = () => { ov.remove(); location.hash = ""; };
     f.onsubmit = async (e) => {
       e.preventDefault();
       const msg = ov.querySelector("#anxMsg"); msg.textContent = "جارٍ التحقق…";
@@ -188,8 +207,7 @@
         const j = await api("/api/login", { phone: ov.querySelector("#anxPh").value, password: ov.querySelector("#anxPw").value });
         TOKEN = j.token; ROLE = j.role;
         LS.set("andalusTok", TOKEN); LS.set("andalusRole", ROLE); LS.set("andalusName", j.name || "");
-        if(j.hash){ try{ sessionStorage.setItem("admOK", j.hash); }catch(err){} }
-        if(/^#login/.test(location.hash)) location.hash = ROLE === "admin" ? "#admin" : "";
+        if(j.hash){ LS.set("andalusAdmHash", j.hash); try{ sessionStorage.setItem("admOK", j.hash); }catch(err){} }
         location.reload();
       }catch(err){
         msg.textContent = err.message === "phone" ? "رقم الجوال غير مسجّل ضمن مستخدمي بوابة الإدارة." :
@@ -200,7 +218,7 @@
   }
 
   function bar(){
-    if(!TOKEN) return;
+    if(!isAdmin()) return;
     addCss();
     const b = document.createElement("div"); b.className = "anx-bar";
     b.innerHTML = `<button type="button" id="anxOut">خروج (${ROLE === "admin" ? "الإدارة" : "المعلمون"})</button>` + (ROLE === "admin" ? `<button type="button" id="anxImp">استيراد نسخة</button>` : "");
@@ -241,7 +259,7 @@
   }
 
   function onRoute(){
-    if(!TOKEN && /^#(login|admin)/.test(location.hash)) showLogin();
+    if(!isAdmin() && /^#admin/.test(location.hash)) showLogin();
   }
   window.addEventListener("hashchange", onRoute);
   const start = () => { bar(); onRoute(); };
@@ -4125,7 +4143,7 @@ function rlPublic(el){ const v=rlActive(); const c=rlCfg(); const F=S.rlF=S.rlF|
   el.querySelector("#rlIn")?.addEventListener("click",e=>{ e.preventDefault(); rlLoginBox(el); });
   el.querySelectorAll("[data-rlj]").forEach(a=>a.addEventListener("click",()=>{ const s=(v.sessions||[]).find(x=>x.id===a.dataset.rlj); if(s) rlTrack("join",s); }));
   el.querySelectorAll("[data-rls]").forEach(b=>b.onclick=()=>{ F.sec=b.dataset.rls; re(); }); el.querySelectorAll("[data-rlg]").forEach(b=>b.onclick=()=>{ F.sec=allowed.find(x=>x.startsWith(b.dataset.rlg+"-"))||""; re(); }); el.querySelectorAll("[data-rlv]").forEach(b=>b.onclick=()=>{ F.view=b.dataset.rlv; re(); }); }
-function rlSignOut(){ S.session=null; S.rlF=null; S.rlMine=null; S.rlVisK=null; try{ sessionStorage.removeItem("acct"); localStorage.removeItem("acct"); sessionStorage.removeItem("uc"); sessionStorage.removeItem("gaK"); S.gaPkg=null; }catch(e){} toast("تم تسجيل الخروج"); render(); }
+function rlSignOut(){ S.session=null; try{ window.andalusDropStaff&&window.andalusDropStaff(); }catch(e){} S.rlF=null; S.rlMine=null; S.rlVisK=null; try{ sessionStorage.removeItem("acct"); localStorage.removeItem("acct"); sessionStorage.removeItem("uc"); sessionStorage.removeItem("gaK"); S.gaPkg=null; }catch(e){} toast("تم تسجيل الخروج"); render(); }
 function rlLinkModal(s,after,asAdmin){ const cur=rlLink(s.id)||{}; const L=pT(cur.links||[]); if(!L.length) L.push({t:"",u:""}); let note=cur.note||""; const m=document.createElement("div"); m.className="modal"; m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true");
   const draw=()=>{ m.innerHTML=`<div class="box" style="max-width:640px"><div class="mh"><h3>🔗 رابط الحصة – ${esc(s.subject)} • ${esc(rlSecLabel(rlSecId(s)))}</h3><button class="btn sm ghost" data-x>إغلاق</button></div><div class="mb stack" style="gap:10px"><div class="small muted">${esc(RL_DAYS[s.day])} ${esc(rlT12(s.start))} – ${esc(rlT12(s.end))} • ${esc(s.teacher)}</div>
     ${L.map((x,i)=>`<div class="pe-l"><input class="in" data-lt="${i}" value="${esc(x.t||"")}" placeholder="العنوان (مثال: Teams / Zoom / Classera)"><input class="in" dir="ltr" data-lu="${i}" value="${esc(x.u||"")}" placeholder="https://"><button type="button" class="btn sm ghost" data-ld="${i}">✕</button></div>`).join("")}
@@ -4285,7 +4303,7 @@ window.platAdminOK=()=>cmAdmin();
 window.platAdminName=()=>S.adminName||"الإدارة";
 window.platAdminState=()=>(!S.userKnown||(S.admin&&!S.authLoaded))?"loading":cmAdmin()?"ok":"locked";
 window.platAdminHash=h=>{ if(!h||!authUsers().some(u=>u.hash===h)) return false; try{ sessionStorage.setItem("admOK",h); }catch(e){} S.unlocked=h; return true; };
-window.platAdminOut=()=>{ try{ sessionStorage.removeItem("admOK"); }catch(e){} S.unlocked=null; };
+window.platAdminOut=()=>{ try{ sessionStorage.removeItem("admOK"); }catch(e){} S.unlocked=null; if(window.andalusLogout) window.andalusLogout(); };
 
 /* ---- m23: student / parent sign-in (mobile number; code = the same mobile number) ---- */
 async function acctTry(phone,code,rem){ try{ if(!S.db) return false; const d=await S.db.doc("site/logins").get(); const L=d.exists?d.data():null; if(!L||!L.b) return false;
@@ -4295,6 +4313,7 @@ async function acctTry(phone,code,rem){ try{ if(!S.db) return false; const d=awa
     if(!found.length) return false;
     S.session={phone,updatedAt:L.updatedAt,profiles:found}; try{ if(found.some(p=>p.role!=="student")) sessionStorage.setItem("gaK",JSON.stringify({p:phone,c:codes[0]})); }catch(e){} const raw=JSON.stringify(S.session); try{ sessionStorage.setItem("acct",raw); if(rem) localStorage.setItem("acct",raw); }catch(e){}
     const st=found.find(p=>p.role==="student"); if(st&&st.students&&st.students[0]&&!(S.trainee&&S.trainee.name)){ S.trainee={name:st.students[0].name,grade:st.students[0].grade}; try{ localStorage.setItem("trainee",JSON.stringify(S.trainee)); }catch(e){} }
+    if(found.some(p=>p.role!=="student"&&p.role!=="parent")&&window.andalusAcctLogin){ try{ await window.andalusAcctLogin(phone,codes[0]); }catch(e){} }
     return true; }catch(e){ return false; } }
 function rlLoginBox(el){ el.innerHTML=`<section class="panel stack" style="gap:12px;max-width:520px;margin:auto;width:100%">${S.site.logo?`<div class="rl-logo"><img alt="شعار مدارس الأندلس الأهلية" src="${blob(S.site.logo)}"></div>`:""}<h2 class="sec-title" style="margin:0">🔐 دخول الطالب أو ولي الأمر</h2>
   <p class="small muted" style="margin:0">اسم المستخدم: رقم الجوال المسجّل لدى المدرسة • الرمز السري: <b>رقم هوية الطالب</b>. بعد الدخول يظهر جدول ابنك فقط.</p>
@@ -6635,7 +6654,7 @@ function wireAuthPanel(){
   document.querySelectorAll("[data-au-del]").forEach(b=>b.onclick=()=>confirmBtn(b,"تأكيد الحذف",async()=>{ const users=authUsers().filter((_,i)=>i!==+b.dataset.auDel);
     try{ if(users.length) await save(users); else { await S.db.doc("secure/auth").delete(); S.auth=null; } toast("تم الحذف"); render(); }catch(e){ toast("تعذّر الحفظ","bad"); } }));
   $("#auOff")?.addEventListener("click",e=>confirmBtn(e.target,"تأكيد الإيقاف",async()=>{ try{ await S.db.doc("secure/auth").delete(); S.auth=null; toast("تم إيقاف القفل"); render(); }catch(err){ toast("تعذّر الحفظ","bad"); } }));
-  $("#auOut")?.addEventListener("click",()=>{ try{ sessionStorage.removeItem("admOK"); }catch(e){} S.unlocked=false; S.adminName=null; location.hash="#admin"; render(); });
+  $("#auOut")?.addEventListener("click",()=>{ try{ sessionStorage.removeItem("admOK"); }catch(e){} S.unlocked=false; S.adminName=null; if(window.andalusLogout){ location.hash=""; window.andalusLogout(); return; } location.hash="#admin"; render(); });
 }
 
 /* ---------- self-training ---------- */
@@ -7173,7 +7192,7 @@ function acctChangeCode(){ const P=(S.session&&S.session.profiles)||[]; const a=
     if(!S.db||!S.uid){ M.innerHTML='<div class="note warn">لتغيير الرمز من هنا يلزم تسجيل الدخول إلى حساب Claude. يمكنك طلب التغيير من الإدارة.</div>'; return; }
     try{ await S.db.doc("acctreq/"+S.uid).set({kind:"change",acct:a.id,phone:S.session.phone,old:v("#ccO"),neu:v("#ccN"),at:new Date().toISOString()}); M.innerHTML='<div class="note ok">استُلم طلب تغيير الرمز. يُفعَّل الرمز الجديد تلقائياً عند تحديث الحسابات، وحتى ذلك الحين يبقى رمزك الحالي صالحاً.</div>'; }
     catch(e){ M.innerHTML='<div class="note bad">تعذّر إرسال الطلب. أعد المحاولة.</div>'; } }; }
-function acctLogout(){ S.session=null; try{ sessionStorage.removeItem("acct"); localStorage.removeItem("acct"); sessionStorage.removeItem("uc"); sessionStorage.removeItem("gaK"); S.gaPkg=null; sessionStorage.removeItem("useL"); localStorage.removeItem("wpMe"); }catch(e){} toast("تم تسجيل الخروج"); location.hash="#login"; }
+function acctLogout(){ S.session=null; try{ window.andalusDropStaff&&window.andalusDropStaff(); }catch(e){} try{ sessionStorage.removeItem("acct"); localStorage.removeItem("acct"); sessionStorage.removeItem("uc"); sessionStorage.removeItem("gaK"); S.gaPkg=null; sessionStorage.removeItem("useL"); localStorage.removeItem("wpMe"); }catch(e){} toast("تم تسجيل الخروج"); location.hash="#login"; }
 function updateAcctNav(){
   const a=$("#navAcct"); if(!a) return; const p=(S.session&&S.session.profiles)||[];
   const nm=(p.find(x=>x.role==="teacher")||{}).name||(p.find(x=>x.role==="student")?.students?.[0]?.name)||"";
@@ -8953,7 +8972,7 @@ function dupOf(t,wk,x,c){ if(!filled(c)) return ""; const v=c.l.trim(); for(cons
 async function tryTLogin(ph,code){ const pep=cfg().pepper||""; const b=(await sha256(pep+"|"+ph)).slice(0,2); const d=await S.db.doc("wpacc/b"+b).get(); const h=await sha256(pep+"|"+ph+"|"+code);
   const hit=d.exists&&(thaw(d.data()).items||[]).find(x=>x.h===h); if(!hit) return {bad:true};
   try{ await bindMe(hit.tid,hit.n); }catch(x){ if(x&&x.code==="other") return {other:x.name}; throw x; }
-  const ib=await sha256("inbox|"+pep+"|"+ph+"|"+code); S.me.ib=ib; subInbox(); lsSet("wpMe",{tid:hit.tid,name:hit.n,ib}); toast("أهلاً أ. "+hit.n); render(); return {ok:true}; }
+  const ib=await sha256("inbox|"+pep+"|"+ph+"|"+code); S.me.ib=ib; subInbox(); lsSet("wpMe",{tid:hit.tid,name:hit.n,ib}); if(window.andalusWpLogin){ try{ await window.andalusWpLogin(ph,code); }catch(e){} } toast("أهلاً أ. "+hit.n); render(); return {ok:true}; }
 async function teacherLogin(){ const app=$("#wpApp");
   let uc=null; try{ uc=JSON.parse(sessionStorage.getItem("uc")||"null"); }catch(e){}
   if(uc&&!S.ucTried&&cfg().pepper){ S.ucTried=true; app.innerHTML='<div class="login panel stack"><h2 class="h2">دخول المعلمين</h2><div class="note info small">جارٍ الدخول بحسابك الموحّد…</div></div>'; try{ const r=await tryTLogin(intlPhone(uc.p),normDigits(uc.c).trim()); if(r.ok) return; S.ucMsg=r.other?`حساب Claude المفتوح الآن مرتبط بالمعلم «${r.other}».`:"حسابك الموحّد لم يُفعَّل في الخطة الأسبوعية بعد. أدخل الرمز الخاص بالخطة، أو اطلب من الإدارة «توحيد دخول المعلمين»."; }catch(e){} }
@@ -8967,7 +8986,7 @@ async function teacherLogin(){ const app=$("#wpApp");
   setTimeout(()=>$("#tlP")?.focus(),30); }
 async function bindMe(tid,name){ const d=await S.db.doc("wpt/"+S.uid).get(); if(d.exists&&thaw(d.data()).tid&&thaw(d.data()).tid!==tid) throw {code:"other",name:thaw(d.data()).name}; S.me={id:tid,name}; await myRef(); subMyDocs(); }
 async function myRef(){ const ref=S.db.doc("wpt/"+S.uid); if(S.myDocs.some(d=>d._id===S.uid)) return ref; const d=await ref.get(); if(!d.exists) await ref.set({tid:S.me.id,name:S.me.name,uid:S.uid,cells:{},meta:{},createdAt:new Date().toISOString()}); else if(thaw(d.data()).tid!==S.me.id) throw new Error("other"); return ref; }
-function logoutTeacher(){ lsSet("wpMe",null); if(S.unIb) S.unIb(); S.inbox=[]; S.me=null; S.myDocs=[]; if(S.unMy) S.unMy(); render(); }
+function logoutTeacher(){ try{ window.andalusDropStaff&&window.andalusDropStaff(); }catch(e){} lsSet("wpMe",null); if(S.unIb) S.unIb(); S.inbox=[]; S.me=null; S.myDocs=[]; if(S.unMy) S.unMy(); render(); }
 const pend={}; let saveT=null;
 function queueSave(k,el){ const v={}; el.querySelectorAll("[data-f]").forEach(i=>v[i.dataset.f]=i.type==="checkbox"?i.checked:i.value.trim()); pend[k]=v; el.classList.toggle("miss",!v.l); el.classList.toggle("exam",!!v.ex);
   $("#saveSt").textContent="جارٍ الحفظ…"; clearTimeout(saveT); saveT=setTimeout(flushSave,700); }

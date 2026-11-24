@@ -216,6 +216,40 @@ async function handleLogin(req, env) {
   return bad("password", 401);
 }
 
+// Teachers sign in with the platform's own accounts (phone + personal code).
+// The server checks the same account and, for staff roles, issues a staff pass so their saves are accepted.
+const STAFF_ROLES = ["teacher", "supervisor", "principal", "deputy", "admin", "coordinator", "staff"];
+async function handleAcct(req, env) {
+  const b = await req.json().catch(() => ({}));
+  await new Promise(r => setTimeout(r, 300));
+  const code = normDigits(b.code || "").replace(/\s/g, "");
+  if (!code) return bad("code", 401);
+  let ok = false, name = "";
+  if (b.kind === "wp") {
+    const ph = String(b.ph || "");
+    for (const m of ["", "r"]) {
+      const conf = await getDoc(env, m + "wp/config");
+      const pep = conf && conf.pepper; if (!pep) continue;
+      const bucket = await getDoc(env, m + "wpacc/b" + (await sha256hex(pep + "|" + ph)).slice(0, 2));
+      const h = await sha256hex(pep + "|" + ph + "|" + code);
+      const hit = bucket && (bucket.items || []).find(x => x.h === h);
+      if (hit) { ok = true; name = hit.n || ""; break; }
+    }
+  } else {
+    const ph = intlPhone(b.phone || "");
+    if (!/^9665\d{8}$/.test(ph)) return bad("phone", 401);
+    const local = "0" + ph.slice(3);
+    const rows = await sbRows(env, "col", ["accts"], "id,data");
+    const hit = rows.map(r => r.data || {}).find(a =>
+      intlPhone(a.phone) === ph && a.status === "active" && STAFF_ROLES.includes(a.role) &&
+      [normDigits(a.code || "").trim()].some(c => c && (c === code || (intlPhone(code) === ph && c === local))));
+    if (hit) { ok = true; name = hit.name || ""; }
+  }
+  if (!ok) return bad("not staff", 401);
+  const token = await makeToken(env, { r: "staff", n: name, exp: Date.now() + 30 * 864e5 });
+  return json({ token, role: "staff", name });
+}
+
 async function handleImport(req, env) {
   const u = await who(req, env);
   if (u.level < LV.admin) return bad("forbidden", 403);
@@ -286,6 +320,7 @@ export default {
         if (p === "/api/w") return await handleWrite(req, env);
         if (p === "/api/login") return await handleLogin(req, env);
         if (p === "/api/import") return await handleImport(req, env);
+        if (p === "/api/acct") return await handleAcct(req, env);
         if (p === "/api/upload") return await handleUpload(req, env);
         return bad("not found", 404);
       }
