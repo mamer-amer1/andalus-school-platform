@@ -1085,7 +1085,7 @@ input.qz-bigcode{font-size:2rem;text-align:center}
     <nav class="main" aria-label="التنقل الرئيسي">
       <a href="#home" data-nav="home">🏆 <span data-t="navPublic">المراكز التنافسية</span></a>
       <a href="#tp" data-nav="tp" data-staffonly hidden>👨‍🏫 بوابة المعلم</a>
-      <a href="#wp-subs" data-nav="wp-subs" id="navSubs" hidden>⏱️ حصص الانتظار</a>
+      <a href="#subs" data-nav="subs" id="navSubs" hidden>⏱️ حصص الانتظار</a>
       <a href="#ann" data-nav="ann" hidden>📣 الإعلانات<span class="badge an" id="annBadge" hidden>0</span></a>
       <a href="#wp" data-nav="wp">📅 الخطة الأسبوعية</a>
       <a href="#rev" data-nav="rev">📚 خطة المراجعة</a>
@@ -1309,7 +1309,7 @@ function render(){
   const r=route(), app=$("#app"); updateAcctNav(); try{ document.querySelectorAll("[data-staffonly]").forEach(a=>a.hidden=!isStaff()); document.querySelectorAll("[data-adminonly]").forEach(a=>a.hidden=!S.admin); }catch(e){} if(!/^(rev|tsk)-(my|subj|design)$/.test(r)) S.ppDirty=false; try{ useTick(); }catch(e){} try{ gsFabSync(); }catch(e){}
   if(!r.startsWith("qzr-")&&typeof qzUnsubRoom==="function"&&QZ.roomCode){ qzUnsubRoom(); QZ.roomCode=null; QZ.roomView=false; }
   if(!r.startsWith("qzh-")&&typeof qzUnsubHost==="function"&&QZ.hostCode){ qzUnsubHost(); QZ.hostCode=null; clearInterval(QZ.hostTick); }
-  document.querySelectorAll("nav.main a").forEach(a=>a.classList.toggle("on",r===a.dataset.nav||(a.dataset.nav==="admin"&&r.startsWith("admin"))||(a.dataset.nav==="cmap"&&r.startsWith("cmap"))||(a.dataset.nav==="rev"&&r.startsWith("rev"))||(a.dataset.nav==="exams"&&r.startsWith("exams"))||(a.dataset.nav==="rl"&&/^rl(-|$)/.test(r))||(a.dataset.nav==="tsk"&&r.startsWith("tsk"))||(a.dataset.nav==="home"&&(r.startsWith("c-")||r==="honor"))||(a.dataset.nav==="train"&&(r.startsWith("t-")||r==="quiz"||r==="nafs"||r.startsWith("qz")&&!r.startsWith("qzm-")))||(a.dataset.nav==="login"&&r==="me")||(a.dataset.nav==="cal"&&r==="cals")||(a.dataset.nav==="tp"&&r.startsWith("tp-"))||(a.dataset.nav==="ann"&&r.startsWith("ann-"))||(a.dataset.nav==="wp"&&r.startsWith("wp-")&&r!=="wp-subs"&&r!=="wp-admin-subs")||(a.dataset.nav==="wp-subs"&&(r==="wp-subs"||r==="wp-admin-subs"))));
+  document.querySelectorAll("nav.main a").forEach(a=>a.classList.toggle("on",r===a.dataset.nav||(a.dataset.nav==="admin"&&r.startsWith("admin"))||(a.dataset.nav==="cmap"&&r.startsWith("cmap"))||(a.dataset.nav==="rev"&&r.startsWith("rev"))||(a.dataset.nav==="exams"&&r.startsWith("exams"))||(a.dataset.nav==="rl"&&/^rl(-|$)/.test(r))||(a.dataset.nav==="tsk"&&r.startsWith("tsk"))||(a.dataset.nav==="home"&&(r.startsWith("c-")||r==="honor"))||(a.dataset.nav==="train"&&(r.startsWith("t-")||r==="quiz"||r==="nafs"||r.startsWith("qz")&&!r.startsWith("qzm-")))||(a.dataset.nav==="login"&&r==="me")||(a.dataset.nav==="cal"&&r==="cals")||(a.dataset.nav==="tp"&&r.startsWith("tp-"))||(a.dataset.nav==="ann"&&r.startsWith("ann-"))||(a.dataset.nav==="wp"&&r.startsWith("wp-"))||(a.dataset.nav==="subs"&&r.startsWith("subs-"))));
   if(S.asParent&&r.startsWith("admin")) S.asParent=false; if(S.tpAs&&r.startsWith("admin")) S.tpAs=null;
   if(r==="cal"&&pubAsParent()&&!pubSecOn("cal")&&pubSecOn("calS")){ location.replace("#cals"); return; }
   if(!pubGate(r,app)) return; if(!tpGate(r,app)){ m30Nav(); return; }
@@ -1339,6 +1339,8 @@ function render(){
   else if(r==="cmap"||r.startsWith("cmap-")||r==="admin-commap"){ const k=r.slice(5); if([...CM_SHEETS.map(x=>x[0]),"dir"].includes(k)&&S.cmSheet!==k){ S.cmSheet=k; S.cmF={st:"",m:"",q:""}; } renderCmapPage(); }
   else if(r==="train") renderTrainHome();
   else if(r==="nafs") renderNafs();
+  else if(r==="wp-subs"||r==="wp-admin-subs"){ location.replace(r==="wp-subs"?"#subs":"#subs-admin"); return; }
+  else if(r==="subs"||r.startsWith("subs-")){ if(window.wpRender) window.wpRender(); else app.innerHTML='<div class="empty">جارٍ التحميل…</div>'; }
   else if(r==="wp"||r.startsWith("wp-")){ if(window.wpRender) window.wpRender(); else app.innerHTML='<div class="empty">جارٍ التحميل…</div>'; }
   else if(r.startsWith("qz-")) { const a=r.slice(3); acadMember(a)?renderQzHub(a):renderQzGate(a); }
   else if(r.startsWith("qzl-")) { const L=qzLesson(r.slice(4)); const a=L&&L.academy||"c-tamkeen"; acadMember(a)?renderQzLesson(r.slice(4)):renderQzGate(a); }
@@ -6008,7 +6010,7 @@ function m30Boot(db){ db.doc("site/tportal").onSnapshot(d=>{ S.tpCfg=d.exists?d.
 function m30Nav(){ try{ tpNav(); }catch(e){} try{ annBadge(); }catch(e){} const c=document.querySelector('nav.main a[data-nav="cal"]'); if(c&&pubAsParent()) c.hidden=!(pubOn("cal")||pubOn("calS")); }
 
 /* ================= بوابة المعلم ================= */
-const TP_SVC=[["wp","الخطة الأسبوعية","cal","#wp-teacher","إدخال خطتك الأسبوعية وتسليمها ومتابعة ملاحظات الإدارة"],["tt","جدولي الدراسي","grid","#tp-tt","حصصك الأسبوعية من الجدول الدراسي المعتمد"],["subs","حصص الانتظار وتبديل الحصص","clock","#wp-subs","تكليفات حصص الانتظار وطلبات تبديل الحصص"],["gaent","إدخال الدرجات","pen","#ga-ent","إدخال درجات الاختبارات ومكونات التقويم خلال الفترة المفتوحة"],["ga","تحليل درجات الاختبارات","chart","#ga","تحليل نتائج فصولك والخطط العلاجية والإثرائية"],["rev","خطط المراجعة","book","#rev-my","إعداد خطط المراجعة لموادك ومتابعتها"],["tsk","المهام الأدائية","tasks","#tsk-my","المهام الأدائية لطلابك ومواعيد تسليمها"],["ann","الإعلانات والتعاميم","mega","#ann","إعلانات الإدارة والتعاميم الموجّهة لك"],["cal","الأجندة المدرسية","cal","#cal","مواعيد الاختبارات والفعاليات والاجتماعات"],["rl","التعليم عن بُعد","laptop","#rl-teacher","روابط حصصك عن بُعد ومتابعة دخول الطلاب"],["exams","جداول الاختبارات","file","#exams","جداول الاختبارات المعتمدة"],["rep","التقارير والمتابعة","trend","#tp-rep","ملخص حصصك وردودك وروابط التقارير"],["comps","مسابقاتي وطلابي","trophy","#tp-comps","المسابقات المسندة إليك وطلابها وحصص التدريب"],["cmap","خريطة التواصل","map","#cmap","خطة التواصل مع أولياء الأمور"],["studio","استوديو التصميم","brush","#studio","تصميم الشهادات والإعلانات"]];
+const TP_SVC=[["wp","الخطة الأسبوعية","cal","#wp-teacher","إدخال خطتك الأسبوعية وتسليمها ومتابعة ملاحظات الإدارة"],["tt","جدولي الدراسي","grid","#tp-tt","حصصك الأسبوعية من الجدول الدراسي المعتمد"],["subs","حصص الانتظار وتبديل الحصص","clock","#subs","تكليفات حصص الانتظار وطلبات تبديل الحصص"],["gaent","إدخال الدرجات","pen","#ga-ent","إدخال درجات الاختبارات ومكونات التقويم خلال الفترة المفتوحة"],["ga","تحليل درجات الاختبارات","chart","#ga","تحليل نتائج فصولك والخطط العلاجية والإثرائية"],["rev","خطط المراجعة","book","#rev-my","إعداد خطط المراجعة لموادك ومتابعتها"],["tsk","المهام الأدائية","tasks","#tsk-my","المهام الأدائية لطلابك ومواعيد تسليمها"],["ann","الإعلانات والتعاميم","mega","#ann","إعلانات الإدارة والتعاميم الموجّهة لك"],["cal","الأجندة المدرسية","cal","#cal","مواعيد الاختبارات والفعاليات والاجتماعات"],["rl","التعليم عن بُعد","laptop","#rl-teacher","روابط حصصك عن بُعد ومتابعة دخول الطلاب"],["exams","جداول الاختبارات","file","#exams","جداول الاختبارات المعتمدة"],["rep","التقارير والمتابعة","trend","#tp-rep","ملخص حصصك وردودك وروابط التقارير"],["comps","مسابقاتي وطلابي","trophy","#tp-comps","المسابقات المسندة إليك وطلابها وحصص التدريب"],["cmap","خريطة التواصل","map","#cmap","خطة التواصل مع أولياء الأمور"],["studio","استوديو التصميم","brush","#studio","تصميم الشهادات والإعلانات"]];
 const TP_ICONS=["link","book","file","chart","cal","users","star","flag","target","folder","video","globe","msg","clip","award","school","bulb"];
 const tpCfg=()=>S.tpCfg||{};
 function tpRuleOK(c,V){ if(!c) return true; if(c.on===false) return false; if((c.deny||[]).some(n=>sameName(n,V.name))) return false; if((c.allow||[]).some(n=>sameName(n,V.name))) return true;
@@ -6019,11 +6021,11 @@ function tpSvcs(V){ const C=tpCfg(); const ord=C.order||[]; const L=TP_SVC.filte
   (C.custom||[]).filter(c=>tpRuleOK(c,V)&&c.label&&c.href).forEach(c=>L.push({k:c.id,label:c.label,icon:c.icon||"link",href:c.href,desc:c.desc||"",ext:/^https?:/.test(c.href)}));
   return L.sort((a,b)=>{ const i=ord.indexOf(a.k), j=ord.indexOf(b.k); return (i<0?99:i)-(j<0?99:j); }); }
 function tpProf(){ if(S.tpAs&&cmAdmin()) return {name:S.tpAs.name,rk:S.tpAs.rk,title:(T_ROLES.find(r=>r[0]===S.tpAs.rk)||[,"معلم"])[1],comps:[],preview:true}; return staffProf(); }
-const TP_ROUTE=[[/^wp-subs$/,["subs"]],[/^wp-teacher/,["wp"]],[/^ga-ent$/,["gaent"]],[/^ga(-|$)/,["ga","gaent"]],[/^rev-(my|subj|design)/,["rev"]],[/^tsk-(my|subj|design)/,["tsk"]],[/^rl-teacher/,["rl"]],[/^cmap/,["cmap"]],[/^studio$/,["studio"]],[/^tp-tt$/,["tt"]],[/^tp-rep$/,["rep"]],[/^tp-comps$/,["comps"]]];
+const TP_ROUTE=[[/^subs$/,["subs"]],[/^wp-teacher/,["wp"]],[/^ga-ent$/,["gaent"]],[/^ga(-|$)/,["ga","gaent"]],[/^rev-(my|subj|design)/,["rev"]],[/^tsk-(my|subj|design)/,["tsk"]],[/^rl-teacher/,["rl"]],[/^cmap/,["cmap"]],[/^studio$/,["studio"]],[/^tp-tt$/,["tt"]],[/^tp-rep$/,["rep"]],[/^tp-comps$/,["comps"]]];
 function tpGate(r,app){ const V=viewer(); if(V.k!=="tea") return true; const m=TP_ROUTE.find(x=>x[0].test(r)); if(!m||m[1].some(k=>tpOn(k,V))) return true;
   app.innerHTML=`<section class="panel stack" style="gap:10px;max-width:640px;margin:auto;text-align:center"><h2 class="sec-title" style="margin:0;justify-content:center">${ic("lock")} هذا القسم غير مفعّل لحسابك</h2><p class="muted" style="margin:0">حدّدت إدارة المنصة الأقسام المتاحة لكل معلم. تواصل مع الإدارة إذا احتجت إليه.</p><div><a class="btn" href="#tp">العودة إلى بوابة المعلم</a></div></section>`; return false; }
 function tpNav(){ const V=viewer(); const nav=k=>document.querySelector(`nav.main a[data-nav="${k}"]`); const tp=nav("tp"); if(tp) tp.hidden=!(V.k==="tea"||cmAdmin());
-  const sb=document.getElementById("navSubs"); if(sb){ const adm=cmAdmin(); sb.hidden=!(adm||(V.k==="tea"&&tpOn("subs",V))); sb.setAttribute("href",adm?"#wp-admin-subs":"#wp-subs"); sb.textContent=adm?"⏱️ إدارة حصص الانتظار":"⏱️ حصص الانتظار"; }
+  const sb=document.getElementById("navSubs"); if(sb){ const adm=cmAdmin(); sb.hidden=!(adm||(V.k==="tea"&&tpOn("subs",V))); sb.setAttribute("href",adm?"#subs-admin":"#subs"); sb.textContent=adm?"⏱️ إدارة حصص الانتظار":"⏱️ حصص الانتظار"; }
   if(V.k!=="tea") return; const st=nav("studio"); if(st) st.hidden=!tpOn("studio",V); const ga=nav("ga"); if(ga) ga.hidden=!(tpOn("ga",V)||tpOn("gaent",V)); const cm=nav("cmap"); if(cm&&!tpOn("cmap",V)) cm.hidden=true; }
 function tpBar(){ return S.tpAs&&cmAdmin()?`<div class="tp-prev"><span>${ic("eye")} معاينة بوابة المعلم كما يراها: <b>${esc(S.tpAs.name)}</b></span><span class="row" style="gap:6px"><a class="btn sm white" href="#admin-tp">إعدادات البوابة</a><button class="btn sm white" type="button" data-tpx>إنهاء المعاينة</button></span></div>`:""; }
 document.addEventListener("click",e=>{ if(!e.target.closest("[data-tpx]")) return; S.tpAs=null; location.hash="#admin-tp"; });
@@ -9075,14 +9077,17 @@ async function mountPlanPage(box,sid,W,rows){ box.innerHTML='<div class="empty">
 const canPrint=()=>{ try{ return window.self===window.top; }catch(e){ return false; } };
 
 /* ---------- router ---------- */
-const isWp=()=>{ const r=(location.hash||"").slice(1); return r==="wp"||r.startsWith("wp-"); };
-const route=()=>{ const r=(location.hash||"").slice(1); return r.startsWith("wp-")?r.slice(3):"home"; };
-function shell(){ const app=document.getElementById("app"); if(app.querySelector(":scope>.wpx")) return; app.innerHTML=`<div class="wpx"><div class="wp-band"><div class="wp-bt"><span class="wp-ic" aria-hidden="true">📅</span><div><b>الخطة الأسبوعية <span class="wp-mode" id="wpModeTag" hidden></span></b><small id="stageTxt">${esc(cfg().school)} • ${esc(cfg().stage)} • تُحدَّث أسبوعياً</small></div></div><nav class="wp-tabs" aria-label="أقسام الخطط"><a href="#wp" data-nav="home">أولياء الأمور</a><a href="#wp-teacher" data-nav="teacher">المعلمون</a><a href="#wp-admin" data-nav="admin">إدارة الخطط</a></nav></div><div id="wpApp"></div></div>`; }
-function render(){ if(S.ttHost&&!isWp()&&wpTTDraw()) return; if(!isWp()) return; if(!S.booted){ S.booted=true; boot(); } shell(); const r=route(); $$(".wp-tabs a").forEach(a=>a.classList.toggle("on",r===a.dataset.nav||r.startsWith(a.dataset.nav+"-")));
+const isWp=()=>{ const r=(location.hash||"").slice(1); return r==="wp"||r.startsWith("wp-")||r==="subs"||r.startsWith("subs-"); };
+const isSubsR=r=>r==="subs"||r==="subs-admin";
+const route=()=>{ const r=(location.hash||"").slice(1); if(r==="subs"||r.startsWith("subs-")) return r==="subs-admin"?"subs-admin":"subs"; return r.startsWith("wp-")?r.slice(3):"home"; };
+function subsShell(){ const app=document.getElementById("app"); if(app.querySelector(":scope>.wpx.subsx")) return; app.innerHTML=`<div class="wpx subsx"><div class="wp-band"><div class="wp-bt"><span class="wp-ic" aria-hidden="true">⏱️</span><div><b>حصص الانتظار وتبديل الحصص</b><small>${esc(cfg().school)} • ${esc(cfg().stage)}</small></div></div></div><div id="wpApp"></div></div>`; }
+function shell(){ const app=document.getElementById("app"); if(app.querySelector(":scope>.wpx:not(.subsx)")) return; app.innerHTML=`<div class="wpx"><div class="wp-band"><div class="wp-bt"><span class="wp-ic" aria-hidden="true">📅</span><div><b>الخطة الأسبوعية <span class="wp-mode" id="wpModeTag" hidden></span></b><small id="stageTxt">${esc(cfg().school)} • ${esc(cfg().stage)} • تُحدَّث أسبوعياً</small></div></div><nav class="wp-tabs" aria-label="أقسام الخطط"><a href="#wp" data-nav="home">أولياء الأمور</a><a href="#wp-teacher" data-nav="teacher">المعلمون</a><a href="#wp-admin" data-nav="admin">إدارة الخطط</a></nav></div><div id="wpApp"></div></div>`; }
+function render(){ if(S.ttHost&&!isWp()&&wpTTDraw()) return; if(!isWp()) return; if(!S.booted){ S.booted=true; boot(); } const r=route();
+  if(isSubsR(r)){ subsShell(); if(S.raw&&S.modeReady){ const w=wantMode(r); if(w!==S.mode) switchMode(w); } modeLook(); if(r==="subs") renderTeacherSubs(); else renderSubsAdmin(); return; }
+  shell(); $$(".wp-tabs a").forEach(a=>a.classList.toggle("on",r===a.dataset.nav||r.startsWith(a.dataset.nav+"-")));
   if(S.raw&&S.modeReady){ const w=wantMode(r); if(w!==S.mode) switchMode(w); }
   modeLook();
-  try{ const isSub=r==="subs"||r==="admin-subs"; const bt=document.querySelector(".wpx .wp-bt b"); if(bt&&bt.firstChild&&bt.firstChild.nodeType===3) bt.firstChild.nodeValue=isSub?"حصص الانتظار ":"الخطة الأسبوعية "; const ic0=document.querySelector(".wpx .wp-ic"); if(ic0) ic0.textContent=isSub?"⏱️":"📅"; const tb=document.querySelector(".wpx .wp-tabs"); if(tb) tb.hidden=(r==="subs"); }catch(e){}
-  if(r==="teacher") renderTeacher(); else if(r==="subs") renderTeacherSubs(); else if(r.startsWith("admin")) renderAdmin(r.split("-")[1]||"dash"); else renderHome();
+  if(r==="teacher") renderTeacher(); else if(r.startsWith("admin")) renderAdmin(r.split("-")[1]||"dash"); else renderHome();
   try{ modeBar(r); }catch(e){ console.error(e); } }
 let rT=null,rDirty=false; const typing=()=>document.activeElement&&/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)&&route()!=="home"||!!document.querySelector(".modal,.ai-sug")||(typeof pend!=="undefined"&&Object.keys(pend).length>0);
 function rerender(){ if(S.ttHost&&!isWp()){ if(typing()){ rDirty=true; return; } clearTimeout(rT); rT=setTimeout(render,60); return; } if(!isWp()) return; if(typing()){ rDirty=true; return; } clearTimeout(rT); rT=setTimeout(render,60); }
@@ -9138,10 +9143,17 @@ function renderTeacherSubs(){ const app=$("#wpApp"); const me=S.me;
   const box=inboxPanel();
   app.innerHTML=`<div class="stack">
     <div class="row" style="justify-content:space-between"><div><h2 class="h2">⏱️ حصص الانتظار وتبديل الحصص</h2><div class="small muted">مرحباً أ. ${esc(me.name)}</div></div>
-      <div class="row">${adm?'<a class="btn sm primary" href="#wp-admin-subs">إدارة حصص الانتظار</a>':""}<a class="btn sm ghost" href="#tp">👨‍🏫 بوابة المعلم</a><button class="btn sm ghost" id="out">تسجيل الخروج</button></div></div>
+      <div class="row">${adm?'<a class="btn sm primary" href="#subs-admin">إدارة حصص الانتظار</a>':""}<a class="btn sm ghost" href="#tp">👨‍🏫 بوابة المعلم</a><button class="btn sm ghost" id="out">تسجيل الخروج</button></div></div>
     ${box||'<section class="panel"><div class="empty">لا توجد لديك تكليفات انتظار أو تبديل حالياً. ستظهر هنا فور إسنادها من الإدارة.</div></section>'}
     <p class="small muted" style="margin:0">تكليفات الانتظار وتبديل الحصص تُسنَد وتُعتمد من الإدارة، وتظهر لك هنا مع زر «تم الاطلاع».</p></div>`;
   wireInbox(); $("#out").onclick=logoutTeacher; }
+/* إدارة حصص الانتظار: قسم مستقل بجوار بوابة المعلم (ليس ضمن الخطة الأسبوعية) */
+function renderSubsAdmin(){ const app=$("#wpApp");
+  if(!S.loaded.boot){ app.innerHTML='<div class="empty">جارٍ التحميل…</div>'; return; }
+  if(typeof window.platAdminState==="function"&&window.platAdminState()==="loading"){ app.innerHTML='<div class="empty">جارٍ التحقق من الصلاحيات…</div>'; return; }
+  const U=adminUser(); if(!S.canEdit||!U||U.role!=="admin"){ app.innerHTML=`<div class="login panel stack"><h2 class="h2">إدارة حصص الانتظار</h2><div class="note warn small">هذا القسم لإدارة المنصة. ادخل من «بوابة الإدارة».</div><div><a class="btn" href="#subs">⏱️ حصص الانتظار الخاصة بي</a></div></div>`; return; }
+  app.innerHTML=`<div class="stack"><div class="row" style="justify-content:space-between"><div><h2 class="h2">إدارة حصص الانتظار وتبديل الحصص</h2><div class="small muted">${esc(U.name)} • مدير</div></div><div class="row"><a class="btn sm ghost" href="#tp">👨‍🏫 بوابة المعلم</a></div></div><div id="subsAdm" class="stack"></div></div>`;
+  admSubs($("#subsAdm"),null,U); }
 function renderTeacher(){ const app=$("#wpApp"); const me=S.me;
   if(!S.db||!S.uid){ app.innerHTML=`<div class="login panel stack"><h2 class="h2">دخول المعلمين</h2><div class="note warn">لحفظ الخطة يلزم فتح المنصة بحساب يملك صلاحية الاستخدام. تواصل مع الإدارة.</div></div>`; return; }
   if(!me) return teacherLogin();
@@ -9169,7 +9181,6 @@ function renderTeacher(){ const app=$("#wpApp"); const me=S.me;
   app.innerHTML=`<div class="stack">
     <div class="row" style="justify-content:space-between"><div><h2 class="h2">مرحباً أ. ${esc(t.name)}</h2><div class="small muted">${secs.length} فصول • ${pr.total} حصة أسبوعياً</div></div>
       <div class="row"><label class="small" for="tw">الأسبوع</label><select class="in" id="tw" style="width:auto">${wks.map(w=>`<option value="${w.no}" ${w.no===wk?"selected":""}>الأسبوع ${w.no} (${fmtGs(D0(w.start))})</option>`).join("")}</select><button class="btn sm ghost" id="out">تسجيل الخروج</button></div></div>
-    ${inboxPanel()}
     <section class="panel stack" style="gap:10px"><div class="row" style="justify-content:space-between"><div class="row"><span class="pill ${ST_CLS[st.k]}">${st.txt}</span>${st.late?'<span class="pill bad">متأخر</span>':""}<span class="small muted">آخر موعد: ${fmtDT(W.dueAt)}</span></div><b class="num">${pr.pct}% مكتمل (${pr.done} من ${pr.total})</b></div>
       <div class="bar ${pr.pct<50?"lo":pr.pct<100?"mid":""}"><span style="width:${pr.pct}%"></span></div>
       ${notes.map(([k,m])=>`<div class="note ${k} small">🔔 ${esc(m)}</div>`).join("")}
@@ -9184,7 +9195,7 @@ function renderTeacher(){ const app=$("#wpApp"); const me=S.me;
             <label class="f">ملاحظات أو متطلبات<input class="in" data-f="n" value="${esc(c.n||"")}" ${R?"readonly":""}></label>
             <label class="f">رابط مصدر تعليمي<input class="in" data-f="u" dir="ltr" placeholder="https://" value="${esc(c.u||"")}" ${R?"readonly":""}></label></div>
           <div class="row" style="justify-content:space-between"><label class="row small" style="font-weight:700"><input type="checkbox" data-f="ex" ${c.ex?"checked":""} ${R?"disabled":""}> 📝 يوجد اختبار في هذه الحصة (يُلوَّن اليوم لولي الأمر)</label>${!R&&(c.h||[]).length?`<button type="button" class="btn sm ghost" data-undo title="${esc("النسخة السابقة: "+(c.h[c.h.length-1].l||""))}">↶ تراجع للنسخة السابقة</button>`:""}</div></article>`; }).join("")}`; }).join("")||'<div class="empty">لا توجد حصص مسندة إليك في الجدول.</div>'}</div></div>`;
-  ensureIb(); wireInbox(); $("#out").onclick=logoutTeacher; $("#tw").onchange=e=>{ lsSet("wpTWeek",+e.target.value); render(); };
+  $("#out").onclick=logoutTeacher; $("#tw").onchange=e=>{ lsSet("wpTWeek",+e.target.value); render(); };
   $$("[data-fs]").forEach(b=>b.onclick=()=>{ lsSet("wpTSec",b.dataset.fs); render(); });
   $("#goMiss")?.addEventListener("click",()=>{ const el=$(".cell.miss"); if(el){ el.scrollIntoView({behavior:"smooth",block:"center"}); el.querySelector("textarea")?.focus(); } });
   $("#prev").onclick=()=>previewTeacher(t,wk,secs);
@@ -9247,7 +9258,7 @@ function previewTeacher(t,wk,secs){ const W=S.weeks[wk]; const docs=S.tdocs.leng
 const allDocsForPreview=()=>{ const m=new Map(); [...S.tdocs,...S.myDocs].forEach(d=>m.set(d._id,d)); return [...m.values()]; };
 
 /* ================= ADMIN ================= */
-const ADM_TABS=[["dash","لوحة التحكم"],["review","المراجعة والنشر"],["teachers","المعلمون"],["subs","إدارة حصص الانتظار"],["weeks","الأسابيع والإجازات والأرشيف"],["brand","تصميم ملف الخطة"],["news","الإعلانات"],["reports","التقارير"],["log","السجل"]];
+const ADM_TABS=[["dash","لوحة التحكم"],["review","المراجعة والنشر"],["teachers","المعلمون"],["weeks","الأسابيع والإجازات والأرشيف"],["brand","تصميم ملف الخطة"],["news","الإعلانات"],["reports","التقارير"],["log","السجل"]];
 const SUP_TABS=["dash","review","reports","log"]; 
 function adminUser(){ if(typeof window.platAdminOK==="function"&&window.platAdminOK()) return {name:(window.platAdminName&&window.platAdminName())||"الإدارة",role:"admin"};
   const st=typeof window.platStaff==="function"?window.platStaff():null; return st&&st.lead?{name:st.name,role:"sup"}:null; }
@@ -9257,18 +9268,17 @@ function renderAdmin(tab){ const app=$("#wpApp");
   const U=adminUser(); if(!U){ app.innerHTML=`<div class="login panel stack"><h2 class="h2">إدارة الخطط</h2><div class="note warn small">هذا القسم لمديري المنصة والمشرفين. ادخل من «بوابة الإدارة»، أو بحساب المشرف الموحّد من زر «دخول».</div></div>`; return; }
   if(S.mode==="r"&&!S.cfgExists){ app.innerHTML='<div id="rsx" class="stack"></div>'; remoteSetup($("#rsx"),U); return; }
   const isSup=U.role==="sup"; const ALLOW=SUP_TABS; if(isSup&&!ALLOW.includes(tab)) tab=ALLOW[0];
-  if(tab==="subs"&&!S.canEdit) tab="dash";
   const wks=weekList(); const live=wks.filter(w=>!w.archived); const wk=S.admWk&&S.weeks[S.admWk]?S.admWk:(live.find(w=>Date.parse(w.start)<=now()+7*864e5)||live[0]||wks[0]||{}).no;
   app.innerHTML=`<div class="stack"><div class="row" style="justify-content:space-between"><div><h2 class="h2">بوابة الإدارة <span class="mtag ${S.mode}">${MODES[S.mode].icon} ${MODES[S.mode].name}</span></h2><div class="small muted">${esc(U.name)} • ${isSup?"مشرف":"مدير"}</div></div>
       <div class="row"><input class="in" id="q" placeholder="🔍 بحث: درس، مادة، معلم، أسبوع" style="width:min(320px,70vw)"><label class="small" for="aw">الأسبوع</label><select class="in" id="aw" style="width:auto">${wks.map(w=>`<option value="${w.no}" ${w.no===wk?"selected":""}>الأسبوع ${w.no}${w.archived?" (مؤرشف)":""}</option>`).join("")||"<option>—</option>"}</select>${S.weeks[wk]?`<button class="btn sm ghost" id="agate" title="التحكم في فتح الخطة وإغلاقها للمعلمين" style="padding:2px 4px">${gatePill(S.weeks[wk])}</button>`:""}</div></div>
-    <div class="subtabs" role="tablist">${ADM_TABS.filter(([k])=>(!isSup||ALLOW.includes(k))&&(k!=="subs"||S.canEdit)).map(([k,l])=>`<button role="tab" aria-selected="${k===tab}" class="${k===tab?"on":""}" data-wt="${k}">${l}</button>`).join("")}</div><div id="adm" class="stack"></div></div>`;
+    <div class="subtabs" role="tablist">${ADM_TABS.filter(([k])=>!isSup||ALLOW.includes(k)).map(([k,l])=>`<button role="tab" aria-selected="${k===tab}" class="${k===tab?"on":""}" data-wt="${k}">${l}</button>`).join("")}</div><div id="adm" class="stack"></div></div>`;
   $$("[data-wt]").forEach(b=>b.onclick=()=>{ location.hash="#wp-admin-"+b.dataset.wt; });
   $("#aw").onchange=e=>{ S.admWk=+e.target.value; render(); };
   $("#agate")?.addEventListener("click",()=>gateModal(+$("#aw").value));
   $("#q").onkeydown=e=>{ if(e.key==="Enter"&&e.target.value.trim()) adminSearch(e.target.value.trim()); };
-  const el=$("#adm"); const f={dash:admDash,review:admReview,subs:admSubs,teachers:admTeachers,weeks:admWeeks,brand:admBrand,news:admNews,reports:admReports,log:admLog}[tab]||admDash;
-  if(wk&&S.weeks[wk]&&S.weeks[wk].archived&&!["weeks","brand","teachers","news","log","subs"].includes(tab)) el.insertAdjacentHTML("beforebegin",`<div class="note warn small">🗄 الأسبوع ${wk} مؤرشف: لا يظهر لأولياء الأمور ولا للمعلمين، وبياناته محفوظة. <a href="#wp-admin-weeks">استعادته من «الأسابيع والإجازات والأرشيف»</a>.</div>`);
-  if(!wk&&!["weeks","brand","teachers","news","log","subs"].includes(tab)){ el.innerHTML=`<div class="empty">لا توجد أسابيع بعد. <a href="#wp-admin-weeks">افتح أسبوعاً جديداً</a>.</div>`; return; }
+  const el=$("#adm"); const f={dash:admDash,review:admReview,teachers:admTeachers,weeks:admWeeks,brand:admBrand,news:admNews,reports:admReports,log:admLog}[tab]||admDash;
+  if(wk&&S.weeks[wk]&&S.weeks[wk].archived&&!["weeks","brand","teachers","news","log"].includes(tab)) el.insertAdjacentHTML("beforebegin",`<div class="note warn small">🗄 الأسبوع ${wk} مؤرشف: لا يظهر لأولياء الأمور ولا للمعلمين، وبياناته محفوظة. <a href="#wp-admin-weeks">استعادته من «الأسابيع والإجازات والأرشيف»</a>.</div>`);
+  if(!wk&&!["weeks","brand","teachers","news","log"].includes(tab)){ el.innerHTML=`<div class="empty">لا توجد أسابيع بعد. <a href="#wp-admin-weeks">افتح أسبوعاً جديداً</a>.</div>`; return; }
   f(el,wk,U); }
 
 async function addLog(what){ const U=adminUser(); const item={at:new Date().toISOString(),who:U?U.name:"الإدارة",what}; S.log=[item,...S.log].slice(0,400); try{ await S.db.doc("wplog/main").set({items:S.log}); }catch(e){} }
@@ -9281,8 +9291,7 @@ function admDash(el,wk){ const W=S.weeks[wk]; const rows=teacherRows(wk); const 
   const bySub={}; rows.forEach(r=>r.st.pr.slots.forEach(x=>{ bySub[x.s]=bySub[x.s]||[0,0]; bySub[x.s][1]++; if(filled(cellOf(r.t.id,ckey(wk,x.sec,x.d,x.p)))) bySub[x.s][0]++; }));
   const late=rows.filter(r=>r.st.late); const ready=rd.filter(x=>x.r.pct===100&&!S.pubs[wk+"_"+x.s.id]);
   const wd=weekDates(W); const sst=secs.map(s=>secStatus(s.id,wk)); const cnt=k=>sst.filter(x=>x.k===k).length; const arcN=weekList().filter(w=>w.archived).length; const offs=offMap(W);
-  const sdx=S.subs[iso(new Date())]; const sAct=sdx?(sdx.items||[]).filter(i=>i.status!=="cancelled"):[];
-  el.innerHTML=`${sdx&&sAct.length?`<a class="note ${sAct.some(i=>i.status!=="assigned")?"warn":"ok"} small" href="#wp-admin-subs" style="display:block;text-decoration:none">⏱ حصص الانتظار اليوم: غائبون ${(sdx.absent||[]).length} • حصص ${sAct.length} • مُسندة ${sAct.filter(i=>i.status==="assigned").length} • غير مسندة ${sAct.filter(i=>i.status!=="assigned").length}${sdx.approved?" • معتمد":" • غير معتمد"} ←</a>`:""}<section class="panel stack" style="gap:10px"><b>حالة خطط الفصول – الأسبوع ${W.no}</b><div class="kpis">${[["مسودة",cnt("draft"),""],["قيد الإعداد",cnt("prog"),"warn"],["جاهزة للمراجعة",cnt("ready"),"warn"],["معتمدة بانتظار النشر",cnt("ok"),""],["مجدولة",cnt("sch"),""],["منشورة",cnt("pub"),""],["أسابيع مؤرشفة",arcN,""]].map(([l,v,k])=>`<div class="kpi ${v&&k?k:""}"><b class="num">${v}</b><small>${l}</small></div>`).join("")}</div>
+  el.innerHTML=`<section class="panel stack" style="gap:10px"><b>حالة خطط الفصول – الأسبوع ${W.no}</b><div class="kpis">${[["مسودة",cnt("draft"),""],["قيد الإعداد",cnt("prog"),"warn"],["جاهزة للمراجعة",cnt("ready"),"warn"],["معتمدة بانتظار النشر",cnt("ok"),""],["مجدولة",cnt("sch"),""],["منشورة",cnt("pub"),""],["أسابيع مؤرشفة",arcN,""]].map(([l,v,k])=>`<div class="kpi ${v&&k?k:""}"><b class="num">${v}</b><small>${l}</small></div>`).join("")}</div>
       <div class="row small">${secs.map((s,i)=>`<span class="pill ${sst[i].c}">${esc(s.id)}: ${sst[i].t}</span>`).join("")}</div>${Object.keys(offs).length?`<div class="note info small">🌴 أيام إجازة هذا الأسبوع: ${esc(Object.entries(offs).map(([d,o])=>DAYS[d]+(o.mode==="hide"?" (مخفي)":" (إجازة رسمية)")).join("، "))}</div>`:""}</section>
     <div class="note info small">الأسبوع ${W.no}: من ${fmtG(wd.from)} إلى ${fmtG(wd.to)} • فتح التخطيط ${fmtDT(W.openAt)} • آخر موعد ${fmtDT(W.dueAt)} • إغلاق التعديل ${fmtDT(W.lockAt)}</div>
     <div class="kpis">${[["إجمالي المعلمين",n],["أدخلوا خططهم",started],["لم يبدؤوا",n-started,n-started?"warn":""],["خطط مكتملة",complete],["غير مكتملة",n-complete,n-complete?"warn":""],["مرسلة للمراجعة",sent],["معتمدة",ok],["فصول منشورة",pubN+" / "+secs.length],["نسبة الإنجاز العامة",overall+"%"]].map(([l,v,k])=>`<div class="kpi ${k||""}"><b class="num">${v}</b><small>${l}</small></div>`).join("")}</div>
@@ -10246,7 +10255,8 @@ const MODES={f:{k:"f",name:"الحضوري",long:"الخطة الأسبوعية 
 const activeMode=()=>(S.modeDoc&&S.modeDoc.active==="r"&&S.modeDoc.remoteReady)?"r":"f";
 function wantMode(r){ const ready=!!(S.modeDoc&&S.modeDoc.remoteReady);
   if(r.startsWith("admin")){ let w=null; try{ w=sessionStorage.getItem("wpWs"); }catch(e){ w=S.wsMem; } return w==="r"||w==="f"?w:activeMode(); }
-  if(r==="teacher"||r==="subs"){ let w=null; try{ w=localStorage.getItem("wpTMode"); }catch(e){} return ready&&(w==="r"||w==="f")?w:activeMode(); }
+  if(isSubsR(r)) return activeMode();
+  if(r==="teacher"){ let w=null; try{ w=localStorage.getItem("wpTMode"); }catch(e){} return ready&&(w==="r"||w==="f")?w:activeMode(); }
   return activeMode(); }
 function mdb(raw,m){ const pre=m==="r"?"r":""; const P=p=>pre&&/^wp/.test(p)?pre+p:p;
   const wrap=ref=>{ if(!ref||typeof ref!=="object") return ref; return new Proxy({},{get:(_,k)=>{ const v=ref[k]; if(typeof v!=="function") return v;
