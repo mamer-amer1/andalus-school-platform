@@ -67,8 +67,8 @@ async function who(req, env) {
   const t = await readToken(env, auth.startsWith("Bearer ") ? auth.slice(7) : "");
   let uid = req.headers.get("x-uid") || "";
   if (!/^[a-z0-9]{16,64}$/.test(uid)) uid = "";
-  const role = t && t.r === "admin" ? "admin" : t && t.r === "staff" ? "interact" : "view";
-  return { level: LV[role], uid };
+  const role = t && t.r === "admin" ? "admin" : t && (t.r === "staff" || t.r === "sup") ? "interact" : "view";
+  return { level: LV[role], uid, sup: !!(t && t.r === "sup") };
 }
 
 // ---------- access rules (same rules the platform used on Claude) ----------
@@ -97,15 +97,24 @@ function privateUserPath(path, uid) {
   if (s[0] === "data" && s[1] === "users") return s.length >= 3 && !!uid && s[2] === uid ? "own" : "deny";
   return null;
 }
+// Supervisors (unified accounts with a lead role) review weekly plans: they may also update these.
+const SUP_WRITE = ["wpweeks", "rwpweeks", "wplog", "rwplog", "wpt", "rwpt"];
+const SUP_READ = ["wplog", "rwplog"];
+// Own entries that only signed-in staff may create (teacher plans, grade entry, attendance).
+const STAFF_SELF = ["wpt", "rwpt", "gaent", "gaprog", "rlatt"];
+const top = p => segs(p)[0] || "";
 function canRead(path, u) {
   const pv = privateUserPath(path, u.uid); if (pv) return pv === "own";
   const r = ruleFor(path, u.uid);
+  if (u.sup && SUP_READ.includes(top(path))) return true;
   return r.self ? true : u.level >= r.read;            // a visitor may always read their own {self} entry
 }
 function canWrite(path, u) {
   const pv = privateUserPath(path, u.uid); if (pv) return pv === "own";
   const r = ruleFor(path, u.uid);
-  return r.self ? true : u.level >= r.write;
+  if (u.sup && SUP_WRITE.includes(top(path))) return true;
+  if (r.self) return STAFF_SELF.includes(top(path)) ? u.level >= LV.interact : true;
+  return u.level >= r.write;
 }
 
 // ---------- Supabase ----------
@@ -219,23 +228,14 @@ async function handleLogin(req, env) {
 // Teachers sign in with the platform's own accounts (phone + personal code).
 // The server checks the same account and, for staff roles, issues a staff pass so their saves are accepted.
 const STAFF_ROLES = ["teacher", "supervisor", "principal", "deputy", "admin", "coordinator", "staff"];
+const LEAD_ROLES = ["supervisor", "deputy", "principal"];
 async function handleAcct(req, env) {
   const b = await req.json().catch(() => ({}));
   await new Promise(r => setTimeout(r, 300));
   const code = normDigits(b.code || "").replace(/\s/g, "");
   if (!code) return bad("code", 401);
-  let ok = false, name = "";
-  if (b.kind === "wp") {
-    const ph = String(b.ph || "");
-    for (const m of ["", "r"]) {
-      const conf = await getDoc(env, m + "wp/config");
-      const pep = conf && conf.pepper; if (!pep) continue;
-      const bucket = await getDoc(env, m + "wpacc/b" + (await sha256hex(pep + "|" + ph)).slice(0, 2));
-      const h = await sha256hex(pep + "|" + ph + "|" + code);
-      const hit = bucket && (bucket.items || []).find(x => x.h === h);
-      if (hit) { ok = true; name = hit.n || ""; break; }
-    }
-  } else {
+  let ok = false, name = "", lead = false;
+  {
     const ph = intlPhone(b.phone || "");
     if (!/^9665\d{8}$/.test(ph)) return bad("phone", 401);
     const local = "0" + ph.slice(3);
@@ -243,11 +243,12 @@ async function handleAcct(req, env) {
     const hit = rows.map(r => r.data || {}).find(a =>
       intlPhone(a.phone) === ph && a.status === "active" && STAFF_ROLES.includes(a.role) &&
       [normDigits(a.code || "").trim()].some(c => c && (c === code || (intlPhone(code) === ph && c === local))));
-    if (hit) { ok = true; name = hit.name || ""; }
+    if (hit) { ok = true; name = hit.name || ""; lead = LEAD_ROLES.includes(hit.role) || LEAD_ROLES.includes(hit.rk); }
   }
   if (!ok) return bad("not staff", 401);
-  const token = await makeToken(env, { r: "staff", n: name, exp: Date.now() + 30 * 864e5 });
-  return json({ token, role: "staff", name });
+  const r = lead ? "sup" : "staff";
+  const token = await makeToken(env, { r, n: name, exp: Date.now() + 30 * 864e5 });
+  return json({ token, role: r, name });
 }
 
 async function handleImport(req, env) {
