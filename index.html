@@ -1943,14 +1943,14 @@ async function submitRegistration(e){
 }
 
 /* ---------- admin ---------- */
-const TABS=[["dash","لوحة القيادة"],["ctl","🎛️ مركز التحكم"],["ann","📣 الإعلانات والتعاميم"],["tp","👨‍🏫 بوابة المعلم"],["stats","الإحصاءات والمشاركة"],["comps","المسابقات والتدريب"],["requests","طلبات التسجيل"],["students","الطلاب وأولياء الأمور"],["ach","الإنجازات"],["train","التدريب الذاتي"],["msg","مركز التواصل"],["posters","🎨 استوديو التصميم"],["calendar","📆 الأجندة المدرسية"],["exams","📝 جداول الاختبارات"],["rl","💻 التعليم عن بُعد"],["media","الصور والفعاليات"],["accounts","حسابات الدخول"],["usage","📈 الدخول والاستخدام"],["downloads","⬇️ التنزيل والتقارير"],["theme","🎨 الهوية والألوان"],["settings","النصوص والإعدادات"]];
+const TABS=[["dash","لوحة القيادة"],["ctl","🎛️ مركز التحكم"],["ann","📣 الإعلانات والتعاميم"],["tp","👨‍🏫 بوابة المعلم"],["stats","الإحصاءات والمشاركة"],["comps","المسابقات والتدريب"],["requests","طلبات التسجيل"],["students","الطلاب وأولياء الأمور"],["ach","الإنجازات"],["train","التدريب الذاتي"],["msg","مركز التواصل"],["posters","🎨 استوديو التصميم"],["calendar","📆 الأجندة المدرسية"],["exams","📝 جداول الاختبارات"],["rl","💻 التعليم عن بُعد"],["media","الصور والفعاليات"],["accounts","حسابات الدخول"],["usage","📈 الدخول والاستخدام"],["resets","🧹 إعادة تهيئة السجلات"],["downloads","⬇️ التنزيل والتقارير"],["theme","🎨 الهوية والألوان"],["settings","النصوص والإعدادات"]];
 function allRequests(){ const out=S.requests.map(r=>({...r,src:"manual"})); S.regs.forEach(d=>(d.items||[]).forEach(i=>out.push({...i,src:"platform",owner:d._id}))); return out.sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt))); }
 function updateBadge(){ const n=allRequests().filter(r=>r.status==="جديد").length; const b=$("#navBadge"); b.hidden=!n||!S.admin; b.textContent=n; document.title=(n&&S.admin?"("+n+") ":"")+"منصة المراكز التنافسية"; }
 function renderAdmin(tab){
   const urgent=dashAlerts().filter(a=>a.lvl==="bad").length+S.alerts.filter(a=>!a.done&&a.level==="عاجل").length;
   const rail=TABS.map(([k,l])=>{ const n=k==="requests"?allRequests().filter(r=>r.status==="جديد").length:k==="dash"?urgent:0; return `<a href="#admin-${k}" class="${k===tab?"on":""}">${l}${n?`<span class="badge">${n}</span>`:""}</a>`; }).join("");
   $("#app").innerHTML=`<div class="admin"><nav class="rail surface" aria-label="أقسام الإدارة">${S.site.logo?`<div class="rail-logo"><img alt="شعار مدارس الأندلس الأهلية" src="${blob(S.site.logo)}"></div>`:""}${rail}<button class="btn sm ghost" type="button" onclick="location.reload()" style="margin-top:8px" title="إعادة تحميل المنصة بآخر البيانات">🔄 تحديث المنصة</button></nav><div id="adm" class="stack" style="min-width:0;gap:18px"></div></div>`;
-  ({dash:admDash,ctl:admCtl,ann:annAdmin,tp:admTP,stats:admStats,comps:admComps,requests:admRequests,students:admStudents,ach:admAch,train:admTrain,msg:admMsg,commap:admCommap,calendar:el=>renderCalendar(el),media:admMedia,accounts:admAccounts,usage:admUsage,posters:el=>fxStudio(el,true),exams:el=>{ exCssOnce(); exManage(el); },rl:el=>{ el.innerHTML='<div class="stack" style="gap:14px" id="rlBody"></div>'; rlAdmin(el.querySelector("#rlBody")); },downloads:admDownloads,theme:admTheme,settings:admSettings}[tab]||admDash)($("#adm"));
+  ({dash:admDash,ctl:admCtl,ann:annAdmin,tp:admTP,stats:admStats,comps:admComps,requests:admRequests,students:admStudents,ach:admAch,train:admTrain,msg:admMsg,commap:admCommap,calendar:el=>renderCalendar(el),media:admMedia,accounts:admAccounts,usage:admUsage,resets:admResets,posters:el=>fxStudio(el,true),exams:el=>{ exCssOnce(); exManage(el); },rl:el=>{ el.innerHTML='<div class="stack" style="gap:14px" id="rlBody"></div>'; rlAdmin(el.querySelector("#rlBody")); },downloads:admDownloads,theme:admTheme,settings:admSettings}[tab]||admDash)($("#adm"));
 }
 /* ---------- admin: command dashboard ---------- */
 S.alerts=S.alerts||[]; S.dashRange=S.dashRange||14;
@@ -7224,6 +7224,71 @@ function admTheme(el){ if(!window.platApplyTheme){ el.innerHTML='<div class="emp
     el.querySelector("#tmDef").onclick=()=>{ d=window.platThemeDefaults(); S.themeDraft=d; window.platApplyTheme(d,{temp:true}); draw(); toast("هذه ألوان هوية الأندلس الافتراضية. اضغط «اعتماد وحفظ» لاعتمادها"); };
   };
   draw(); }
+/* ---------- admin: re-initialise the platform's logs (admins only). Data itself is never touched, only log entries. ---------- */
+const RS_TODAY=()=>new Date().toISOString().slice(0,10);
+async function rsCol(c){ try{ const sn=await S.db.collection(c).get(); return sn.docs.map(d=>({path:c+"/"+d.id,data:d.data()})); }catch(e){ return []; } }
+async function rsDoc(p){ try{ const d=await S.db.doc(p).get(); return d.exists?[{path:p,data:d.data()}]:[]; }catch(e){ return []; } }
+const rsMany=async cs=>(await Promise.all(cs.map(rsCol))).flat();
+const rsSwapDone=w=>["rejected","cancelled"].includes(w.status)||(w.status==="approved"&&String(w.dateB||w.date||"")<RS_TODAY()&&String(w.date||"")<RS_TODAY());
+/* each log: what it holds, how to count it, and how to clear it.
+   kind "del" removes whole entries; kind "field" empties the log field and keeps the record. */
+const RS_LOGS=[
+  {k:"usage",ic:"📈",t:"سجل الدخول والاستخدام",d:"أوقات دخول المعلمين وأولياء الأمور والطلاب وعدد مرات الدخول (قسم «الدخول والاستخدام»). الحسابات ورموز الدخول لا تتأثر.",
+    load:()=>rsCol("usage"),count:L=>L.length,unit:"مستخدم/جهاز",kind:"del"},
+  {k:"subs",ic:"⏱️",t:"سجل حصص الانتظار",d:"سجل العمليات وسجل الإرسال في حصص الانتظار. جداول الانتظار نفسها وتكليفاتها تبقى كما هي.",
+    load:()=>rsMany(["wpsub","rwpsub"]),count:L=>L.reduce((n,x)=>n+(x.data.log||[]).length+(x.data.sendLog||[]).length,0),unit:"سطر",kind:"field",fields:["log","sendLog"]},
+  {k:"swaps",ic:"🔁",t:"سجل تبديل الحصص المنتهية",d:"طلبات التبديل المرفوضة أو الملغاة، والمعتمدة التي مضى تاريخها. الطلبات المعلّقة والتبديلات القادمة تبقى.",
+    load:async()=>(await rsMany(["wpswap","rwpswap"])).filter(x=>rsSwapDone(x.data)),count:L=>L.length,unit:"طلب",kind:"del"},
+  {k:"wplog",ic:"📅",t:"سجل عمليات الخطة الأسبوعية",d:"سجل عمليات الإدارة في الخطة الأسبوعية (الحضورية وعن بُعد). الخطط نفسها لا تتأثر.",
+    load:async()=>[...await rsDoc("wplog/main"),...await rsDoc("rwplog/main")],count:L=>L.reduce((n,x)=>n+(x.data.items||[]).length,0),unit:"سطر",kind:"field",fields:["items"]},
+  {k:"gate",ic:"🔒",t:"سجل فتح وإغلاق الأسابيع",d:"سجل فتح التخطيط وإغلاقه لكل أسبوع. الأسابيع ومواعيدها تبقى.",
+    load:async()=>(await rsMany(["wpweeks","rwpweeks"])).filter(x=>(x.data.gateLog||[]).length),count:L=>L.reduce((n,x)=>n+(x.data.gateLog||[]).length,0),unit:"سطر",kind:"field",fields:["gateLog"]},
+  {k:"ttlog",ic:"🗓️",t:"سجل تعديلات الجدول والإسناد",d:"سجل التعديلات في «إدارة الجداول الدراسية». الجداول والنسخ المؤرشفة تبقى.",
+    load:()=>rsCol("ttlog"),count:L=>L.length,unit:"عملية",kind:"del"},
+  {k:"rllog",ic:"🔗",t:"سجل روابط التعليم عن بُعد",d:"سجل وضع روابط الحصص وتعديلها. الروابط الحالية تبقى.",
+    load:()=>rsCol("rllog"),count:L=>L.length,unit:"عملية",kind:"del"},
+  {k:"rlatt",ic:"🎥",t:"سجل حضور ومشاهدة التعليم عن بُعد",d:"دخول الطلاب للحصص عن بُعد واطلاع أولياء الأمور. تنبيه: تبدأ المتابعة والتقارير الشاملة للتعليم عن بُعد من الصفر.",
+    load:()=>rsCol("rlatt"),count:L=>L.length,unit:"مستخدم",kind:"del"},
+  {k:"acctlog",ic:"👥",t:"سجل تعديلات الحسابات",d:"سجل التعديلات داخل كل حساب دخول (إنشاء، تغيير رمز…). الحسابات ورموزها تبقى كما هي.",
+    load:async()=>(await rsCol("accts")).filter(x=>(x.data.log||[]).length).map(x=>({path:x.path,data:{log:x.data.log}})),count:L=>L.reduce((n,x)=>n+(x.data.log||[]).length,0),unit:"سطر",kind:"field",fields:["log"],partial:true}
+];
+async function rsBackup(items){ const data=new Blob([JSON.stringify({kind:"andalus-logs-backup",at:new Date().toISOString(),by:admMe(),logs:items.map(([L,rows])=>({log:L.k,title:L.t,rows}))},null,1)],{type:"application/json"});
+  let dl=S.downloads; if(!dl){ try{ dl=S.downloads=await claude.use("downloads"); }catch(e){ dl=null; } } if(!dl) return false;
+  try{ await dl.save({filename:`نسخة السجلات ${new Date().toISOString().slice(0,16).replace("T"," ").replace(":","-")}.json`,data}); return true; }catch(e){ return false; } }
+async function rsClear(L,rows,say){ let n=0;
+  for(const x of rows){ try{ if(L.kind==="del") await S.db.doc(x.path).delete();
+      else{ const cur=L.partial?await S.db.doc(x.path).get():null; const base=L.partial?(cur&&cur.exists?cur.data():null):x.data; if(!base) continue; const nx={...base}; L.fields.forEach(f=>nx[f]=[]); await S.db.doc(x.path).set(nx); }
+      n++; say&&say(n,rows.length); }catch(e){} }
+  return n; }
+const rsRedraw=()=>{ const x=document.getElementById("adm"); if(x&&route()==="admin-resets") admResets(x); };
+function admResets(el){ const R=S.rsInfo=S.rsInfo||{};
+  const hist=S.rsHist||[]; const lastOf=k=>hist.filter(h=>(h.keys||[]).includes(k)).sort((a,b)=>String(b.at).localeCompare(String(a.at)))[0];
+  el.innerHTML=`<h2 class="sec-title" style="font-size:1.5rem">🧹 إعادة تهيئة السجلات</h2>
+  <div class="note info small">تمسح إعادة التهيئة <b>سطور السجل فقط</b> ليبدأ السجل من جديد، ولا تحذف أي بيانات عمل (الحسابات، الخطط، الجداول، حصص الانتظار…). هذا القسم لإدارة المنصة فقط.</div>
+  <label class="row small" style="gap:6px"><input type="checkbox" id="rsBk" ${S.rsNoBk?"":"checked"}> تنزيل نسخة احتياطية من السجل (ملف JSON) قبل المسح – موصى به</label>
+  <div class="tbl"><table><thead><tr><th style="width:34px"><input type="checkbox" id="rsAll" aria-label="تحديد الكل"></th><th>السجل</th><th>الحجم الحالي</th><th>آخر إعادة تهيئة</th><th></th></tr></thead><tbody>${RS_LOGS.map(L=>{ const i=R[L.k]; const h=lastOf(L.k);
+    return `<tr><td><input type="checkbox" data-rssel="${L.k}" aria-label="${esc(L.t)}"></td><td><b>${L.ic} ${esc(L.t)}</b><div class="small muted">${esc(L.d)}</div></td><td class="num">${i?`${i.n} ${esc(L.unit)}`:'<span class="muted small">جارٍ العدّ…</span>'}</td><td class="small">${h?`${esc(fmtTime(h.at))}<br><span class="muted">${esc(h.by||"")}</span>`:"—"}</td><td><button class="btn sm danger" style="white-space:nowrap" data-rsone="${L.k}" ${i&&!i.n?"disabled":""}>إعادة تهيئة</button></td></tr>`; }).join("")}</tbody></table></div>
+  <div class="row"><button class="btn danger" id="rsSel" disabled>إعادة تهيئة السجلات المحددة</button><button class="btn ghost sm" id="rsRe">🔄 إعادة العدّ</button><span class="small muted" id="rsMsg" role="status"></span></div>`;
+  const q=x=>el.querySelector(x); const boxes=()=>[...el.querySelectorAll("[data-rssel]")];
+  const upd=()=>{ const n=boxes().filter(b=>b.checked).length; q("#rsSel").disabled=!n; q("#rsSel").textContent=n?`إعادة تهيئة السجلات المحددة (${n})`:"إعادة تهيئة السجلات المحددة"; };
+  boxes().forEach(b=>b.onchange=upd); q("#rsAll").onchange=e=>{ boxes().forEach(b=>b.checked=e.target.checked); upd(); };
+  q("#rsBk").onchange=e=>{ S.rsNoBk=!e.target.checked; };
+  const count=async()=>{ for(const L of RS_LOGS){ try{ const rows=await L.load(); R[L.k]={n:L.count(rows)}; }catch(e){ R[L.k]={n:0}; } }
+    if(!S.rsHist){ try{ const d=await S.db.doc("secure/logresets").get(); S.rsHist=(d.exists&&d.data().items)||[]; }catch(e){ S.rsHist=[]; } }
+    if(S.rsInfo===R) rsRedraw(); };
+  q("#rsRe").onclick=()=>{ S.rsInfo={}; admResets(el); };
+  const run=async keys=>{ const Ls=RS_LOGS.filter(L=>keys.includes(L.k)); if(!Ls.length) return;
+    if(!await qzAsk(`إعادة تهيئة ${Ls.length===1?"«"+Ls[0].t+"»":Ls.length+" سجلات"}؟\n\n${Ls.map(L=>"• "+L.t).join("\n")}\n\nتُمسح سطور السجل نهائياً ويبدأ من جديد. لا تتأثر بيانات العمل.`,"إعادة التهيئة")) return;
+    const msg=q("#rsMsg"); el.querySelectorAll("button").forEach(b=>b.disabled=true); msg.textContent="جارٍ تجهيز السجلات…";
+    const items=[]; for(const L of Ls) items.push([L,await L.load()]);
+    if(!S.rsNoBk&&items.some(([,r])=>r.length)){ msg.textContent="جارٍ تنزيل النسخة الاحتياطية…"; if(!await rsBackup(items)){ toast("لم تُحفظ النسخة الاحتياطية، فلم يُمسح شيء. ألغِ خيار النسخة إن أردت المسح بدونها.","bad"); S.rsInfo={}; rsRedraw(); return; } }
+    let tot=0; for(const [L,rows] of items){ tot+=await rsClear(L,rows,(i,n)=>{ msg.textContent=`جارٍ إعادة تهيئة «${L.t}»… ${i}/${n}`; }); }
+    const entry={at:new Date().toISOString(),by:admMe(),keys:Ls.map(L=>L.k),what:Ls.map(L=>L.t).join("، ")};
+    try{ const d=await S.db.doc("secure/logresets").get(); const cur=(d.exists&&d.data().items)||[]; S.rsHist=[...cur,entry].slice(-200); await S.db.doc("secure/logresets").set({items:S.rsHist}); }catch(e){}
+    toast(`تمت إعادة التهيئة: ${Ls.map(L=>L.t).join("، ")}`); S.rsInfo={}; rsRedraw(); };
+  el.querySelectorAll("[data-rsone]").forEach(b=>b.onclick=()=>run([b.dataset.rsone]));
+  q("#rsSel").onclick=()=>run(boxes().filter(b=>b.checked).map(b=>b.dataset.rssel));
+  if(RS_LOGS.some(L=>!R[L.k])&&S.rsCounting!==R){ S.rsCounting=R; count().finally(()=>{ if(S.rsCounting===R) S.rsCounting=null; }); } }
 function admSettings(el){
   const s=S.site;
   el.innerHTML=`<h2 class="sec-title" style="font-size:1.5rem">النصوص والإعدادات</h2>
@@ -7724,7 +7789,7 @@ function qzCheer(msg){ const t=document.createElement("div"); t.className="qz-ch
 
 /* in-page confirm (browser confirm() is blocked inside the platform frame) */
 function qzAsk(msg,ok="نعم",danger=true){ return new Promise(res=>{ const m=document.createElement("div"); m.className="modal"; m.setAttribute("role","alertdialog"); m.setAttribute("aria-modal","true");
-  m.innerHTML=`<div class="box" style="width:min(440px,100%)"><div class="mb stack" style="gap:14px"><p style="margin:0;font-weight:700;font-size:1.05rem">${esc(msg)}</p><div class="row" style="gap:8px;justify-content:flex-end"><button class="btn ghost" data-n>إلغاء</button><button class="btn ${danger?"danger":"primary"}" data-y>${esc(ok)}</button></div></div></div>`;
+  m.innerHTML=`<div class="box" style="width:min(440px,100%)"><div class="mb stack" style="gap:14px"><p style="margin:0;font-weight:700;font-size:1.05rem;white-space:pre-line">${esc(msg)}</p><div class="row" style="gap:8px;justify-content:flex-end"><button class="btn ghost" data-n>إلغاء</button><button class="btn ${danger?"danger":"primary"}" data-y>${esc(ok)}</button></div></div></div>`;
   document.body.append(m); const done=v=>{ m.remove(); res(v); };
   m.querySelector("[data-y]").onclick=()=>done(true); m.querySelector("[data-n]").onclick=()=>done(false);
   m.addEventListener("keydown",e=>{ if(e.key==="Escape"){ e.stopPropagation(); done(false); } }); m.addEventListener("click",e=>{ if(e.target===m) done(false); });
