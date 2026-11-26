@@ -193,6 +193,17 @@ async function handleQuery(req, env) {
     selfCols.forEach(c => res.cols[c] = []);
     rows.forEach(r => res.cols[r.col] && res.cols[r.col].push({ id: r.id, data: r.data }));
   }
+  /* chess: visitors never see other participants' payment state */
+  if (uc.level < LV.admin) {
+    const isP = id => String(id).startsWith(CH + "players/");
+    const has = Object.keys(res.docs).some(isP) || Object.values(res.cols).some(L => L.some(x => isP(x.id)));
+    if (has) {
+      const own = new Set((await sbRows(env, "col", [CH + "private"], "id,data")).filter(r => uc.uid && (r.data || {}).by === uc.uid).map(r => r.id.split("/").pop()));
+      const red = (id, d) => { if (!d || own.has(String(id).split("/").pop())) return d; const o = { ...d }; delete o.paid; if (o.status === "await" || o.status === "paid") o.status = "new"; return o; };
+      Object.keys(res.docs).forEach(id => { if (isP(id)) res.docs[id] = red(id, res.docs[id]); });
+      Object.values(res.cols).forEach(L => L.forEach(x => { if (isP(x.id)) x.data = red(x.id, x.data); }));
+    }
+  }
   return json(res);
 }
 
@@ -311,7 +322,12 @@ async function handleChessRegister(req, env) {
   const id = "p" + Date.now().toString(36) + chessRid(3), at = new Date().toISOString(), season = String(S.season || "2026"), cat = TYPES[type];
   const pub = { no, name, cat, type, level: "beg", rating: 0, status: "new", paid: false, withdrawn: false, duo: "", mk, att: {}, season, createdAt: at };
   const partner = String(b.partner || "").trim().slice(0, 20);
-  const pv = { phone, grade: String(b.grade || "").slice(0, 40), branch: String(S.school || ""), terms: true, parent: !!b.parent, photo: !!b.photo, wantsDuo: !!partner || !!b.duo, partner, payMethod: "cash", payAmount: 0, linkCode: chessRid(6), notes: "", source: "التسجيل الإلكتروني", by: uid, at, history: [{ at, text: "تسجيل إلكتروني من ولي الأمر/المشارك" }] };
+  let photo = "";
+  if (b.photo64) { const m = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/.exec(String(b.photo64));
+    if (!m || m[2].length > 400000) return bad("photo");
+    photo = "ph" + [...crypto.getRandomValues(new Uint8Array(12))].map(x => x.toString(16).padStart(2, "0")).join("");
+    await putAsset(env, photo, "image/" + m[1], m[2]); }
+  const pv = { phone, grade: String(b.grade || "").slice(0, 40), branch: String(S.school || ""), terms: true, parent: !!b.parent, photo: !!b.photo, wantsDuo: !!partner || !!b.duo, partner, photo, payMethod: "cash", payAmount: 0, linkCode: chessRid(6), notes: "", source: "التسجيل الإلكتروني", by: uid, at, history: [{ at, text: "تسجيل إلكتروني من ولي الأمر/المشارك" }] };
   const rows = [
     { id: CH + "players/" + id, col: CH + "players", data: pub, updated_at: at },
     { id: CH + "private/" + id, col: CH + "private", data: pv, updated_at: at },
@@ -319,7 +335,7 @@ async function handleChessRegister(req, env) {
   ];
   if (!m) rows.push({ id: CH + "members/" + mk, col: CH + "members", data: { name, phone, first: season }, updated_at: at });
   await upsert(env, rows);
-  return json({ ok: true, id, no, name, cat, type, status: "new", season });
+  return json({ ok: true, id, no, name, cat, type, status: "new", season, photo });
 }
 
 
@@ -333,7 +349,7 @@ async function handleChessCard(req, env) {
   const id = hit.id.split("/").pop(); const q = (await getDoc(env, CH + "private/" + id)) || {};
   if (chessNorm(q.phone) !== phone) return bad("not_found", 404);
   const p = hit.data || {};
-  return json({ ok: true, id, no: p.no, name: p.name, cat: p.cat, type: p.type, status: p.status, paid: !!p.paid, season: p.season });
+  return json({ ok: true, id, no: p.no, name: p.name, cat: p.cat, type: p.type, status: p.status, paid: !!p.paid, season: p.season, photo: q.photo || "" });
 }
 
 async function handleImport(req, env) {

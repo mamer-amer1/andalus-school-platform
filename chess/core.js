@@ -27,16 +27,16 @@ const RES_LBL = { '1-0': '1-0', '0-1': '0-1', '½-½': '½-½', '+-': '+/- غي�
 const GST = { pending: 'لم تبدأ', live: 'جارية', done: 'انتهت', await: 'بانتظار الاعتماد', help: 'طلب الحكم الرئيسي' };
 const TB = { de: 'المواجهة المباشرة', bhc1: 'بوخهولز بدون أقل نتيجة', bh: 'بوخهولز', wins: 'عدد الانتصارات', sb: 'سونبورن-برجر', rating: 'التصنيف' };
 const ROLES = {
-  sys: { n: 'مدير النظام', s: ['dash', 'players', 'requests', 'attend', 'rounds', 'ref', 'standings', 'finance', 'prizes', 'reports', 'notify', 'gallery', 'roles', 'settings', 'season', 'audit', 'clock', 'help'] },
-  director: { n: 'مدير البطولة', s: ['dash', 'players', 'requests', 'attend', 'rounds', 'ref', 'standings', 'prizes', 'reports', 'notify', 'gallery', 'settings', 'season', 'audit', 'clock', 'help'] },
-  registrar: { n: 'مسؤول التسجيل', s: ['dash', 'players', 'requests', 'attend', 'notify', 'reports', 'help'] },
-  finance: { n: 'المسؤول المالي', s: ['dash', 'players', 'finance', 'reports', 'help'] },
+  sys: { n: 'مدير النظام', s: ['dash', 'subs', 'players', 'requests', 'attend', 'rounds', 'ref', 'standings', 'finance', 'prizes', 'reports', 'notify', 'gallery', 'roles', 'settings', 'season', 'audit', 'clock', 'help'] },
+  director: { n: 'مدير البطولة', s: ['dash', 'subs', 'players', 'requests', 'attend', 'rounds', 'ref', 'standings', 'prizes', 'reports', 'notify', 'gallery', 'settings', 'season', 'audit', 'clock', 'help'] },
+  registrar: { n: 'مسؤول التسجيل', s: ['dash', 'subs', 'players', 'requests', 'attend', 'notify', 'reports', 'help'] },
+  finance: { n: 'المسؤول المالي', s: ['dash', 'subs', 'players', 'finance', 'reports', 'help'] },
   chief: { n: 'الحكم الرئيسي', s: ['dash', 'rounds', 'ref', 'clock', 'standings', 'attend', 'prizes', 'help'] },
   assistant: { n: 'الحكم المساعد', s: ['ref', 'clock', 'help'] },
   women: { n: 'مشرفة فئة النساء', s: ['players', 'attend', 'rounds', 'ref', 'clock', 'standings', 'help'], cat: '3' },
   display: { n: 'مسؤول العرض', s: ['screens'] }
 };
-const SECTIONS = { clock: 'ساعة الشطرنج', help: 'المساعدة', dash: 'لوحة المتابعة', players: 'المشاركون', requests: 'طلبات التسجيل', attend: 'الحضور', rounds: 'الجولات', ref: 'التحكيم والنتائج', standings: 'الترتيب', finance: 'المالية', prizes: 'الجوائز والشهادات', reports: 'التقارير', notify: 'الإشعارات', gallery: 'معرض الصور', roles: 'الصلاحيات والحكام', settings: 'الإعدادات', season: 'المواسم والأرشيف', audit: 'سجل التدقيق', screens: 'الشاشات المباشرة' };
+const SECTIONS = { subs: 'المشتركون والمدفوعات', clock: 'ساعة الشطرنج', help: 'المساعدة', dash: 'لوحة المتابعة', players: 'المشاركون', requests: 'طلبات التسجيل', attend: 'الحضور', rounds: 'الجولات', ref: 'التحكيم والنتائج', standings: 'الترتيب', finance: 'المالية', prizes: 'الجوائز والشهادات', reports: 'التقارير', notify: 'الإشعارات', gallery: 'معرض الصور', roles: 'الصلاحيات والحكام', settings: 'الإعدادات', season: 'المواسم والأرشيف', audit: 'سجل التدقيق', screens: 'الشاشات المباشرة' };
 
 const DEF = {
   name: 'بطولة شطرنج الأندلس', season: '2026', org: 'مدارس الأندلس الأهلية', school: 'مدارس الأندلس الأهلية – فرع الزهراء', club: 'نادي شطرنج الأندلس',

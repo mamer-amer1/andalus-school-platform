@@ -15,7 +15,13 @@ function header(h) {
   <div class="sub">${esc(S.club)} • ${esc(S.school)}</div><h1>${esc(S.name)} ${esc(S.season)}</h1>
   <div class="sub">${esc(S.days.filter(d => d.date).length ? fmtD(S.days[0].date) + ' – ' + fmtD(S.days[S.days.length - 1].date) : 'المواعيد تُعلن قريباً')} • ${esc(S.start)}–${esc(S.end)} مساءً</div>
   <div class="stat"><div>رسوم الاشتراك<b>${esc(Number(S.fee || 0).toLocaleString('en-US'))} ريال</b></div><div>زمن اللعب<b>${esc(S.tc)} دقيقة لكل لاعب</b></div><div>التسجيل<b>${S.regOpen ? 'مفتوح' : 'مغلق'}</b></div></div></div></div>
-  <nav class="tabs" aria-label="واجهة الجمهور">${PUB.map(([k, n]) => `<a href="#${k}" class="${h === k || (k === 'player' && h.startsWith('p-')) ? 'on' : ''}">${n}</a>`).join('')}${staff ? '<a href="#admin">لوحة الإدارة</a>' : ''}<a href="#tv">الشاشة المباشرة</a></nav></header>`;
+  </header>`;
+}
+const ICO = { home: '🏠', register: '📝', mine: '🎫', matches: '♟️', results: '📋', standings: '🏆', player: '👤', prizes: '🥇', news: '📣', gallery: '🖼️', clock: '⏱️', help: '❔' };
+function sideNav(h) {
+  const staff = A.st.level !== 'view' && A.st.level !== 'none';
+  const cur = PUB.find(([k]) => h === k || (k === 'player' && h.startsWith('p-'))) || PUB[0];
+  return `<nav class="pubside" aria-label="أقسام المنصة"><button type="button" class="pubtoggle" data-pubmenu aria-expanded="false">☰ القائمة <span>— ${cur[1]}</span></button><div class="publinks">${PUB.map(([k, n]) => `<a href="#${k}" class="${cur[0] === k ? 'on' : ''}"><i>${ICO[k] || '•'}</i>${n}</a>`).join('')}<hr>${staff ? '<a href="#admin"><i>⚙️</i>لوحة الإدارة</a>' : ''}<a href="#tv"><i>📺</i>الشاشة المباشرة</a></div></nav>`;
 }
 function footer() {
   const S = A.S(), wa = intl(S.wa);
@@ -103,7 +109,7 @@ function playerPage(h) {
     return `<h2>صفحة اللاعب</h2>${find}${q ? (hits.length ? `<div class="card">${hits.map(p => `<a class="row sp hit" href="#p-${p.no}"><span><b>${esc(p.name)}</b> — ${esc(A.catName(p.cat))}</span><span class="note">${esc(A.regNo(p))}</span></a>`).join('')}</div>` : '<div class="empty">لا يوجد لاعب بهذا الاسم.</div>') : '<p class="note">اكتب اسم اللاعب أو رقمه لعرض نتائجه وترتيبه ومنافسه القادم وسجل مبارياته.</p>'}`; }
   const f = A.byNo(no); if (!f) return `<h2>صفحة اللاعب</h2>${find}<div class="empty">لا يوجد لاعب بهذا الرقم.</div>`;
   const [id, p] = f, T = A.table(p.cat), x = T.find(t => t.id === id), nx = A.nextOpp(id), H = A.history(id), ach = A.achievements(p.mk);
-  return `${find}<div class="card"><div class="row sp"><div><div class="note">${esc(A.regNo(p))} • ${esc(A.catName(p.cat))}</div><h2 style="margin:0">${esc(p.name)}</h2></div><div class="row"><span class="pill ${K.REG_CLS[p.status] || ''}">${esc(K.REG[p.status] || '')}</span>${p.withdrawn ? '<span class="pill bad">منسحب</span>' : ''}</div></div>
+  return `${find}<div class="card"><div class="row sp"><div class="row" style="flex-wrap:nowrap;gap:14px">${A.thumb ? A.thumb(p, id, 72) : ''}<div><div class="note">${esc(A.regNo(p))} • ${esc(A.catName(p.cat))}</div><h2 style="margin:0">${esc(p.name)}</h2></div></div><div class="row">${p.withdrawn ? '<span class="pill bad">منسحب</span>' : ''}</div></div>
   ${x ? `<div class="kpis" style="margin-top:14px">${[['الترتيب', x.rank + ' / ' + T.length], ['النقاط', x.pts], ['المباريات', x.gp + x.bye], ['فوز', x.w], ['تعادل', x.d], ['خسارة', x.l]].map(([l, v]) => `<div class="kpi"><span>${l}</span><b>${esc(v)}</b></div>`).join('')}</div>` : '<p class="note">يظهر الترتيب بعد اعتماد التسجيل.</p>'}
   <h3>المباراة القادمة</h3>${nx ? (nx.bye ? `<p>استراحة في الجولة ${nx.n} (نقطة كاملة)</p>` : `<p>الجولة ${nx.n} — الطاولة ${nx.bd} — يلعب ${nx.color === 'w' ? 'بالأبيض' : 'بالأسود'} ضد ${plink(nx.opp)}</p>`) : '<p class="note">لم يُعلن التوزيع بعد.</p>'}
   <h3>سجل المباريات</h3>${H.length ? `<div class="scroll"><table class="stack"><thead><tr><th>الجولة</th><th>الطاولة</th><th>اللون</th><th>المنافس</th><th>النتيجة</th></tr></thead><tbody>${H.map(r => r.bye ? `<tr><td>${r.n}</td><td>—</td><td>—</td><td>استراحة</td><td>1</td></tr>` : `<tr><td>${r.n}</td><td>${r.bd}</td><td>${r.color === 'w' ? 'أبيض' : 'أسود'}</td><td>${plink(r.opp)}</td><td>${r.res ? esc(r.pts) + ' (' + esc(r.res) + ')' : 'لم تنتهِ'}</td></tr>`).join('')}</tbody></table></div>` : '<p class="note">لا توجد مباريات بعد.</p>'}
@@ -124,7 +130,8 @@ function register() {
    <label>الاسم الكامل *<input name="name" required autocomplete="name" placeholder="الاسم كما سيظهر في البطاقة"></label>
    <label>المشارك *<select name="type">${Object.entries(K.TYPES).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></label>
    <label>رقم الجوال *<input name="phone" inputmode="tel" placeholder="05xxxxxxxx" dir="ltr"></label>
-   <label data-only="student">الصف الدراسي<input name="grade" placeholder="مثال: الثاني متوسط"></label></div>
+   <label data-only="student">الصف الدراسي<input name="grade" placeholder="مثال: الثاني متوسط"></label>
+   <label>صورة شخصية للبطاقة <span class="opt">اختياري</span><input type="file" name="pic" accept="image/*"><span class="note">إن لم ترفع صورة تُوضع صورة رمزية حسب الفئة. صورتك تظهر في بطاقتك فقط ولا تُنشر في المنصة.</span></label><div id="picPrev" class="picprev"></div></div>
    <details style="margin-top:10px"><summary>تحدي الأسرة (اختياري)</summary><p class="note">إذا سجّل ابنك أو ولي أمرك قبلك، اكتب رقم تسجيله هنا ليُحتسب مجموعكما في «تحدي الأسرة». هذا الرقم يظهر في بطاقة المشارك (مثل AND26-012).</p><label>رقم تسجيل الشريك<input name="partner" dir="ltr" placeholder="AND26-012"></label></details>
    <label class="ck" style="margin-top:12px"><input type="checkbox" name="terms"> أوافق على شروط البطولة ولوائحها *</label>
    <label class="ck" data-only="student"><input type="checkbox" name="parent"> موافقة ولي الأمر على مشاركة الطالب *</label>
@@ -147,12 +154,14 @@ A.renderPublic = h => {
   if (h.startsWith('p-')) h = 'p';
   const page = Object.assign({ home, prizes: prizesPage, matches, results, standings, news, gallery, register, track, survey }, A.pubX || {})[h] || (h === 'p' || h === 'player' ? () => playerPage(location.hash.slice(1)) : home);
   const S = A.S();
-  document.getElementById('root').innerHTML = header(location.hash.slice(1) || 'home') + `<main>${A.st.err ? `<div class="warnbox">${esc(A.st.err)}</div>` : ''}${page()}${footer()}</main>`;
+  const hh = location.hash.slice(1) || 'home';
+  document.getElementById('root').innerHTML = header(hh) + `<div class="publay">${sideNav(hh)}<main>${A.st.err ? `<div class="warnbox">${esc(A.st.err)}</div>` : ''}${page()}${footer()}</main></div>`;
   if (h === 'register' && S.formUrl && /^https:\/\//.test(S.formUrl)) A.qrSvg(S.formUrl, 4).then(svg => { const e = document.getElementById('formQr'); if (e) e.innerHTML = svg; }).catch(() => { });
 };
 
 /* events */
 document.addEventListener('click', e => {
+  const m = e.target.closest('[data-pubmenu]'); if (m) { const n = m.closest('.pubside'); n.classList.toggle('open'); m.setAttribute('aria-expanded', n.classList.contains('open')); return; }
   const b = e.target.closest('[data-pcat],[data-rsel],[data-pcat-go]'); if (!b) return;
   if (b.dataset.pcat) { cat = b.dataset.pcat; A.render(); }
   else if (b.dataset.rsel) { rsel[cat] = +b.dataset.rsel; A.render(); }
@@ -164,7 +173,7 @@ document.addEventListener('submit', async e => {
   else if (f.id === 'trk') {
     e.preventDefault(); const v = +A.u.digits(document.getElementById('tno').value).replace(/\D/g, ''); const r = A.byNo(v); const o = document.getElementById('trkOut');
     if (!r) { o.innerHTML = '<div class="empty">لا يوجد طلب بهذا الرقم.</div>'; return; }
-    const p = r[1]; o.innerHTML = `<div class="card"><h3>${esc(p.name)} — ${esc(A.regNo(p))}</h3><p>الفئة: ${esc(A.catName(p.cat))}</p><p>حالة الطلب: <span class="pill ${K.REG_CLS[p.status]}">${esc(K.REG[p.status])}</span> • السداد: ${p.paid ? '<span class="pill ok">مدفوع</span>' : '<span class="pill warn">غير مدفوع</span>'}</p><p class="note">الحضور: ${esc(A.S().start)} مساءً في ${esc(A.S().place)}، قبل بداية الجولة بخمس دقائق.</p></div>`;
+    const p = r[1]; o.innerHTML = `<div class="card"><h3>${esc(p.name)} — ${esc(A.regNo(p))}</h3><p>الفئة: ${esc(A.catName(p.cat))}</p><p class="note">لمعرفة حالة طلبك ورسومك افتح «بطاقتي».</p><p class="note">الحضور: ${esc(A.S().start)} مساءً في ${esc(A.S().place)}، قبل بداية الجولة بخمس دقائق.</p></div>`;
   }
   else if (f.id === 'regf') { e.preventDefault(); await A.submitRegistration(f); }
   else if (f.id === 'srv') {
@@ -188,14 +197,16 @@ A.validateReg = o => {
 A.submitRegistration = async f => {
   const fd = new FormData(f), o = {}; fd.forEach((v, k) => o[k] = typeof v === 'string' ? v.trim() : v);
   ['terms', 'parent', 'photo'].forEach(k => o[k] = !!(f.elements[k] && f.elements[k].checked));
+  const pic = o.pic && o.pic.size ? o.pic : null; delete o.pic;
   const errs = A.validateReg(o), box = document.getElementById('regErr');
   if (errs.length) { box.hidden = false; box.textContent = errs.join(' • '); return; }
   box.hidden = true;
-  if (A.isAdminLvl()) { const id = await A.createPlayer(Object.assign({}, o, { link: '' }), 'نموذج المنصة'); if (id) { if (o.partner) A.linkByNo && A.linkByNo(id, o.partner); A.confirmBox(id); f.reset(); } return; }
+  if (A.isAdminLvl()) { const id = await A.createPlayer(Object.assign({}, o, { link: '' }), 'نموذج المنصة'); if (id) { if (o.partner) A.linkByNo && A.linkByNo(id, o.partner); if (pic) await A.setPhoto(id, pic); else A.confirmBox(id); f.reset(); } return; }
   const btn = document.getElementById('regBtn'); if (btn) { btn.disabled = true; btn.textContent = 'جارٍ التسجيل…'; }
   try {
+    if (pic) { try { o.photo64 = await A.shrinkPhoto(pic); } catch (er) { throw new Error('الصورة غير صالحة — اختر صورة بصيغة JPG أو PNG'); } }
     const r = await A.regServer(o);
-    A.rememberCard(r); f.reset(); A.showMyCard(r, true);
+    A.rememberCard(r); f.reset(); const pv = document.getElementById('picPrev'); if (pv) pv.innerHTML = ''; A.showMyCard(r, true);
   } catch (e) {
     box.hidden = false; box.textContent = e.message;
     if (e.dup) { A.rememberCard(e.dup); }

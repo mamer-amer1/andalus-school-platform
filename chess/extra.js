@@ -2,6 +2,10 @@
    مسح الحضور بالكاميرا، التقارير الشاملة، المساعدة */
 {
 const A = window.A, { esc, fmtD, fmtDT, money, normPhone, validPhone, intl, digits, now } = A.u, K = A.K, D = A.D;
+/* photo or the category's default avatar (same style for all, in the school colours) */
+A.avatar = p => 'avatars/' + ({ student: 'student', father: 'man', mother: 'woman' }[p && p.type] || { 1: 'student', 2: 'man', 3: 'woman' }[p && p.cat] || 'student') + '.svg';
+A.photoOf = (p, id) => { id = id || (p && p.id); const mine = id && (JSON.parse(localStorage.getItem('chessCards') || '[]').find(c => c.id === id) || {}).photo; const ph = (p && p.photo) || (id && (A.D.priv[id] || {}).photo) || mine; return ph ? '/_blob/' + encodeURIComponent(ph) : A.avatar(p); };
+A.thumb = (p, id, size = 44) => `<img class="pthumb" src="${A.photoOf(p, id)}" alt="" width="${size}" height="${Math.round(size * 1.25)}" loading="lazy" onerror="this.onerror=null;this.src='${A.avatar(p)}'">`;
 const fmtN = v => Number(v || 0).toLocaleString('en-US');
 const SCHOOL = 'مدارس الأندلس الأهلية';
 
@@ -52,21 +56,32 @@ A.cardCanvas = async (p, scale = 1) => {
   try { const m = await qrMatrix(code), box = 250, cs = box / (m.n + 2); x.fillStyle = '#fff'; rr(x, 44, 200, box + 24, box + 24, 18); x.fill(); x.strokeStyle = '#c9d6ea'; x.lineWidth = 2; x.stroke(); x.fillStyle = '#0b1b3a';
     for (let r = 0; r < m.n; r++) for (let k = 0; k < m.n; k++) if (m.at(r, k)) x.fillRect(56 + (k + 1) * cs, 212 + (r + 1) * cs, Math.ceil(cs), Math.ceil(cs)); } catch (e) { }
   x.textAlign = 'center'; x.fillStyle = navy; x.font = `700 26px ${BF}`; x.fillText(code, 44 + 137, 514);
-  // name + details (right)
-  x.textAlign = 'right'; x.fillStyle = '#0b1b3a'; x.font = fit(x, p.name || '', 620, 50, HF); x.fillText(p.name || '', 968, 258);
-  x.font = `500 22px ${BF}`; x.fillStyle = '#55625f'; x.fillText('الفئة', 968, 316);
-  const cat = A.catName(p.cat); x.font = `700 28px ${BF}`; const cw = x.measureText(cat).width + 40; x.fillStyle = '#e8f1fb'; rr(x, 968 - cw, 330, cw, 50, 25); x.fill(); x.fillStyle = navy; x.fillText(cat, 948, 365);
-  x.font = `500 22px ${BF}`; x.fillStyle = '#55625f'; x.fillText('رقم المشارك', 968, 424); x.font = `700 30px ${BF}`; x.fillStyle = '#0b1b3a'; x.fillText(code, 968, 462);
+  // photo (right) — kept private: only the participant's own card and the organisers can load it
+  const phId = p.photo || (p.id && (D.priv[p.id] || {}).photo) || '';
+  const ph = (phId ? await A.img('/_blob/' + encodeURIComponent(phId)).catch(() => null) : null) || await img(A.avatar(p));
+  let R = 968;
+  if (ph) { const pw = 172, phh = 215, px = 968 - pw, py = 196; x.save(); rr(x, px, py, pw, phh, 18); x.clip(); const sc = Math.max(pw / ph.width, phh / ph.height), dw = ph.width * sc, dh = ph.height * sc; x.drawImage(ph, px + (pw - dw) / 2, py + (phh - dh) / 2, dw, dh); x.restore(); x.strokeStyle = navy; x.lineWidth = 4; rr(x, px, py, pw, phh, 18); x.stroke(); R = px - 26; }
+  // name + details
+  const nmax = R - 360;
+  x.textAlign = 'right'; x.fillStyle = '#0b1b3a'; x.font = fit(x, p.name || '', nmax, ph ? 42 : 50, HF); x.fillText(p.name || '', R, 258);
+  x.font = `500 22px ${BF}`; x.fillStyle = '#55625f'; x.fillText('الفئة', R, 316);
+  const cat = A.catName(p.cat); x.font = fit(x, cat, nmax - 40, 28, BF); const cw = x.measureText(cat).width + 40; x.fillStyle = '#e8f1fb'; rr(x, R - cw, 330, cw, 50, 25); x.fill(); x.fillStyle = navy; x.fillText(cat, R - 20, 365);
+  x.font = `500 22px ${BF}`; x.fillStyle = '#55625f'; x.fillText('رقم المشارك', R, 424); x.font = `700 30px ${BF}`; x.fillStyle = '#0b1b3a'; x.fillText(code, R, 462);
   // footer
   x.fillStyle = '#f1f6f5'; x.fillRect(0, 560, 1012, 78); x.fillStyle = '#334'; x.font = `500 20px ${BF}`; x.textAlign = 'center';
   x.fillText('احتفظ بهذه البطاقة — يُمسح رمز QR عند الحضور لتسجيل حضورك', 506, 592); x.fillStyle = '#55625f'; x.font = `400 17px ${BF}`; x.fillText(S.school || SCHOOL, 506, 620);
   x.restore(); x.strokeStyle = navy; x.lineWidth = 4; rr(x, 2, 2, 1008, 634, 32); x.stroke();
   return c;
 };
+A.plist = f => Object.entries(D.players).filter(([, p]) => f(p)).map(([id, p]) => Object.assign({ id }, p)).sort((a, b) => a.no - b.no);
+/* photo: crop to 4:5 and shrink before sending (small file, fast card) */
+A.shrinkPhoto = file => new Promise((res, rej) => { if (!file || !/^image\//.test(file.type)) return rej(new Error('type')); const u = URL.createObjectURL(file), im = new Image();
+  im.onload = () => { const W = 400, H = 500, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d'), sc = Math.max(W / im.width, H / im.height); x.fillStyle = '#fff'; x.fillRect(0, 0, W, H); x.drawImage(im, (W - im.width * sc) / 2, (H - im.height * sc) / 2, im.width * sc, im.height * sc); URL.revokeObjectURL(u); res(c.toDataURL('image/jpeg', .82)); };
+  im.onerror = () => rej(new Error('img')); im.src = u; });
 const cardName = p => 'بطاقة-' + A.regNo(p) + '-' + String(p.name || '').replace(/\s+/g, '-');
 A.cardPNG = async p => { const c = await A.cardCanvas(p, 1); const b = await new Promise(r => c.toBlob(r, 'image/png')); A.save(cardName(p) + '.png', b); };
 A.cardsPDF = async (list, name) => {
-  list = list || Object.values(D.players).filter(p => !['rejected', 'cancelled'].includes(p.status)).sort((a, b) => a.no - b.no);
+  list = list || A.plist(p => !['rejected', 'cancelled'].includes(p.status));
   if (!list.length) { A.toast('لا يوجد مشاركون'); return; }
   let jsPDF; try { jsPDF = await A.jsPDF(); } catch (e) { A.toast('تعذّر تحميل مكتبة PDF'); return; }
   A.toast('جارٍ إنشاء ' + list.length + ' بطاقة…', 4000);
@@ -82,7 +97,7 @@ A.cardsPDF = async (list, name) => {
 A.cardPDF = p => A.cardsPDF([p], cardName(p));
 
 /* ---------- self-registration through the platform server ---------- */
-const ERR = { closed: 'التسجيل مغلق حالياً', name: 'الاسم الكامل مطلوب', type: 'اختر نوع المشارك', phone: 'رقم الجوال يجب أن يكون بصيغة 05xxxxxxxx', terms: 'الموافقة على الشروط مطلوبة', parent: 'موافقة ولي الأمر مطلوبة للطالب', too_many: 'عدد كبير من التسجيلات من هذا الجهاز اليوم — تواصل مع منسّق البطولة' };
+const ERR = { closed: 'التسجيل مغلق حالياً', name: 'الاسم الكامل مطلوب', type: 'اختر نوع المشارك', phone: 'رقم الجوال يجب أن يكون بصيغة 05xxxxxxxx', terms: 'الموافقة على الشروط مطلوبة', parent: 'موافقة ولي الأمر مطلوبة للطالب', photo: 'الصورة غير صالحة أو كبيرة جداً — اختر صورة أخرى', too_many: 'عدد كبير من التسجيلات من هذا الجهاز اليوم — تواصل مع منسّق البطولة' };
 A.regServer = async o => {
   let r; try { r = await fetch('/api/chess/register', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Uid': localStorage.getItem('andalusUid') || '', ...(localStorage.getItem('andalusTok') ? { Authorization: 'Bearer ' + localStorage.getItem('andalusTok') } : {}) }, body: JSON.stringify(o) }); }
   catch (e) { throw new Error('تعذّر الاتصال — تأكد من الإنترنت وأعد المحاولة'); }
@@ -93,8 +108,8 @@ A.regServer = async o => {
 };
 const MY = 'chessCards';
 A.myCards = () => { try { return JSON.parse(localStorage.getItem(MY) || '[]'); } catch (e) { return []; } };
-A.rememberCard = r => { const L = A.myCards().filter(x => x.id !== r.id); L.unshift({ id: r.id, no: r.no, name: r.name, cat: r.cat, season: r.season || A.S().season }); try { localStorage.setItem(MY, JSON.stringify(L.slice(0, 12))); } catch (e) { } };
-const asP = c => Object.assign({}, c, D.players[c.id] || {});
+A.rememberCard = r => { const L = A.myCards().filter(x => x.id !== r.id); L.unshift({ id: r.id, no: r.no, name: r.name, cat: r.cat, season: r.season || A.S().season, photo: r.photo || '' }); try { localStorage.setItem(MY, JSON.stringify(L.slice(0, 12))); } catch (e) { } };
+const asP = c => Object.assign({}, c, D.players[c.id] || {}, { id: c.id, photo: c.photo || (D.priv[c.id] || {}).photo || '' });
 A.showMyCard = async (c, fresh) => {
   const p = asP(c);
   A.modal(`<div class="row" style="gap:10px">${A.emb(48)}<h2 style="margin:0">${fresh ? '✓ تم التسجيل بنجاح' : 'بطاقة المشارك'}</h2></div>
@@ -104,14 +119,14 @@ A.showMyCard = async (c, fresh) => {
   <div class="row"><button class="pri" data-x="cardPng" data-id="${esc(c.id)}">تنزيل البطاقة (صورة)</button><button data-x="cardPdf" data-id="${esc(c.id)}">تنزيل PDF</button><a class="btn" href="#mine" data-close>بطاقتي</a><button data-close>إغلاق</button></div>`);
   try { const cv = await A.cardCanvas(p, 1); const e = document.getElementById('cardImg'); if (e) e.innerHTML = `<img src="${cv.toDataURL('image/png')}" alt="بطاقة ${esc(p.name)}">`; } catch (e) { }
 };
-const cardById = id => { const m = A.myCards().find(x => x.id === id); return m ? asP(m) : D.players[id] ? Object.assign({ id }, D.players[id]) : null; };
+const cardById = id => { const m = A.myCards().find(x => x.id === id); return m ? asP(m) : D.players[id] ? Object.assign({ id }, D.players[id], { photo: (D.priv[id] || {}).photo || '' }) : null; };
 
 /* ---------- public pages ---------- */
 function mine() {
   const L = A.myCards(), S = A.S();
   return `<h2>بطاقتي</h2>
   <p class="note">هنا تجد بطاقات من سجّلتهم من هذا الجهاز، وحالة الطلب والرسوم فقط.</p>
-  ${L.length ? `<div class="grid">${L.map(c => { const p = asP(c); return `<div class="card mycard" style="margin:0"><div class="row sp"><div><b>${esc(p.name)}</b><div class="note">${esc(A.regNo(p))} • ${esc(A.catName(p.cat))}</div></div>${A.emb(40)}</div>
+  ${L.length ? `<div class="grid">${L.map(c => { const p = asP(c); return `<div class="card mycard" style="margin:0"><div class="row sp"><div class="row" style="flex-wrap:nowrap">${A.thumb(p, c.id, 56)}<div><b>${esc(p.name)}</b><div class="note">${esc(A.regNo(p))} • ${esc(A.catName(p.cat))}</div></div></div>${A.emb(40)}</div>
     <div class="row" style="margin:10px 0"><span class="pill ${K.REG_CLS[p.status] || ''}">${esc(K.REG[p.status] || 'طلب جديد')}</span>${p.paid ? '<span class="pill ok">الرسوم مسددة</span>' : `<span class="pill warn">الرسوم: ${fmtN(S.fee)} ريال</span>`}</div>
     <div class="row"><button class="pri" data-x="showCard" data-id="${esc(c.id)}">عرض البطاقة و QR</button>${p.no ? `<a class="btn" href="#p-${p.no}">النتائج</a>` : ''}<button class="sm dan" data-x="forget" data-id="${esc(c.id)}">إزالة من الجهاز</button></div></div>`; }).join('')}</div>` : `<div class="empty">لا توجد بطاقات محفوظة على هذا الجهاز. ${S.regOpen ? '<a href="#register">سجّل الآن</a> أو ابحث عن بطاقتك بالأسفل.' : ''}</div>`}
   <form id="findCard" class="card" style="margin-top:18px"><h3>استرجاع بطاقة</h3><p class="note">إذا سجّلت من جهاز آخر: اكتب رقم المشارك ورقم الجوال المسجّل.</p><div class="grid"><label>رقم المشارك<input name="no" dir="ltr" placeholder="AND26-012 أو 12"></label><label>رقم الجوال<input name="phone" dir="ltr" inputmode="tel" placeholder="05xxxxxxxx"></label></div><div id="fcErr" class="warnbox" hidden></div><button class="pri" style="margin-top:10px">عرض بطاقتي</button></form>`;
@@ -268,6 +283,7 @@ async function onScan(txt) {
   const n = +String(digits(txt)).split('-').pop().replace(/\D/g, ''), f = n ? A.byNo(n) : null, m = document.getElementById('camMsg'), log = document.getElementById('camLog');
   if (!f) { if (m) { m.className = 'camMsg bad'; m.textContent = '✗ رمز غير معروف: ' + txt; } return; }
   const [id, p] = f, key = 'd' + ((A.ui.day || 0) + 1);
+  if (p.archived || p.status === 'cancelled') { if (m) { m.className = 'camMsg bad'; m.textContent = `✗ ${p.name}: التسجيل ملغى (مؤرشف)`; } beep(); return; }
   if (p.status !== 'approved') { if (m) { m.className = 'camMsg warn'; m.textContent = `⚠ ${p.name}: الطلب غير معتمد بعد (${K.REG[p.status] || ''})`; } beep(); return; }
   if (p.att && p.att[key]) { if (m) { m.className = 'camMsg ok'; m.textContent = `✓ ${p.name} — مسجّل حضوره مسبقاً`; } return; }
   await A.markAtt(id, true);
@@ -288,6 +304,138 @@ async function listQR() {
   A.printDoc('قائمة المشاركين ورموز QR', `<style>td svg{width:70px;height:70px}</style><table><thead><tr><th>رقم التسجيل</th><th>الاسم</th><th>الفئة</th><th>الحالة</th><th>QR</th></tr></thead><tbody>${rows}</tbody></table>`);
 }
 
+/* ---------- admin: card with photo, delete participant ---------- */
+const canManage = A.canManageP = () => A.isAdminLvl() && (A.st.level === 'owner' || ['sys', 'director', 'registrar'].includes(A.role()));
+A.cardModal = async id => {
+  const p = D.players[id]; if (!p) return; const ph = (D.priv[id] || {}).photo;
+  A.modal(`<h2>بطاقة ${esc(p.name)}</h2><div id="cardImg" class="cardimg"><div class="empty">جارٍ التجهيز…</div></div>
+  <div class="row"><button class="pri" data-x="cardPng" data-id="${esc(id)}">تنزيل صورة</button><button data-x="cardPdf" data-id="${esc(id)}">تنزيل PDF</button>
+  ${canManage() ? `<label class="btn" style="flex-direction:row">${ph ? 'تغيير الصورة الشخصية' : 'إضافة صورة شخصية'}<input type="file" accept="image/*" data-xphoto="${esc(id)}" hidden></label>${ph ? `<button data-x="rmPhoto" data-id="${esc(id)}">إزالة الصورة</button>` : ''}<button class="dan" data-x="delP" data-id="${esc(id)}">حذف المشارك</button>` : ''}<button data-close>إغلاق</button></div>`);
+  const cv = await A.cardCanvas(Object.assign({ id }, p, { photo: ph || '' })); const el = document.getElementById('cardImg'); if (el) el.innerHTML = `<img src="${cv.toDataURL('image/png')}" alt="">`;
+};
+const setPhoto = A.setPhoto = async (id, file) => {
+  if (!A.st.assets) { A.toast('رفع الصور متاح للإدارة فقط'); return; }
+  A.toast('جارٍ رفع الصورة…');
+  try { const du = await A.shrinkPhoto(file); const blob = await (await fetch(du)).blob(); const r = await A.st.assets.upload(new File([blob], 'photo.jpg', { type: 'image/jpeg' }));
+    const q = Object.assign({}, D.priv[id] || {}, { photo: r.id }); await A.put('private/' + id, q); D.priv[id] = q; await A.log('صورة المشارك', A.regNo(D.players[id]), 'رفع صورة'); A.toast('✓ أُضيفت الصورة إلى البطاقة'); A.cardModal(id); }
+  catch (e) { A.toast('تعذّر رفع الصورة — اختر صورة بصيغة JPG أو PNG', 4000); }
+};
+const playedGames = id => Object.values(D.rounds).some(r => (r.games || []).some(g => g.w === id || g.b === id) || r.bye === id);
+const isBoss = A.isBoss = () => A.st.level === 'owner' || A.role() === 'sys';
+/* archive (cancel registration, reversible) is the default; permanent delete is for the manager only */
+function delPlayer(id) {
+  const p = D.players[id]; if (!p) return; const played = playedGames(id);
+  A.modal(`<h2>إلغاء تسجيل ${esc(p.name)}</h2><p class="note">${esc(A.regNo(p))} • ${esc(A.catName(p.cat))}</p>
+  <div class="card" style="margin:10px 0"><h3>📦 أرشفة (موصى بها)</h3><p>يُلغى التسجيل ويختفي المشارك من القوائم العامة وتوزيع الجولات القادمة، مع <b>الاحتفاظ</b> ببياناته ودفعاته وحضوره ونتائجه. لا تُقبل بطاقته عند مسح الحضور. <b>يمكن استعادته</b> في أي وقت من «المشتركون والمدفوعات ← المؤرشفون».</p>
+   <form id="archF" data-id="${esc(id)}"><label>السبب *<input name="reason" required placeholder="مثال: طلب ولي الأمر"></label><button class="pri" style="margin-top:8px">أرشفة</button></form></div>
+  ${isBoss() ? `<div class="card" style="margin:10px 0;border-color:#d0453b"><h3>🗑️ حذف نهائي (للمدير فقط)</h3>${played ? '<p>لا يمكن الحذف النهائي: المشارك لعب مباريات، وحذفه يُفسد نتائج منافسيه والترتيب. استخدم الأرشفة.</p>' : `<p>يُحذف التسجيل وبيانات التواصل والدفعات وسجل الحضور، وتصبح بطاقته ورمز QR غير صالحين. <b>لا يمكن التراجع</b> إلا من نسخة احتياطية (تُحفظ تلقائياً قبل الحذف). تُسجَّل العملية في سجل التدقيق.</p>
+   <form id="delPF" data-id="${esc(id)}"><label>اكتب «حذف» للتأكيد<input name="confirm" required autocomplete="off"></label><label>السبب *<input name="reason" required></label><button class="pri dan" style="margin-top:8px">حذف نهائياً</button></form>`}</div>` : '<p class="note">الحذف النهائي متاح لمدير النظام فقط.</p>'}
+  <div class="row"><button data-close>إلغاء</button></div>`);
+}
+A.archiveP = async (id, reason) => {
+  const p = D.players[id], q = D.priv[id] || {}; if (!p) return;
+  const hist = (q.history || []).concat([{ at: now(), text: 'أرشفة (إلغاء التسجيل) — ' + reason }]).slice(-40);
+  await A.safe(async () => {
+    await A.upd('players/' + id, { status: 'cancelled', archived: true, withdrawn: true, prevStatus: p.status, prevWithdrawn: !!p.withdrawn, archivedAt: now() });
+    await A.put('private/' + id, Object.assign({}, q, { history: hist }));
+    await A.log('أرشفة مشارك', A.regNo(p), p.name + ' — ' + reason, p.status, 'cancelled');
+  }, '✓ أُرشف المشارك — يمكن استعادته من قائمة المؤرشفين');
+  A.closeModal();
+};
+A.restoreP = async id => {
+  const p = D.players[id], q = D.priv[id] || {}; if (!p) return;
+  const st = p.prevStatus && p.prevStatus !== 'cancelled' ? p.prevStatus : 'new';
+  const hist = (q.history || []).concat([{ at: now(), text: 'استعادة من الأرشيف' }]).slice(-40);
+  await A.safe(async () => {
+    await A.upd('players/' + id, { status: st, archived: false, withdrawn: !!p.prevWithdrawn, archivedAt: '' });
+    await A.put('private/' + id, Object.assign({}, q, { history: hist }));
+    await A.log('استعادة مشارك', A.regNo(p), p.name, 'cancelled', st);
+  }, '✓ استُعيد المشارك');
+};
+async function doDelete(id, reason) {
+  const p = D.players[id]; if (!p || !isBoss() || playedGames(id)) return;
+  const ok = await A.safe(async () => {
+    await A.backup('قبل حذف ' + A.regNo(p));
+    if (p.duo && D.players[p.duo]) await A.upd('players/' + p.duo, { duo: '' });
+    await A.del('players/' + id); await A.del('private/' + id).catch(() => { });
+    await A.log('حذف مشارك نهائياً', A.regNo(p), p.name + ' — ' + reason);
+    delete D.players[id]; delete D.priv[id]; return true;
+  }, '✓ حُذف المشارك نهائياً');
+  if (ok) { A.closeModal(); A.render(true); }
+}
+
+/* ---------- subscribers & payments (management only) ---------- */
+const canPay = () => A.st.level === 'owner' || ['sys', 'director', 'finance', 'registrar'].includes(A.role());
+const SU = { c: 'all', q: '', pay: '' };
+const payOf = id => { const q = D.priv[id] || {}, p = D.players[id] || {}; return { paid: !!p.paid, amt: +q.payAmount || 0, date: q.payDate || '', note: q.payNote || '', method: q.payMethod || '' }; };
+function subRows() {
+  const q = digits(SU.q).trim(); let L = Object.entries(D.players);
+  L = SU.c === 'arch' ? L.filter(([, p]) => p.archived || p.status === 'cancelled') : L.filter(([, p]) => !p.archived && p.status !== 'cancelled' && p.status !== 'rejected');
+  if (K.CATS.includes(SU.c)) L = L.filter(([, p]) => p.cat === SU.c);
+  if (SU.pay === 'paid') L = L.filter(([, p]) => p.paid); else if (SU.pay === 'unpaid') L = L.filter(([, p]) => !p.paid);
+  if (q) { const n = q.split('-').pop().replace(/\D/g, ''); L = L.filter(([, p]) => p.name.includes(q) || A.regNo(p).toUpperCase().includes(q.toUpperCase()) || (n && String(p.no) === String(+n))); }
+  return L.sort((a, b) => a[1].cat.localeCompare(b[1].cat) || a[1].no - b[1].no);
+}
+function subsPage() {
+  const S = A.S(), fee = +S.fee || 0, act = Object.entries(D.players).filter(([, p]) => !p.archived && !['cancelled', 'rejected'].includes(p.status));
+  const paidAmt = act.reduce((s, [id]) => s + payOf(id).amt, 0), due = act.length * fee, paidN = act.filter(([, p]) => p.paid).length;
+  const L = subRows(), arch = SU.c === 'arch', cp = canPay(), cm = A.canManageP();
+  const catStat = c => { const X = act.filter(([, p]) => p.cat === c); return `${X.length} • 🟢 ${X.filter(([, p]) => p.paid).length} • 🔴 ${X.filter(([, p]) => !p.paid).length}`; };
+  let hc = false;
+  const row = ([id, p], i) => { const y = payOf(id), q = D.priv[id] || {}; return `<tr class="${p.paid ? 'paidrow' : ''}"><td class="n">${i + 1}</td><td class="n">${esc(A.regNo(p))}</td><td><div class="row" style="flex-wrap:nowrap;gap:8px">${A.thumb(p, id, 36)}<div><b>${esc(p.name)}</b><br><span class="note">${esc(K.TYPES[p.type] || '')}</span></div></div></td>${hc ? '' : `<td>${esc(A.catName(p.cat))}</td>`}<td class="n" dir="ltr">${esc(q.phone || '')}</td>
+    <td>${arch ? '<span class="pill bad">مؤرشف</span>' : `<span class="pill ${K.REG_CLS[p.status] || ''}">${esc(K.REG[p.status] || '')}</span>`}</td>
+    <td>${p.paid ? '<span class="paybadge ok">🟢 تم الدفع</span>' : '<span class="paybadge no">🔴 لم يتم الدفع بعد</span>'}</td><td class="n">${y.amt ? fmtN(y.amt) + ' ريال' : '—'}</td><td class="n">${esc(y.date || '—')}</td><td>${esc(y.note || '')}</td>
+    <td><div class="row">${cp && !arch ? `<button class="sm ${p.paid ? '' : 'pri'}" data-x="payM" data-id="${esc(id)}">${p.paid ? 'تعديل الدفع' : 'تسجيل الدفع'}</button>` : ''}<button class="sm" data-xcard="${esc(id)}">البطاقة</button>${cm ? (arch ? `<button class="sm pri" data-x="restoreP" data-id="${esc(id)}">استعادة</button>` : `<button class="sm dan" data-x="delP" data-id="${esc(id)}">إلغاء/حذف</button>`) : ''}</div></td></tr>`; };
+  const table = (rows, h) => { hc = !!h; return rows.length ? `<div class="scroll"><table class="stack subt"><thead><tr><th>#</th><th>رقم التسجيل</th><th>الاسم</th>${hc ? '' : '<th>الفئة</th>'}<th>الجوال</th><th>حالة الطلب</th><th>السداد</th><th>المبلغ</th><th>تاريخ السداد</th><th>ملاحظات</th><th></th></tr></thead><tbody>${rows.map(row).join('')}</tbody></table></div>` : '<div class="empty">لا يوجد مشتركون بهذه التصفية.</div>'; };
+  return `<div class="row sp"><div class="row">${A.emb(46)}<h2 style="margin:0">المشتركون والمدفوعات</h2></div><div class="row"><button data-x="subX" data-f="xlsx">⬇ Excel</button><button data-x="subX" data-f="pdf">⬇ PDF</button></div></div>
+  <div class="kpis dk">${[['إجمالي المشتركين', act.length, 'navy'], ['🟢 سددوا', paidN, 'ok'], ['🔴 لم يسددوا', act.length - paidN, 'co'], ['المبالغ المسددة', fmtN(paidAmt) + ' ريال', 'ok'], ['المبالغ المتبقية', fmtN(Math.max(0, due - paidAmt)) + ' ريال', 'co'], ['المستحق الكلي', fmtN(due) + ' ريال', 'navy']].map(([l, v, c]) => `<div class="kpi k-${c}"><span>${l}</span><b>${esc(v)}</b></div>`).join('')}</div>
+  <div class="cats subtabs">${[['all', 'الكل (قائمة موحدة)'], ...K.CATS.map(c => [c, A.catName(c)]), ['arch', '📦 المؤرشفون']].map(([k, l]) => `<button data-x="suC" data-c="${k}" class="${SU.c === k ? 'on' : ''}">${esc(l)}${K.CATS.includes(k) ? `<small> (${catStat(k)})</small>` : ''}</button>`).join('')}</div>
+  <div class="row card"><label style="flex:2 1 240px">بحث بالاسم أو رقم التسجيل<input id="sq" value="${esc(SU.q)}" placeholder="مثال: أحمد أو AND26-012"></label><label style="flex:1 1 170px">حالة السداد<select id="spay"><option value="">الكل</option><option value="paid" ${SU.pay === 'paid' ? 'selected' : ''}>🟢 تم الدفع</option><option value="unpaid" ${SU.pay === 'unpaid' ? 'selected' : ''}>🔴 لم يتم الدفع بعد</option></select></label></div>
+  ${SU.c === 'all' && !SU.q && !SU.pay ? K.CATS.map(c => { const R = L.filter(([, p]) => p.cat === c); return `<h3 style="margin-top:18px">${esc(A.catName(c))} <span class="note">(${R.length})</span></h3>${table(R, true)}`; }).join('') : table(L, K.CATS.includes(SU.c))}
+  <p class="note">تغيير حالة السداد متاح لفريق الإدارة فقط، ولا يرى أولياء الأمور حالة سداد غيرهم أو أي بيانات مالية.</p>`;
+}
+function payModal(id) {
+  const p = D.players[id], y = payOf(id), S = A.S();
+  A.modal(`<h2>السداد — ${esc(p.name)}</h2><p class="note">${esc(A.regNo(p))} • ${esc(A.catName(p.cat))} • الرسوم ${fmtN(S.fee)} ريال</p><form id="payX" data-id="${esc(id)}">
+  <div class="row paych"><label class="ck"><input type="radio" name="st" value="paid" ${p.paid || !y.amt ? 'checked' : ''}> 🟢 تم الدفع</label><label class="ck"><input type="radio" name="st" value="unpaid" ${!p.paid && y.amt ? 'checked' : ''}> 🔴 لم يتم الدفع بعد</label></div>
+  <div class="grid"><label>المبلغ المدفوع (ريال)<input name="amount" inputmode="decimal" value="${esc(y.amt || S.fee)}"></label><label>تاريخ السداد<input type="date" name="date" value="${esc(y.date || new Date().toISOString().slice(0, 10))}"></label><label>وسيلة الدفع<select name="method">${Object.entries(K.PAYM).map(([k, v]) => `<option value="${k}" ${y.method === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label></div>
+  <label>ملاحظات<textarea name="note" placeholder="مثال: دُفع نقداً للمنسّق">${esc(y.note)}</textarea></label>
+  <div class="row" style="margin-top:12px"><button class="pri">حفظ</button><button type="button" data-close>إلغاء</button></div></form>`);
+}
+async function savePayX(f) {
+  const id = f.dataset.id, p = D.players[id], q = D.priv[id] || {}, S = A.S(), fd = new FormData(f);
+  const paid = fd.get('st') === 'paid', amt = paid ? (+digits(fd.get('amount')) || 0) : 0;
+  if (paid && amt <= 0) { A.toast('أدخل المبلغ المدفوع'); return; }
+  const st = paid ? (['new', 'await'].includes(p.status) ? 'paid' : p.status) : (p.status === 'paid' ? 'await' : p.status);
+  const txt = paid ? `تم الدفع: ${amt} ريال بتاريخ ${fd.get('date')} (${K.PAYM[fd.get('method')]})` : 'تغيير السداد إلى: لم يتم الدفع';
+  const hist = (q.history || []).concat([{ at: now(), text: txt + (fd.get('note') ? ' — ' + fd.get('note') : '') }]).slice(-40);
+  await A.safe(async () => {
+    await A.put('private/' + id, Object.assign({}, q, { payAmount: amt, payDate: paid ? fd.get('date') : '', payMethod: fd.get('method'), payNote: String(fd.get('note') || '').slice(0, 300), history: hist }));
+    await A.upd('players/' + id, { paid: paid && amt >= (+S.fee || 0) ? true : paid, status: st });
+    await A.log(paid ? 'تسجيل دفع' : 'إلغاء حالة الدفع', A.regNo(p), txt, q.payAmount || 0, amt);
+    A.closeModal();
+  }, paid ? '✓ سُجّل الدفع' : '✓ عُدّلت حالة السداد');
+}
+function subExport(fmt) {
+  const S = A.S(), head = ['رقم التسجيل', 'الاسم', 'الفئة', 'النوع', 'الجوال', 'حالة الطلب', 'السداد', 'المبلغ المدفوع', 'المتبقي', 'تاريخ السداد', 'وسيلة الدفع', 'ملاحظات'];
+  const toRow = ([id, p]) => { const y = payOf(id), q = D.priv[id] || {}; return [A.regNo(p), p.name, A.catName(p.cat), K.TYPES[p.type] || '', q.phone || '', p.archived ? 'مؤرشف' : K.REG[p.status] || '', p.paid ? 'تم الدفع' : 'لم يتم الدفع بعد', y.amt, Math.max(0, (+S.fee || 0) - y.amt), y.date, K.PAYM[y.method] || '', y.note]; };
+  const L = subRows(), cats = K.CATS.includes(SU.c) ? [SU.c] : K.CATS;
+  const secs = SU.c === 'arch' ? [{ name: 'المؤرشفون', rows: L.map(toRow) }] : [{ name: 'جميع المشتركين', rows: L.map(toRow) }, ...(K.CATS.includes(SU.c) ? [] : cats.map(c => ({ name: A.catName(c), rows: L.filter(([, p]) => p.cat === c).map(toRow) })))];
+  const sum = rows => ['الإجمالي', rows.length + ' مشترك', '', '', '', '', rows.filter(r => r[6] === 'تم الدفع').length + ' سددوا', rows.reduce((s, r) => s + (+r[7] || 0), 0), rows.reduce((s, r) => s + (+r[8] || 0), 0), '', '', ''];
+  const title = 'كشف المشتركين والمدفوعات' + (K.CATS.includes(SU.c) ? ' — ' + A.catName(SU.c) : SU.c === 'arch' ? ' — المؤرشفون' : '');
+  if (fmt === 'xlsx') return A.xlsx(title, secs.map(s => ({ name: s.name.slice(0, 30), rows: [head, ...s.rows, sum(s.rows)] })));
+  const tb = rows => `<table><thead><tr>${head.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map((v, i) => `<td${i === 6 ? ` style="color:${v === 'تم الدفع' ? '#1f9d55' : '#d0453b'};font-weight:700"` : ''}>${esc(v)}</td>`).join('')}</tr>`).join('')}<tr style="background:#eef4fb;font-weight:700">${sum(rows).map(v => `<td>${esc(v)}</td>`).join('')}</tr></tbody></table>`;
+  A.printDoc(title, `<style>table{font-size:11px}</style>` + secs.slice(secs.length > 1 ? 1 : 0).map(s => `<h2>${esc(s.name)}</h2>${s.rows.length ? tb(s.rows) : '<p>لا يوجد.</p>'}`).join(''));
+}
+A.admX.subs = subsPage;
+document.addEventListener('input', e => { if (e.target.id !== 'sq') return; SU.q = e.target.value; clearTimeout(SU.t); SU.t = setTimeout(() => { const pos = e.target.selectionStart; A.render(true); const i = document.getElementById('sq'); if (i) { i.focus(); try { i.setSelectionRange(pos, pos); } catch (er) { } } }, 250); });
+document.addEventListener('change', e => { if (e.target.id === 'spay') { SU.pay = e.target.value; A.render(true); } });
+document.addEventListener('submit', async e => { const f = e.target; if (f.id === 'payX') { e.preventDefault(); await savePayX(f); } else if (f.id === 'archF') { e.preventDefault(); const r = f.elements.reason.value.trim(); if (r) await A.archiveP(f.dataset.id, r); } });
+A.subsX = { payModal, subExport, SU };
+document.addEventListener('change', e => { const t = e.target; if (t.dataset && t.dataset.xphoto) { const f = t.files[0]; t.value = ''; if (f) setPhoto(t.dataset.xphoto, f); }
+  else if (t.name === 'pic' && t.closest('#regf')) { const f = t.files[0], pv = document.getElementById('picPrev'); if (!pv) return; if (!f) { pv.innerHTML = ''; return; } A.shrinkPhoto(f).then(u => { pv.innerHTML = `<img src="${u}" alt="">`; }).catch(() => { pv.innerHTML = '<span class="note">اختر صورة بصيغة JPG أو PNG</span>'; }); } });
+document.addEventListener('submit', async e => { if (e.target.id !== 'delPF') return; e.preventDefault(); const f = e.target; if (f.elements.confirm.value.trim() !== 'حذف') { A.toast('اكتب كلمة «حذف» للتأكيد'); return; } const r = f.elements.reason.value.trim(); if (!r) return; await doDelete(f.dataset.id, r); });
+
 /* ---------- events ---------- */
 document.addEventListener('click', async e => {
   const t = e.target.closest('[data-x],[data-ck],[data-ckgo],[data-ckpause],[data-ckreset],[data-ckres],[data-full],[data-xcard]'); if (!t) return;
@@ -298,12 +446,12 @@ document.addEventListener('click', async e => {
   if (d.ckreset) { ckReset(document.getElementById('ckMin')?.value, document.getElementById('ckInc')?.value); A.render(true); return; }
   if (d.ckres) { const L = CK.link; if (!L) return; await A.setResult(L.c, L.n, L.bd, d.ckres); CK.done = true; CK.run = null; A.render(true); return; }
   if (d.full) { const [c, f] = d.full.split(':'); A.fullReport(c, f); return; }
-  if (d.xcard) { const p = D.players[d.xcard]; if (!p) return; A.modal(`<h2>بطاقة ${esc(p.name)}</h2><div id="cardImg" class="cardimg"><div class="empty">جارٍ التجهيز…</div></div><div class="row"><button class="pri" data-x="cardPng" data-id="${esc(d.xcard)}">تنزيل صورة</button><button data-x="cardPdf" data-id="${esc(d.xcard)}">تنزيل PDF</button><button data-close>إغلاق</button></div>`); const cv = await A.cardCanvas(Object.assign({ id: d.xcard }, p)); const el = document.getElementById('cardImg'); if (el) el.innerHTML = `<img src="${cv.toDataURL('image/png')}" alt="">`; return; }
+  if (d.xcard) { A.cardModal(d.xcard); return; }
   if (x === 'showCard') { const m = A.myCards().find(c => c.id === d.id); if (m) A.showMyCard(m); }
   else if (x === 'forget') { try { localStorage.setItem(MY, JSON.stringify(A.myCards().filter(c => c.id !== d.id))); } catch (err) { } A.render(true); }
   else if (x === 'cardPng') { const p = cardById(d.id); if (p) A.cardPNG(p); }
   else if (x === 'cardPdf') { const p = cardById(d.id); if (p) A.cardPDF(p); }
-  else if (x === 'cardsCat') A.cardsPDF(Object.values(D.players).filter(p => p.cat === d.c && !['rejected', 'cancelled'].includes(p.status)).sort((a, b) => a.no - b.no), 'بطاقات-' + A.catName(d.c).replace(/\s+/g, '-'));
+  else if (x === 'cardsCat') A.cardsPDF(A.plist(p => p.cat === d.c && !['rejected', 'cancelled'].includes(p.status)), 'بطاقات-' + A.catName(d.c).replace(/\s+/g, '-'));
   else if (x === 'listQR') listQR();
   else if (x === 'copyReg') { const u = A.regLink(); try { await navigator.clipboard.writeText(u); A.toast('✓ تم نسخ رابط التسجيل'); } catch (err) { const i = document.getElementById('regUrl'); if (i) { i.select(); document.execCommand('copy'); A.toast('✓ تم نسخ رابط التسجيل'); } } }
   else if (x === 'regToggle') { const open = !A.S().regOpen; await A.saveSettings({ regOpen: open }); A.toast(open ? '✓ فُتح التسجيل' : '✓ أُوقف التسجيل'); }
@@ -311,6 +459,13 @@ document.addEventListener('click', async e => {
   else if (x === 'camScan') camScan();
   else if (x === 'camStop') stopCam();
   else if (x === 'attSheet') attSheet();
+  else if (x === 'delP') delPlayer(d.id);
+  else if (x === 'payM') payModal(d.id);
+  else if (x === 'restoreP') A.restoreP(d.id);
+  else if (x === 'suC') { SU.c = d.c; A.render(true); }
+  else if (x === 'subX') subExport(d.f);
+  else if (x === 'withdraw') { await A.safe(() => A.upd('players/' + d.id, { withdrawn: true }), '✓ سُجّل منسحباً'); await A.log('انسحاب مشارك', A.regNo(D.players[d.id]), ''); A.closeModal(); }
+  else if (x === 'rmPhoto') { const q = Object.assign({}, D.priv[d.id] || {}, { photo: '' }); await A.safe(() => A.put('private/' + d.id, q), '✓ أُزيلت الصورة'); D.priv[d.id] = q; A.cardModal(d.id); }
   else if (x === 'linkDuo') A.linkByNo(d.id, D.priv[d.id].partner);
 });
 document.addEventListener('change', e => {

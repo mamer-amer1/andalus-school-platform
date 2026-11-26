@@ -153,6 +153,22 @@ a.hit{color:inherit;text-decoration:none;padding:10px 4px;border-bottom:1px soli
 #chessBar a{color:#fff;text-decoration:none;font-weight:700;border:1px solid #ffffff55;border-radius:999px;padding:6px 14px;background:#ffffff14}#chessBar a:hover{background:#ffffff2e}
 #chessBar .who{opacity:.9}
 @media print{#chessBar{display:none}}
+label .note{display:block;font-weight:400}.picprev img{width:96px;height:120px;object-fit:cover;border-radius:12px;border:2px solid var(--tile);margin-top:4px}
+.paybadge{display:inline-block;white-space:nowrap;font-weight:700;border-radius:999px;padding:3px 10px;font-size:13px}.paybadge.ok{background:light-dark(#e3f6ea,#123322);color:light-dark(#156c3a,#8fe0ad)}.paybadge.no{background:light-dark(#fde8e6,#3a1714);color:light-dark(#b3261e,#f4a39c)}
+.subtabs button small{opacity:.75;font-weight:400}.paych{gap:20px;margin:6px 0 12px}.paych .ck{font-weight:700}
+.publay{max-width:1240px;margin:0 auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:22px;align-items:start;padding:22px max(3vw,14px) 0}
+.publay>main{max-width:none;margin:0;padding:0 0 60px}
+.pubside{background:var(--bg);border:1px solid var(--line);border-radius:18px;padding:10px;box-shadow:0 6px 18px #1238850d}
+.pubtoggle{display:none}
+.publinks{display:grid;gap:2px}.publinks hr{border:0;border-top:1px solid var(--line);margin:6px 4px}
+.publinks a{display:flex;align-items:center;gap:10px;color:var(--ink);text-decoration:none;padding:10px 12px;border-radius:12px;font-weight:500;min-height:44px}
+.publinks a i{font-style:normal;width:22px;text-align:center}
+.publinks a:hover{background:var(--soft)}.publinks a.on{background:var(--tile);color:#fff;font-weight:700}
+@media(max-width:860px){.publay{grid-template-columns:1fr;gap:12px}.pubtoggle{display:flex;width:100%;align-items:center;gap:6px;justify-content:flex-start;font-weight:700;border-radius:12px;min-height:46px}.pubtoggle span{color:var(--mut);font-weight:500}.publinks{display:none;margin-top:8px}.pubside.open .publinks{display:grid}}
+@media(max-width:600px){.stat{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%}.stat>div{min-width:0;padding:2px 6px}.stat b{font-size:15px}}
+.subt td:last-child .row{flex-wrap:nowrap;gap:6px}.subt td b{white-space:nowrap}@media(max-width:600px){.subt td:last-child .row{flex-wrap:wrap}}
+.pthumb{flex:none;object-fit:cover;border-radius:10px;border:2px solid color-mix(in srgb,var(--tile) 45%,transparent);background:var(--soft)}
+.opt{display:inline-block;font-size:12px;font-weight:700;color:var(--tl);background:color-mix(in srgb,var(--tile) 12%,var(--bg));border:1px solid color-mix(in srgb,var(--tile) 35%,transparent);border-radius:99px;padding:0 8px;margin-inline-start:6px}
 #mBody{max-height:calc(100dvh - 32px);overflow:auto}
 </style>
 <script>new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true})</script>
