@@ -11,7 +11,7 @@ const curCat = () => lockCat() || UI.cat;
 function side(sec) {
   const r = A.role(), secs = K.ROLES[r].s;
   const badge = { requests: Object.values(D.requests).reduce((s, q) => s + (q.items || []).filter(i => !i.done).length, 0) + Object.values(D.players).filter(p => p.status === 'new').length, ref: Object.keys(D.subs).length + Object.values(D.incidents).filter(i => i.status !== 'closed').length };
-  return `<aside class="side"><img src="logo.png" alt="شعار مدارس الأندلس الأهلية"><div class="who">${esc(K.ROLES[r].n)}<br>${esc(A.S().name)} ${esc(A.S().season)}</div>${secs.map(s => `<a href="#a-${s}" class="${s === sec ? 'on' : ''}">${K.SECTIONS[s]}${badge[s] ? `<span class="bdg">${badge[s]}</span>` : ''}</a>`).join('')}<div class="sep" style="border-top:1px solid #ffffff33;margin:8px 0"></div><a href="#home">واجهة الجمهور</a><a href="#tv">الشاشة المباشرة</a></aside>`;
+  return `<aside class="side"><img src="logo.png" alt="شعار مدارس الأندلس الأهلية">${A.emb ? A.emb(64) : ''}<div class="who">${esc(K.ROLES[r].n)}<br>${esc(A.S().name)} ${esc(A.S().season)}</div>${secs.map(s => `<a href="#a-${s}" class="${s === sec ? 'on' : ''}">${K.SECTIONS[s]}${badge[s] ? `<span class="bdg">${badge[s]}</span>` : ''}</a>`).join('')}<div class="sep" style="border-top:1px solid #ffffff33;margin:8px 0"></div><a href="#home">واجهة الجمهور</a><a href="#tv">الشاشة المباشرة</a></aside>`;
 }
 const catTabs = () => lockCat() ? `<div class="cats"><span class="pill">${esc(A.catName(lockCat()))}</span></div>` : `<div class="cats">${K.CATS.map(c => `<button data-acat="${c}" class="${c === UI.cat ? 'on' : ''}">${esc(A.catName(c))}</button>`).join('')}</div>`;
 
@@ -44,7 +44,7 @@ function players() {
   const fin = A.role() === 'finance';
   return `<div class="row sp"><h2 style="margin:0">المشاركون (${L.length})</h2><div class="row">${fin ? '' : '<button class="pri" data-act="addPlayer">إضافة لاعب</button><button data-act="import">استيراد من ملف</button>'}<button data-act="xPlayers">تصدير Excel</button><button data-act="pPlayers">طباعة القائمة</button><button data-act="cards">بطاقات QR</button></div></div>
   <div class="row card" style="margin-top:14px"><label style="flex:2 1 220px">بحث بالاسم أو رقم التسجيل أو الجوال<input id="pq" value="${esc(UI.q)}" placeholder="اكتب للبحث"></label>${lc ? '' : `<label style="flex:1 1 160px">الفئة<select id="pfc"><option value="">الكل</option>${K.CATS.map(c => `<option value="${c}" ${UI.fcat === c ? 'selected' : ''}>${esc(A.catName(c))}</option>`).join('')}</select></label>`}<label style="flex:1 1 160px">الحالة<select id="pfs"><option value="">الكل</option>${Object.entries(K.REG).map(([k, v]) => `<option value="${k}" ${UI.fst === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label></div>
-  ${L.length ? `<div class="scroll"><table class="stack"><thead><tr><th>رقم التسجيل</th><th>الاسم</th><th>الفئة</th><th>الجوال</th><th>الحالة</th><th>السداد</th><th>تحدي الأسرة</th><th></th></tr></thead><tbody>${L.map(([id, p]) => { const q = D.priv[id] || {}; return `<tr><td class="n">${esc(A.regNo(p))}</td><td><b>${esc(p.name)}</b>${p.withdrawn ? ' <span class="pill bad">منسحب</span>' : ''}<br><span class="note">${esc(K.TYPES[p.type] || '')}${q.grade ? ' • ' + esc(q.grade) : ''}</span></td><td>${esc(A.catName(p.cat))}</td><td class="n" dir="ltr">${esc(q.phone || '')}</td><td><span class="pill ${K.REG_CLS[p.status]}">${esc(K.REG[p.status])}</span></td><td>${p.paid ? `<span class="pill ok">${esc(money(q.payAmount))}</span>` : `<button class="sm" data-pay="${id}">تسجيل دفع</button>`}</td><td>${p.duo && D.players[p.duo] ? nm(p.duo) : ''}</td><td><div class="row">${fin ? '' : `<button class="sm" data-edit="${id}">تعديل</button>${['new', 'await', 'paid'].includes(p.status) ? `<button class="sm" data-st="${id}:approved">اعتماد</button>` : ''}${p.status === 'new' ? `<button class="sm" data-st="${id}:await">بانتظار السداد</button><button class="sm dan" data-st="${id}:rejected">رفض</button>` : ''}`}<button class="sm" data-conf="${id}">تأكيد</button></div></td></tr>`; }).join('')}</tbody></table></div>` : '<div class="empty">لا يوجد مشاركون بهذه التصفية.</div>'}`;
+  ${L.length ? `<div class="scroll"><table class="stack"><thead><tr><th>رقم التسجيل</th><th>الاسم</th><th>الفئة</th><th>الجوال</th><th>الحالة</th><th>السداد</th><th>تحدي الأسرة</th><th></th></tr></thead><tbody>${L.map(([id, p]) => { const q = D.priv[id] || {}; return `<tr><td class="n">${esc(A.regNo(p))}</td><td><b>${esc(p.name)}</b>${p.withdrawn ? ' <span class="pill bad">منسحب</span>' : ''}<br><span class="note">${esc(K.TYPES[p.type] || '')}${q.grade ? ' • ' + esc(q.grade) : ''}</span></td><td>${esc(A.catName(p.cat))}</td><td class="n" dir="ltr">${esc(q.phone || '')}</td><td><span class="pill ${K.REG_CLS[p.status]}">${esc(K.REG[p.status])}</span></td><td>${p.paid ? `<span class="pill ok">${esc(money(q.payAmount))}</span>` : `<button class="sm" data-pay="${id}">تسجيل دفع</button>`}</td><td>${p.duo && D.players[p.duo] ? nm(p.duo) : ''}</td><td><div class="row"><button class="sm" data-xcard="${id}" title="بطاقة المشارك">البطاقة</button>${fin ? '' : `<button class="sm" data-edit="${id}">تعديل</button>${['new', 'await', 'paid'].includes(p.status) ? `<button class="sm" data-st="${id}:approved">اعتماد</button>` : ''}${p.status === 'new' ? `<button class="sm" data-st="${id}:await">بانتظار السداد</button><button class="sm dan" data-st="${id}:rejected">رفض</button>` : ''}`}<button class="sm" data-conf="${id}">تأكيد</button></div></td></tr>`; }).join('')}</tbody></table></div>` : '<div class="empty">لا يوجد مشاركون بهذه التصفية.</div>'}`;
 }
 function playerForm(id) {
   const p = id ? D.players[id] : { type: 'student', level: 'beg', status: 'new' }, q = id ? (D.priv[id] || {}) : { branch: A.S().school, payMethod: 'cash' }, lc = lockCat();
@@ -59,7 +59,7 @@ function playerForm(id) {
   <label>التصنيف (اختياري)<input name="rating" inputmode="numeric" value="${esc(p.rating || '')}"></label>
   <label>وسيلة الدفع<select name="payMethod">${Object.entries(K.PAYM).map(([k, v]) => `<option value="${k}" ${q.payMethod === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
   ${id ? `<label>حالة الطلب<select name="status">${Object.entries(K.REG).map(([k, v]) => `<option value="${k}" ${p.status === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>` : ''}
-  <label>ربط بمشارك آخر (رمز الربط)<input name="link" dir="ltr" placeholder="${id ? 'رمز هذا المشارك: ' + esc(q.linkCode || '') : ''}"></label></div>
+  <label>تحدي الأسرة: رقم تسجيل الشريك<input name="link" dir="ltr" placeholder="مثال: AND26-012"></label></div>
   <label class="ck" style="margin-top:10px"><input type="checkbox" name="terms" ${q.terms || !id ? 'checked' : ''}> الموافقة على الشروط</label>
   <label class="ck"><input type="checkbox" name="parent" ${q.parent ? 'checked' : ''}> موافقة ولي الأمر (للطلاب)</label>
   <label class="ck"><input type="checkbox" name="photo" ${q.photo ? 'checked' : ''}> موافقة التصوير والنشر</label>
@@ -87,7 +87,8 @@ A.createPlayer = async (o, source) => {
   return r;
 };
 A.linkDuo = async (id, code) => {
-  const c = String(code).trim().toUpperCase(); const f = Object.entries(D.priv).find(([oid, q]) => oid !== id && String(q.linkCode).toUpperCase() === c);
+  const c = String(code).trim().toUpperCase(); let f = Object.entries(D.priv).find(([oid, q]) => oid !== id && String(q.linkCode).toUpperCase() === c);
+  if (!f && /\d/.test(c)) { const t = A.byNo(+c.split('-').pop().replace(/\D/g, '')); if (t && t[0] !== id) f = [t[0]]; }
   if (!f) { A.toast('رمز الربط غير صحيح'); return false; }
   const oid = f[0];
   await A.upd('players/' + id, { duo: oid }); await A.upd('players/' + oid, { duo: id });
@@ -144,7 +145,7 @@ function requests() {
   const newP = Object.entries(D.players).filter(([, p]) => p.status === 'new');
   return `<h2>طلبات التسجيل</h2><div class="card"><h3>استيراد من نموذج Google</h3><p class="note">من جدول ردود النموذج: ملف ← تنزيل ← CSV أو Excel، ثم ارفعه هنا. تُنشأ الطلبات بحالة «طلب جديد» ويُتجاهل المكرر (نفس الاسم والجوال).</p><button class="pri" data-act="import">رفع ملف الردود</button></div>
   <div class="card"><h3>طلبات من حسابات المنصة (${fromAcc.length})</h3>${fromAcc.length ? fromAcc.map(r => `<div class="row sp" style="border-bottom:1px solid var(--line);padding:8px 0"><span><b>${esc(r.it.name)}</b> — ${esc(K.TYPES[r.it.type] || '')} — <span dir="ltr">${esc(r.it.phone)}</span> <span class="note">${esc(fmtDT(r.it.at))}</span></span><span class="row"><button class="sm pri" data-reqok="${esc(r.uid)}:${r.i}">قبول وإنشاء</button><button class="sm dan" data-reqno="${esc(r.uid)}:${r.i}">رفض</button></span></div>`).join('') : '<p class="note">لا توجد طلبات معلّقة.</p>'}</div>
-  <div class="card"><h3>طلبات جديدة بانتظار المراجعة (${newP.length})</h3>${newP.length ? newP.map(([id, p]) => `<div class="row sp" style="border-bottom:1px solid var(--line);padding:8px 0"><span>${esc(A.regNo(p))} — <b>${esc(p.name)}</b> — ${esc(A.catName(p.cat))}</span><span class="row"><button class="sm" data-st="${id}:await">بانتظار السداد</button><button class="sm pri" data-st="${id}:approved">اعتماد</button><button class="sm dan" data-st="${id}:rejected">رفض</button></span></div>`).join('') : '<p class="note">لا توجد.</p>'}</div>`;
+  <div class="card"><h3>طلبات جديدة بانتظار المراجعة (${newP.length})</h3>${newP.length ? newP.map(([id, p]) => `<div class="row sp" style="border-bottom:1px solid var(--line);padding:8px 0"><span>${esc(A.regNo(p))} — <b>${esc(p.name)}</b> — ${esc(A.catName(p.cat))}</span><span class="row"><button class="sm" data-st="${id}:await">بانتظار السداد</button><button class="sm pri" data-st="${id}:approved">اعتماد</button><button class="sm dan" data-st="${id}:rejected">رفض</button></span></div>`).join('') : '<p class="note">لا توجد.</p>'}</div>${A.reqX ? A.reqX() : ''}`;
 }
 const HMAP = { name: ['الاسم', 'name'], type: ['نوع', 'المشارك', 'type'], phone: ['جوال', 'الجوال', 'هاتف', 'phone', 'mobile'], grade: ['الصف', 'grade'], branch: ['المدرسة', 'الفرع', 'branch'], level: ['المستوى', 'level'], terms: ['الشروط', 'terms'], parent: ['ولي الأمر على', 'موافقة ولي', 'parent'], photo: ['التصوير', 'photo'], payMethod: ['الدفع', 'payment'], link: ['رمز الربط', 'link'] };
 A.importRows = async rows => {
@@ -174,7 +175,7 @@ function attend() {
   let L = Object.entries(D.players).filter(([, p]) => p.status === 'approved' && (!lc || p.cat === lc)).sort((a, b) => a[1].no - b[1].no);
   const present = L.filter(([, p]) => p.att && p.att[key]).length;
   return `<h2>الحضور</h2><div class="row card"><label style="flex:1 1 200px">اليوم<select id="attDay">${S.days.map((d, i) => `<option value="${i}" ${i === day ? 'selected' : ''}>اليوم ${i + 1}${d.date ? ' — ' + esc(fmtD(d.date)) : ''}</option>`).join('')}</select></label><form id="scanF" style="flex:2 1 260px" class="row"><label style="flex:1">امسح بطاقة QR أو اكتب رقم المشارك<input id="scan" autocomplete="off" placeholder="AND26-012 أو 12" autofocus></label><button class="pri" style="align-self:end">تسجيل حضور</button></form></div>
-  <p><b>${present}</b> حاضر من ${L.length} • <span class="note">قارئ الباركود يعمل كلوحة مفاتيح: ضع المؤشر في الخانة وامسح البطاقة.</span></p>
+  <div class="row" style="margin-bottom:10px"><button class="pri" data-x="camScan">📷 مسح البطاقات بالكاميرا</button><button data-x="attSheet">🖨️ كشف الحضور حسب الفئة</button></div><p><b>${present}</b> حاضر و<b>${L.length - present}</b> غائب من ${L.length} • <span class="note">يمكن أيضاً استخدام قارئ الباركود: ضع المؤشر في الخانة وامسح البطاقة.</span></p>
   <div class="scroll"><table class="stack"><thead><tr><th>رقم التسجيل</th><th>الاسم</th><th>الفئة</th><th>حاضر</th></tr></thead><tbody>${L.map(([id, p]) => `<tr><td class="n">${esc(A.regNo(p))}</td><td>${esc(p.name)}</td><td>${esc(A.catName(p.cat))}</td><td><input type="checkbox" data-att="${id}" ${p.att && p.att[key] ? 'checked' : ''} aria-label="حضور ${esc(p.name)}"></td></tr>`).join('')}</tbody></table></div>`;
 }
 A.markAtt = async (id, val) => { const p = D.players[id], key = 'd' + (UI.day + 1); const att = Object.assign({}, p.att || {}, { [key]: val }); await A.safe(async () => { await A.upd('players/' + id, { att }); await A.log(val ? 'تسجيل حضور' : 'إلغاء حضور', A.regNo(p), 'اليوم ' + (UI.day + 1)); }); };
@@ -287,7 +288,7 @@ function reports() {
   const fin = A.role() === 'finance', reg = A.role() === 'registrar';
   const ok = k => fin ? ['payments', 'financial', 'final'].includes(k) : reg ? ['participants', 'attendance', 'payments'].includes(k) : true;
   return `<h2>التقارير</h2><p class="note">«طباعة» تنزّل صفحة جاهزة للطباعة بهوية المدرسة؛ افتحها واضغط Ctrl+P (أو مشاركة ← طباعة على الجوال) واختر «حفظ PDF» إن أردت. «Excel» ينزّل جدولاً قابلاً للتحليل.</p><div class="grid">${REPORTS.filter(([k]) => ok(k)).map(([k, l]) => `<div class="card" style="margin:0"><h3>${l}</h3><div class="row"><button data-rep="${k}:html">طباعة</button><button data-rep="${k}:xlsx">Excel</button></div></div>`).join('')}</div>
-  <div class="card" style="margin-top:18px"><h3>بطاقات المشاركين</h3><p class="note">بطاقة لكل لاعب معتمد فيها اسمه ورقمه وفئته ورمز QR لتسجيل الحضور.</p><button data-act="cards">تنزيل البطاقات للطباعة</button></div>`;
+  ${A.reportsX ? A.reportsX() : ''}`;
 }
 
 /* ---------- notify ---------- */
@@ -320,7 +321,7 @@ function roles() {
 function settings() {
   const S = A.S(), f = (k, l, t = 'text', a = '') => `<label>${l}<input data-set="${k}" type="${t}" value="${esc(S[k])}" ${a}></label>`;
   const bk = UI.backups;
-  return `<h2>الإعدادات</h2><div class="card"><h3>البطولة</h3><div class="grid">${f('name', 'اسم البطولة')}${f('season', 'الموسم')}${f('club', 'اسم النادي')}${f('org', 'الجهة المنظمة')}${f('school', 'المدرسة / الفرع')}${f('place', 'مكان المنافسات')}${f('start', 'بداية المنافسات', 'time')}${f('end', 'نهاية المنافسات', 'time')}${f('tc', 'دقائق لكل لاعب', 'number', 'min="1" max="90"')}${f('maxRounds', 'عدد الجولات', 'number', 'min="1" max="15"')}${f('fee', 'رسوم الاشتراك (ريال)', 'number', 'min="0"')}${f('target', 'العدد المستهدف', 'number', 'min="0"')}${f('phone', 'جوال التواصل')}${f('wa', 'واتساب المنسّق')}${f('formUrl', 'رابط نموذج التسجيل (Google)', 'url')}${f('surveyUrl', 'رابط استبيان الرضا', 'url')}${f('tvSec', 'ثوانٍ لكل شاشة عرض', 'number', 'min="6"')}</div>
+  return `<h2>الإعدادات</h2><div class="savebar"><span>✓ تُحفظ كل خانة تلقائياً عند تغييرها، وتظهر رسالة «تم حفظ الإعدادات».</span><button class="pri" data-x="saveAll">حفظ الإعدادات</button></div><div class="card"><h3>البطولة</h3><div class="grid">${f('name', 'اسم البطولة')}${f('season', 'الموسم')}${f('club', 'اسم النادي')}${f('org', 'الجهة المنظمة')}${f('school', 'المدرسة / الفرع')}${f('place', 'مكان المنافسات')}${f('start', 'بداية المنافسات', 'time')}${f('end', 'نهاية المنافسات', 'time')}${f('tc', 'دقائق لكل لاعب (زمن المباراة)', 'number', 'min="1" max="90"')}${f('inc', 'ثوانٍ إضافية بعد كل نقلة', 'number', 'min="0" max="60"')}${f('maxRounds', 'عدد الجولات', 'number', 'min="1" max="15"')}${f('fee', 'رسوم الاشتراك (ريال)', 'number', 'min="0"')}${f('target', 'العدد المستهدف', 'number', 'min="0"')}${f('phone', 'جوال التواصل')}${f('wa', 'واتساب المنسّق')}${f('formUrl', 'رابط نموذج التسجيل (Google)', 'url')}${f('surveyUrl', 'رابط استبيان الرضا', 'url')}${f('tvSec', 'ثوانٍ لكل شاشة عرض', 'number', 'min="6"')}</div>
   <label class="ck" style="margin-top:10px"><input type="checkbox" data-setb="regOpen" ${S.regOpen ? 'checked' : ''}> التسجيل مفتوح</label></div>
   <div class="card"><h3>الفئات والجوائز</h3><div class="grid">${K.CATS.map(c => `<label>الفئة ${c}<input data-setn="cats.${c}" value="${esc(S.cats[c])}"></label><label>نظام الفئة ${c}<select data-setn="sys.${c}"><option value="auto" ${S.sys[c] === 'auto' ? 'selected' : ''}>تلقائي (دوري للفئات الصغيرة)</option><option value="swiss" ${S.sys[c] === 'swiss' ? 'selected' : ''}>سويسري</option><option value="rr" ${S.sys[c] === 'rr' ? 'selected' : ''}>دوري</option></select></label>`).join('')}${[1, 2, 3].map(i => `<label>جائزة المركز ${i} (ريال)<input data-setn="prizes.${i}" type="number" value="${esc(S.prizes[i])}"></label>`).join('')}</div></div>
   <div class="card"><h3>الجدول الزمني</h3>${S.days.map((d, i) => `<div class="grid" style="margin-bottom:8px"><label>اليوم ${i + 1}<input type="date" data-day="${i}:date" value="${esc(d.date)}"></label><label>البرنامج<input data-day="${i}:title" value="${esc(d.title)}"></label><label>الجولات<input data-day="${i}:rounds" value="${esc(d.rounds)}" placeholder="مثال: 4,5"></label></div>`).join('')}<div class="row"><button data-act="dayAdd">إضافة يوم</button>${S.days.length > 1 ? '<button class="dan" data-act="dayDel">حذف آخر يوم</button>' : ''}</div></div>
@@ -370,7 +371,7 @@ A.renderAdmin = h => {
   if (!K.ROLES[r].s.includes(sec)) sec = K.ROLES[r].s[0];
   if (sec === 'screens' && r === 'display') { /* display-only staff */ }
   const lc = lockCat(); if (lc) UI.cat = lc;
-  document.getElementById('root').innerHTML = `<div class="adm">${side(sec)}<div class="work">${A.st.err ? `<div class="warnbox">${esc(A.st.err)}</div>` : ''}${PAGES[sec]()}</div></div>`;
+  document.getElementById('root').innerHTML = `<div class="adm">${side(sec)}<div class="work">${A.st.err ? `<div class="warnbox">${esc(A.st.err)}</div>` : ''}${(Object.assign({}, PAGES, A.admX || {}))[sec]()}</div></div>`;
 };
 
 /* ---------- events ---------- */
@@ -456,7 +457,7 @@ document.addEventListener('submit', async e => {
 
 /* settings save (merge) */
 let setQ = Promise.resolve();
-A.saveSettings = patch => { setQ = setQ.then(() => A.safe(async () => { const cur = Object.assign({}, D.settings || {}, patch); D.settings = cur; await A.put('settings/main', cur); await A.log('تعديل الإعدادات', Object.keys(patch).join('، '), ''); A.render(); })); return setQ; };
+A.saveSettings = patch => { setQ = setQ.then(() => A.safe(async () => { const cur = Object.assign({}, D.settings || {}, patch); D.settings = cur; await A.put('settings/main', cur); await A.log('تعديل الإعدادات', Object.keys(patch).join('، '), ''); A.render(); }, '✓ تم حفظ الإعدادات')); return setQ; };
 
 /* restore & migrate */
 A.restore = async bid => {

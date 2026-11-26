@@ -27,20 +27,20 @@ const RES_LBL = { '1-0': '1-0', '0-1': '0-1', '½-½': '½-½', '+-': '+/- غي�
 const GST = { pending: 'لم تبدأ', live: 'جارية', done: 'انتهت', await: 'بانتظار الاعتماد', help: 'طلب الحكم الرئيسي' };
 const TB = { de: 'المواجهة المباشرة', bhc1: 'بوخهولز بدون أقل نتيجة', bh: 'بوخهولز', wins: 'عدد الانتصارات', sb: 'سونبورن-برجر', rating: 'التصنيف' };
 const ROLES = {
-  sys: { n: 'مدير النظام', s: ['dash', 'players', 'requests', 'attend', 'rounds', 'ref', 'standings', 'finance', 'prizes', 'reports', 'notify', 'gallery', 'roles', 'settings', 'season', 'audit'] },
-  director: { n: 'مدير البطولة', s: ['dash', 'players', 'requests', 'attend', 'rounds', 'ref', 'standings', 'prizes', 'reports', 'notify', 'gallery', 'settings', 'season', 'audit'] },
-  registrar: { n: 'مسؤول التسجيل', s: ['dash', 'players', 'requests', 'attend', 'notify', 'reports'] },
-  finance: { n: 'المسؤول المالي', s: ['dash', 'players', 'finance', 'reports'] },
-  chief: { n: 'الحكم الرئيسي', s: ['dash', 'rounds', 'ref', 'standings', 'attend', 'prizes'] },
-  assistant: { n: 'الحكم المساعد', s: ['ref'] },
-  women: { n: 'مشرفة فئة النساء', s: ['players', 'attend', 'rounds', 'ref', 'standings'], cat: '3' },
+  sys: { n: 'مدير النظام', s: ['dash', 'players', 'requests', 'attend', 'rounds', 'ref', 'standings', 'finance', 'prizes', 'reports', 'notify', 'gallery', 'roles', 'settings', 'season', 'audit', 'clock', 'help'] },
+  director: { n: 'مدير البطولة', s: ['dash', 'players', 'requests', 'attend', 'rounds', 'ref', 'standings', 'prizes', 'reports', 'notify', 'gallery', 'settings', 'season', 'audit', 'clock', 'help'] },
+  registrar: { n: 'مسؤول التسجيل', s: ['dash', 'players', 'requests', 'attend', 'notify', 'reports', 'help'] },
+  finance: { n: 'المسؤول المالي', s: ['dash', 'players', 'finance', 'reports', 'help'] },
+  chief: { n: 'الحكم الرئيسي', s: ['dash', 'rounds', 'ref', 'clock', 'standings', 'attend', 'prizes', 'help'] },
+  assistant: { n: 'الحكم المساعد', s: ['ref', 'clock', 'help'] },
+  women: { n: 'مشرفة فئة النساء', s: ['players', 'attend', 'rounds', 'ref', 'clock', 'standings', 'help'], cat: '3' },
   display: { n: 'مسؤول العرض', s: ['screens'] }
 };
-const SECTIONS = { dash: 'لوحة المؤشرات', players: 'المشاركون', requests: 'طلبات التسجيل', attend: 'الحضور', rounds: 'الجولات', ref: 'التحكيم والنتائج', standings: 'الترتيب', finance: 'المالية', prizes: 'الجوائز والشهادات', reports: 'التقارير', notify: 'الإشعارات', gallery: 'معرض الصور', roles: 'الصلاحيات والحكام', settings: 'الإعدادات', season: 'المواسم والأرشيف', audit: 'سجل التدقيق', screens: 'الشاشات المباشرة' };
+const SECTIONS = { clock: 'ساعة الشطرنج', help: 'المساعدة', dash: 'لوحة المتابعة', players: 'المشاركون', requests: 'طلبات التسجيل', attend: 'الحضور', rounds: 'الجولات', ref: 'التحكيم والنتائج', standings: 'الترتيب', finance: 'المالية', prizes: 'الجوائز والشهادات', reports: 'التقارير', notify: 'الإشعارات', gallery: 'معرض الصور', roles: 'الصلاحيات والحكام', settings: 'الإعدادات', season: 'المواسم والأرشيف', audit: 'سجل التدقيق', screens: 'الشاشات المباشرة' };
 
 const DEF = {
   name: 'بطولة شطرنج الأندلس', season: '2026', org: 'مدارس الأندلس الأهلية', school: 'مدارس الأندلس الأهلية – فرع الزهراء', club: 'نادي شطرنج الأندلس',
-  start: '14:00', end: '15:00', tc: 10, inc: 0, maxRounds: 5, fee: 100, prizes: { 1: 300, 2: 200, 3: 100 },
+  start: '14:00', end: '15:00', tc: 15, inc: 0, maxRounds: 5, fee: 100, prizes: { 1: 300, 2: 200, 3: 100 },
   cats: { 1: 'الطلاب', 2: 'أولياء الأمور – الرجال', 3: 'أولياء الأمور – النساء' }, sys: { 1: 'auto', 2: 'auto', 3: 'auto' },
   days: [{ date: '', title: 'الافتتاح والجولة الأولى', rounds: '1' }, { date: '', title: 'الجولة الثانية', rounds: '2' }, { date: '', title: 'الجولة الثالثة', rounds: '3' }, { date: '', title: 'الجولتان الرابعة والخامسة', rounds: '4,5' }, { date: '', title: 'الحفل الختامي وإعلان النتائج والتتويج', rounds: '' }],
   tb: ['de', 'bhc1', 'bh', 'wins', 'sb'], target: 60, formUrl: '', surveyUrl: '', phone: '', wa: '', place: 'صالة النشاط – مقر المدرسة',
@@ -219,9 +219,10 @@ A.achievements = mk => {
 /* ---------- lazy libraries ---------- */
 const libs = {};
 A.lib = (key, url, test) => libs[key] || (libs[key] = new Promise((res, rej) => { if (test()) return res(test()); const s = document.createElement('script'); s.src = url; s.onload = () => test() ? res(test()) : rej(new Error('lib')); s.onerror = () => { delete libs[key]; rej(new Error('تعذّر تحميل المكتبة')); }; document.head.appendChild(s); }));
-A.XLSX = () => A.lib('xlsx', 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', () => window.XLSX);
-A.jsPDF = () => A.lib('jspdf', 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', () => window.jspdf && window.jspdf.jsPDF);
-A.QR = () => A.lib('qr', 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js', () => window.qrcode);
+A.XLSX = () => A.lib('xlsx', 'lib/xlsx.js', () => window.XLSX);
+A.jsPDF = () => A.lib('jspdf', 'lib/jspdf.js', () => window.jspdf && window.jspdf.jsPDF);
+A.QR = () => A.lib('qr', 'lib/qrcode.js', () => window.qrcode);
+A.JSQR = () => A.lib('jsqr', 'lib/jsqr.js', () => window.jsQR);
 A.qrSvg = async (text, cell = 4) => { const q = await A.QR(); const qr = q(0, 'M'); qr.addData(text); qr.make(); return qr.createSvgTag({ cellSize: cell, margin: 2 }); };
 
 /* ---------- downloads ---------- */

@@ -121,6 +121,39 @@ td.n,th.n{text-align:left;font-variant-numeric:tabular-nums;white-space:nowrap}
 @media(max-width:600px){.g{grid-template-columns:36px minmax(0,1fr) minmax(0,1fr)}.g .res,.g .rv{grid-column:1/-1;justify-self:stretch}.res button{flex:1}
  table{font-size:13px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px;border-bottom:1px solid var(--line)}.stack td{display:flow-root;border:0;padding:3px 0;padding-inline-start:8em;text-align:start}.stack td::before{content:attr(data-l);float:inline-start;width:7.5em;margin-inline-start:-8em;color:var(--mut)}.stack td:empty{display:none}
  .tvr{grid-template-columns:2em minmax(0,1fr) 3.4em minmax(0,1fr)}}
+
+/* ---- platform additions ---- */
+.emb2{position:relative;display:inline-block;flex:none;vertical-align:middle}.emb2 img{position:absolute;inset:0;width:100%!important;height:100%!important;background:none!important;padding:0!important;margin:0!important;border-radius:0!important}
+.side .emb2{align-self:center;margin:2px 0 6px;background:#fff;border-radius:50%;box-shadow:0 0 0 4px #ffffff22}
+.feeband{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:linear-gradient(90deg,color-mix(in srgb,var(--tile) 10%,var(--bg)),var(--bg));border:1px solid color-mix(in srgb,var(--tile) 30%,var(--line));border-inline-start:6px solid var(--tile);border-radius:14px;padding:14px 18px;margin-bottom:18px}
+.feeband b{display:block;font-family:var(--hf,'Reem Kufi');font-size:22px;color:var(--tl)}.feeband span{color:var(--mut);font-size:14px}
+.feebox{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;border:1px dashed var(--tile);border-radius:14px;padding:12px 16px}.feebox b{font-family:var(--hf,'Reem Kufi');font-size:26px;color:var(--tl)}.feebox span{color:var(--mut)}
+.okbox{background:light-dark(#e9f8ef,#10291b);border:1px solid #1f9d55;color:light-dark(#145c33,#9be3b6);border-radius:12px;padding:10px 14px;margin:10px 0}
+.savebar{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:14px;box-shadow:0 6px 16px #0000000d}.savebar span{color:var(--mut);font-size:14px}
+.cardimg{margin:12px 0}.cardimg img{width:100%;max-width:520px;display:block;margin:auto;border-radius:16px;box-shadow:0 8px 24px #12388533}
+a.hit{color:inherit;text-decoration:none;padding:10px 4px;border-bottom:1px solid var(--line)}a.hit:hover{background:var(--soft)}
+.lrow{border-bottom:1px solid var(--line);padding:7px 0;font-size:14px}
+.kpis.dk .kpi{background:var(--bg);border-top:4px solid var(--tile)}.k-cy{border-top-color:#17a9d9!important}.k-pu{border-top-color:#9b4fa3!important}.k-co{border-top-color:#e8665d!important}.k-ok{border-top-color:#1f9d55!important}
+.dgrid{grid-template-columns:repeat(auto-fit,minmax(min(330px,100%),1fr))!important}.dgrid .card{margin:0}
+.hrow{display:grid;grid-template-columns:minmax(90px,1.3fr) 2fr auto;gap:10px;align-items:center;margin:8px 0;font-size:14px}.hbar{height:12px;background:var(--soft);border-radius:99px;overflow:hidden}.hbar i{display:block;height:100%;border-radius:99px;transition:width .4s}
+.ringc{--p:0;--c:var(--tile);width:124px;aspect-ratio:1;border-radius:50%;background:conic-gradient(var(--c) calc(var(--p)*1%),var(--soft) 0);display:grid;place-content:center;text-align:center;position:relative}.ringc::before{content:"";position:absolute;inset:13px;border-radius:50%;background:var(--bg)}.ringc b,.ringc span{position:relative}.ringc b{font-size:22px;color:var(--tl)}.ringc span{font-size:11px;color:var(--mut);max-width:90px;line-height:1.3}
+.fin3{display:grid;gap:8px;flex:1 1 180px}.fin3 div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line);padding:4px 0;font-size:14px}.okc{color:#1f9d55}.bdc{color:#d0453b}
+.qrbox{width:150px;flex:none}.qrbox svg{width:100%;height:auto;display:block}
+.help .card{margin:0}.help p{margin:6px 0}
+.clock{display:grid;gap:10px;margin-top:12px}
+.ckside{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:min(34vh,260px);border-radius:22px;border:2px solid var(--line);background:var(--soft);color:var(--ink);cursor:pointer;font:inherit;padding:14px;touch-action:manipulation}
+.ckside.on{background:var(--tile);color:#fff;border-color:var(--tile)}.ckside.on .note{color:#ffffffcc}.ckside.flag{background:#d0453b;color:#fff;border-color:#d0453b}
+.ckt{font:700 clamp(54px,14vw,120px)/1 var(--hf,'Reem Kufi');font-variant-numeric:tabular-nums;direction:ltr}.ckn{font-size:18px;font-weight:700}
+.ckbar{justify-content:center}.ckflag{display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-weight:700}
+@media(max-width:700px){.ckside.top{transform:rotate(180deg)}}
+.camwrap{position:relative;max-width:420px;margin:10px auto;border-radius:16px;overflow:hidden;background:#000;aspect-ratio:1}.camwrap video{width:100%;height:100%;object-fit:cover;display:block}.camframe{position:absolute;inset:18%;border:4px solid #ffffffcc;border-radius:18px;box-shadow:0 0 0 999px #0005}
+.camMsg{text-align:center;font-weight:700;font-size:18px;padding:10px;border-radius:12px;background:var(--soft)}.camMsg.ok{background:#1f9d55;color:#fff}.camMsg.bad{background:#d0453b;color:#fff}.camMsg.warn{background:#e2a91e;color:#1b1300}
+#camLog{max-height:160px;overflow:auto;margin-top:8px}
+#chessBar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:8px max(5vw,14px);background:var(--tile2,#0e2c6b);color:#fff;font-size:14px;position:sticky;top:0;z-index:15}
+#chessBar a{color:#fff;text-decoration:none;font-weight:700;border:1px solid #ffffff55;border-radius:999px;padding:6px 14px;background:#ffffff14}#chessBar a:hover{background:#ffffff2e}
+#chessBar .who{opacity:.9}
+@media print{#chessBar{display:none}}
+#mBody{max-height:calc(100dvh - 32px);overflow:auto}
 </style>
 <script>new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true})</script>
 </head>
@@ -137,6 +170,7 @@ td.n,th.n{text-align:left;font-variant-numeric:tabular-nums;white-space:nowrap}
 <script src="tv.js"></script>
 <script src="adm.js"></script>
 <script src="out.js"></script>
+<script src="extra.js"></script>
 <script src="boot.js"></script>
 
 </body>

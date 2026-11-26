@@ -17,8 +17,8 @@ A.printDoc = async (title, body) => {
   body{font:13px/1.6 'IBM Plex Sans Arabic',Tahoma,sans-serif;color:#14201f;margin:24px}header{display:flex;justify-content:space-between;align-items:center;border-bottom:4px solid #123885;padding-bottom:10px;margin-bottom:16px}header img{height:56px}h1{font-family:'Reem Kufi',serif;color:#123885;font-size:22px;margin:0}h2{font-family:'Reem Kufi',serif;color:#123885;font-size:17px;margin:18px 0 8px}
   table{width:100%;border-collapse:collapse;margin-bottom:12px}th,td{border:1px solid #c9d6ea;padding:5px 7px;text-align:start}th{background:#eef4fb}.k{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.k div{border:1px solid #c9d6ea;border-radius:8px;padding:8px}.k b{display:block;font-size:17px;color:#123885}footer{margin-top:20px;color:#666;font-size:11px;border-top:1px solid #ddd;padding-top:6px}
   .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.idc{border:2px solid #123885;border-radius:12px;padding:10px;text-align:center;break-inside:avoid}.idc img{height:30px}.idc b{display:block;font-size:16px}.idc svg{width:110px;height:110px}
-  @media print{body{margin:10mm}.noprint{display:none}}</style></head><body><header><div><h1>${esc(title)}</h1><div>${esc(S.name)} ${esc(S.season)} — ${esc(S.school)}</div></div>${logo ? `<img src="${logo}" alt="">` : ''}</header>${body}<footer>أُنشئ في ${esc(fmtDT(now()))} من منصة ${esc(S.club)}</footer><p class="noprint" style="color:#123885">للطباعة: Ctrl+P (أو مشاركة ← طباعة على الجوال).</p></body></html>`;
-  await A.save(title.replace(/\s+/g, '-') + '-' + day() + '.html', html);
+  @media print{body{margin:10mm}.noprint{display:none}}</style></head><body><header><div><h1>${esc(title)}</h1><div>${esc(S.name)} ${esc(S.season)} — ${esc(S.school)}</div></div><div style="display:flex;gap:10px;align-items:center">${logo ? `<img src="${logo}" alt="">` : ''}<img src="${location.origin + location.pathname.replace(/[^/]*$/, '')}emblem.png" alt="" style="height:56px"></div></header>${body}<footer>أُنشئ في ${esc(fmtDT(now()))} من منصة ${esc(S.club)}</footer><p class="noprint" style="color:#123885">للطباعة: Ctrl+P (أو مشاركة ← طباعة على الجوال).</p></body></html>`;
+  A.printHtml(html, title.replace(/\s+/g, '-') + '-' + day());
 };
 const tbl = (head, rows) => `<table><thead><tr>${head.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
 const pv = id => D.priv[id] || {};
@@ -106,7 +106,7 @@ A.out = act => {
   if (act === 'xPlayers') return A.report('participants', 'xlsx');
   if (act === 'pPlayers') return A.report('participants', 'html');
   if (act === 'xFinance') return A.report('financial', 'xlsx');
-  if (act === 'cards') return cards();
+  if (act === 'cards') return A.cardsPDF ? A.cardsPDF() : cards();
   if (act === 'certAll') return certs('all');
   if (act === 'certWin') return certs('win');
   if (act === 'achv') return achv();

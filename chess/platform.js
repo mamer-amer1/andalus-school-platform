@@ -96,12 +96,18 @@
     await api("/api/import", { docs: SEED.map(([p, d]) => ({ id: full(p), data: d })) }); notify(); }catch(e){} }, 1500);
   window.claude = { use: async n => ({ db, user, assets, downloads }[n] || null) };
 
-  /* a way back to the platform, and to sign in for staff */
-  document.addEventListener("DOMContentLoaded", () => {
-    const b = document.createElement("div");
-    b.style.cssText = "position:fixed;bottom:12px;left:12px;z-index:50;display:flex;gap:6px;font:600 13px system-ui,sans-serif;direction:rtl";
-    const a = (href, t) => `<a href="${href}" style="background:#fff;color:#17347E;border:1px solid #d5dbe8;border-radius:999px;padding:6px 12px;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,.08)">${t}</a>`;
-    b.innerHTML = a("/", "🏠 المنصة") + (TOKEN ? "" : a("/#login", "دخول المنظّمين"));
-    document.body.appendChild(b);
-  });
+  /* top bar: stay signed in, and a clear way back to the competitive-centres platform (same page you came from) */
+  let back = "/";
+  try { const r = document.referrer ? new URL(document.referrer) : null;
+    if (r && r.origin === location.origin && !r.pathname.startsWith("/chess")) { back = r.pathname + r.search + r.hash; sessionStorage.setItem("chessBack", back); }
+    else back = sessionStorage.getItem("chessBack") || "/"; } catch(e){}
+  const esc = v => String(v || "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+  const build = () => {
+    if (document.getElementById("chessBar")) return;
+    const b = document.createElement("div"); b.id = "chessBar";
+    const nm = myName(), roleTx = isAdmin ? "الإدارة" : TOKEN ? "حساب المنصة" : "";
+    b.innerHTML = `<a href="${esc(back)}">→ العودة إلى المراكز التنافسية</a><span class="who">${nm || roleTx ? "مرحباً" + (nm ? "، " + esc(nm) : "") + (roleTx ? " • " + roleTx : "") + " — أنت مسجّل الدخول في المنصة" : ""}</span>${TOKEN ? "" : '<a href="/#login">دخول المنظّمين</a>'}`;
+    document.body.insertBefore(b, document.body.firstChild);
+  };
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", build); else build();
 })();

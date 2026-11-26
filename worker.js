@@ -279,6 +279,63 @@ async function handlePeople(req, env) {
   return json({ people: out });
 }
 
+
+/* ---------- chess: public self-registration (creates the player directly, with a number) ---------- */
+const CH = "chess/t/";
+function chessNorm(v) { let d = String(v || "").replace(/[٠-٩]/g, c => "٠١٢٣٤٥٦٧٨٩".indexOf(c)).replace(/\D/g, ""); if (d.startsWith("00966")) d = d.slice(5); if (d.startsWith("966")) d = d.slice(3); if (d.length === 9 && d[0] === "5") d = "0" + d; return d; }
+const chessRid = n => { const c = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; return [...crypto.getRandomValues(new Uint8Array(n))].map(x => c[x % c.length]).join(""); };
+async function handleChessRegister(req, env) {
+  const u = await who(req, env);
+  const b = await req.json().catch(() => null);
+  if (!b) return bad("bad body");
+  const S = (await getDoc(env, CH + "settings/main")) || {};
+  if (S.regOpen === false) return bad("closed", 403);
+  const TYPES = { student: "1", father: "2", mother: "3" };
+  const name = String(b.name || "").replace(/\s+/g, " ").trim().slice(0, 80), type = String(b.type || ""), phone = chessNorm(b.phone);
+  if (name.length < 3) return bad("name");
+  if (!TYPES[type]) return bad("type");
+  if (!/^05\d{8}$/.test(phone)) return bad("phone");
+  if (!b.terms) return bad("terms");
+  if (type === "student" && !b.parent) return bad("parent");
+  const players = await sbRows(env, "col", [CH + "players"], "id,data");
+  const privs = await sbRows(env, "col", [CH + "private"], "id,data");
+  const pmap = new Map(players.map(r => [r.id.split("/").pop(), r.data || {}]));
+  const dup = privs.find(r => { const id = r.id.split("/").pop(), p = pmap.get(id), q = r.data || {}; return p && chessNorm(q.phone) === phone && String(p.name).trim() === name && !["cancelled", "rejected"].includes(p.status); });
+  if (dup) { const p = pmap.get(dup.id.split("/").pop()); return json({ error: "dup", no: p.no, id: dup.id.split("/").pop(), name: p.name, cat: p.cat, status: p.status }, 409); }
+  const uid = u.pid || u.uid || "";
+  if (uid && privs.filter(r => (r.data || {}).by === uid && Date.now() - Date.parse((r.data || {}).at || 0) < 864e5).length >= 8) return bad("too_many", 429);
+  const members = await sbRows(env, "col", [CH + "members"], "id,data");
+  const m = members.find(r => chessNorm((r.data || {}).phone) === phone && String((r.data || {}).name).trim() === name);
+  const mk = m ? m.id.split("/").pop() : "m" + chessRid(8);
+  const no = players.reduce((x, r) => Math.max(x, +((r.data || {}).no) || 0), 0) + 1;
+  const id = "p" + Date.now().toString(36) + chessRid(3), at = new Date().toISOString(), season = String(S.season || "2026"), cat = TYPES[type];
+  const pub = { no, name, cat, type, level: "beg", rating: 0, status: "new", paid: false, withdrawn: false, duo: "", mk, att: {}, season, createdAt: at };
+  const partner = String(b.partner || "").trim().slice(0, 20);
+  const pv = { phone, grade: String(b.grade || "").slice(0, 40), branch: String(S.school || ""), terms: true, parent: !!b.parent, photo: !!b.photo, wantsDuo: !!partner || !!b.duo, partner, payMethod: "cash", payAmount: 0, linkCode: chessRid(6), notes: "", source: "التسجيل الإلكتروني", by: uid, at, history: [{ at, text: "تسجيل إلكتروني من ولي الأمر/المشارك" }] };
+  const rows = [
+    { id: CH + "players/" + id, col: CH + "players", data: pub, updated_at: at },
+    { id: CH + "private/" + id, col: CH + "private", data: pv, updated_at: at },
+    { id: CH + "audit/" + "r" + Date.now().toString(36) + chessRid(4), col: CH + "audit", data: { act: "تسجيل مشارك", target: "AND" + season.slice(-2) + "-" + String(no).padStart(3, "0"), info: name + " — تسجيل إلكتروني", at, uid }, updated_at: at }
+  ];
+  if (!m) rows.push({ id: CH + "members/" + mk, col: CH + "members", data: { name, phone, first: season }, updated_at: at });
+  await upsert(env, rows);
+  return json({ ok: true, id, no, name, cat, type, status: "new", season });
+}
+
+
+/* chess: a participant finds their own card again with registration number + phone */
+async function handleChessCard(req, env) {
+  const b = await req.json().catch(() => null); if (!b) return bad("bad body");
+  const no = +String(b.no || "").split("-").pop().replace(/\D/g, ""), phone = chessNorm(b.phone);
+  if (!no || !/^05\d{8}$/.test(phone)) return bad("input");
+  const players = await sbRows(env, "col", [CH + "players"], "id,data");
+  const hit = players.find(r => +((r.data || {}).no) === no); if (!hit) return bad("not_found", 404);
+  const id = hit.id.split("/").pop(); const q = (await getDoc(env, CH + "private/" + id)) || {};
+  if (chessNorm(q.phone) !== phone) return bad("not_found", 404);
+  const p = hit.data || {};
+  return json({ ok: true, id, no: p.no, name: p.name, cat: p.cat, type: p.type, status: p.status, paid: !!p.paid, season: p.season });
+}
+
 async function handleImport(req, env) {
   const u = await who(req, env);
   if (u.level < LV.admin) return bad("forbidden", 403);
@@ -351,6 +408,8 @@ export default {
         if (p === "/api/import") return await handleImport(req, env);
         if (p === "/api/acct") return await handleAcct(req, env);
         if (p === "/api/people") return await handlePeople(req, env);
+        if (p === "/api/chess/register") return await handleChessRegister(req, env);
+        if (p === "/api/chess/card") return await handleChessCard(req, env);
         if (p === "/api/upload") return await handleUpload(req, env);
         return bad("not found", 404);
       }
