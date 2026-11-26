@@ -542,7 +542,7 @@ table.plan tr.hl td{background:#fde2e2}
 
 /* admin */
 .admin{display:grid;grid-template-columns:220px minmax(0,1fr);gap:20px;align-items:start}
-.rail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);display:grid;gap:4px;padding:8px}
+.rail{position:static;align-self:start;display:grid;gap:4px;padding:8px}
 .rail a{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-radius:.7rem;text-decoration:none;color:var(--fg);font-weight:700;font-size:.92rem}
 .rail a.on{background:var(--green);color:#fff}
 .rail a:not(.on):hover{background:var(--sunk)}
@@ -1089,6 +1089,7 @@ input.qz-bigcode{font-size:2rem;text-align:center}
     </a>
     <nav class="main" aria-label="التنقل الرئيسي">
       <a href="#home" data-nav="home">🏆 <span data-t="navPublic">المراكز التنافسية</span></a>
+      <a href="/chess/" class="nav-chess">♟️ شطرنج أندلس</a>
       <a href="#tp" data-nav="tp" data-staffonly hidden>👨‍🏫 بوابة المعلم</a>
       <a href="#subs" data-nav="subs" id="navSubs" hidden>⏱️ حصص الانتظار</a>
       <a href="#ann" data-nav="ann" hidden>📣 الإعلانات<span class="badge an" id="annBadge" hidden>0</span></a>
@@ -6789,7 +6790,7 @@ function renderLogin(){ const byPhone=!S.auth||S.auth.kind!=="nid";
 function authPanel(){
   const users=authUsers(); const on=adminLockOn(); const legacy=S.auth&&S.auth.kind==="nid";
   return `<div class="panel stack" style="gap:14px" id="authPanel"><h3 class="sec-title" style="font-size:1.05rem">مستخدمو بوابة الإدارة (الدخول برقم الجوال)</h3>
-    <p class="muted small" style="margin:0">يدخل كل مسؤول برقم جواله، ورمز الدخول هو رقم الجوال نفسه. ${legacy?"<b>الدخول الحالي ما زال برقم الهوية؛</b> أضف أول مستخدم بالجوال لتحويله.":on?"":"<b>القفل غير مفعّل:</b> أضف مستخدماً لتفعيله."}</p>
+    <p class="muted small" style="margin:0">يدخل كل مسؤول من زر «بوابة الإدارة» برقم جواله المسجّل هنا + كلمة مرور الإدارة الموحّدة. حذف الرقم من هنا يمنع صاحبه من الدخول فوراً حتى لو كان يعرف كلمة المرور. ${legacy?"<b>الدخول الحالي ما زال برقم الهوية؛</b> أضف أول مستخدم بالجوال لتحويله.":on?"":"<b>القفل غير مفعّل:</b> أضف مستخدماً لتفعيله."}</p>
     ${users.length?`<div class="tbl-wrap"><table><thead><tr><th>الاسم</th><th>رقم الجوال</th><th></th></tr></thead><tbody>${users.map((u,i)=>`<tr><td><b>${esc(u.name)}</b>${S.adminName===u.name?' <span class="pill ok">أنت</span>':""}</td><td class="num" dir="ltr">05•• ••• ${esc(u.tail||"")}</td><td><button class="btn sm ghost danger" data-au-del="${i}">حذف</button></td></tr>`).join("")}</tbody></table></div>`:""}
     <div class="grid2"><label class="f">اسم المسؤول<input class="in" id="auName" placeholder="مثال: أ. أحمد العطاس"></label><label class="f">رقم الجوال (وهو رمز الدخول)<input class="in num" id="auPhone" dir="ltr" inputmode="tel" placeholder="05xxxxxxxx"></label></div>
     <div class="row"><button class="btn primary sm" id="auAdd">إضافة مستخدم</button>${on?'<button class="btn ghost sm" id="auOut">تسجيل الخروج الآن</button><button class="btn ghost sm" id="auOff">إيقاف القفل</button>':""}</div></div>`;

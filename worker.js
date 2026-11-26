@@ -5,6 +5,11 @@
 
 const RULES = [["", "view", "admin"], ["students", "admin", "admin"], ["requests", "admin", "admin"], ["achievements", "admin", "admin"], ["outbox", "admin", "admin"], ["templates", "admin", "admin"], ["secure", "admin", "admin"], ["registrations", "admin", "admin"], ["registrations/{self}", "interact", "interact"], ["practice", "admin", "admin"], ["practice/{self}", "interact", "interact"], ["qzp", "admin", "admin"], ["qzp/{self}", "interact", "interact"], ["roomplay", "view", "admin"], ["roomplay/{self}", "interact", "interact"], ["wpsec", "admin", "admin"], ["wplog", "admin", "admin"], ["wpt", "interact", "admin"], ["wpt/{self}", "interact", "interact"], ["wpsub", "admin", "admin"], ["wpsubcfg", "admin", "admin"], ["wpswap", "admin", "admin"], ["rwpsec", "admin", "admin"], ["rwplog", "admin", "admin"], ["rwpt", "interact", "admin"], ["rwpt/{self}", "interact", "interact"], ["rwpsub", "admin", "admin"], ["rwpsubcfg", "admin", "admin"], ["rwpswap", "admin", "admin"], ["accts", "admin", "admin"], ["acctreq", "admin", "admin"], ["acctreq/{self}", "interact", "interact"], ["commap", "interact", "interact"], ["plans", "view", "interact"], ["pln", "view", "interact"], ["pcfg", "view", "admin"], ["usage", "admin", "admin"], ["usage/{self}", "interact", "interact"], ["calendar", "view", "interact"], ["exams", "view", "interact"], ["rltt", "view", "interact"], ["rllinks", "view", "interact"], ["rlcfg", "view", "interact"], ["rllog", "interact", "interact"], ["rlatt", "admin", "admin"], ["rlatt/{self}", "interact", "interact"], ["gax", "admin", "admin"], ["gar", "admin", "admin"], ["gastu", "admin", "admin"], ["gaplan", "admin", "admin"], ["gacfg", "admin", "admin"], ["gat", "view", "admin"], ["gap", "view", "admin"], ["gaprog", "admin", "admin"], ["gaprog/{self}", "interact", "interact"], ["gaent", "admin", "admin"], ["gaent/{self}", "interact", "interact"], ["ttarch", "admin", "admin"], ["ttlog", "admin", "admin"]];
 const LV = { view: 0, interact: 1, admin: 2 };
+/* «شطرنج أندلس» lives under chess/… with the rules it had on Claude ("owner" → platform admin). */
+const CHESS_RULES = [["", "view", "admin"], ["private", "admin", "admin"], ["members", "admin", "admin"], ["finance", "admin", "admin"], ["roles", "admin", "admin"], ["backups", "admin", "admin"], ["audit", "interact", "admin"], ["incidents", "interact", "admin"], ["requests", "admin", "admin"], ["survey", "admin", "admin"]];
+RULES.push(...CHESS_RULES.map(([p, r, w]) => [p ? "chess/t/" + p : "chess", r, w]));
+/* each visitor may send and follow their own registration request / survey answer */
+RULES.push(["chess/t/requests/{self}", "view", "view"], ["chess/t/survey/{self}", "view", "view"]);
 const enc = new TextEncoder();
 
 const json = (obj, status = 200) => new Response(JSON.stringify(obj), {
@@ -68,7 +73,7 @@ async function who(req, env) {
   let uid = req.headers.get("x-uid") || "";
   if (!/^[a-z0-9]{16,64}$/.test(uid)) uid = "";
   const role = t && t.r === "admin" ? "admin" : t && (t.r === "staff" || t.r === "sup") ? "interact" : "view";
-  return { level: LV[role], uid, sup: !!(t && t.r === "sup") };
+  return { level: LV[role], uid, sup: !!(t && t.r === "sup"), pid: (t && t.id) || "" };
 }
 
 // ---------- access rules (same rules the platform used on Claude) ----------
@@ -103,10 +108,18 @@ const SUP_READ = ["wplog", "rwplog"];
 // Own entries that only signed-in staff may create (teacher plans, grade entry, attendance).
 const STAFF_SELF = ["wpt", "rwpt", "gaent", "gaprog", "rlatt"];
 const top = p => segs(p)[0] || "";
+async function chessLevel(env, u) {
+  if (u.chessLv !== undefined) return u.chessLv;
+  u.chessLv = u.level;
+  if (u.level < LV.admin && u.pid) { const r = await getDoc(env, "chess/t/roles/" + u.pid).catch(() => null); if (r && r.role) u.chessLv = LV.admin; }
+  return u.chessLv;
+}
+async function forChess(env, path, u) { if (segs(path)[0] !== "chess") return u; const lv = await chessLevel(env, u); return { ...u, level: lv, uid: u.pid || u.uid }; }
 function canRead(path, u) {
   const pv = privateUserPath(path, u.uid); if (pv) return pv === "own";
   const r = ruleFor(path, u.uid);
   if (u.sup && SUP_READ.includes(top(path))) return true;
+  const sg = segs(path); if (sg[0] === "chess" && sg[2] === "roles" && sg.length === 4 && u.pid && sg[3] === u.pid) return true;
   return r.self ? true : u.level >= r.read;            // a visitor may always read their own {self} entry
 }
 function canWrite(path, u) {
@@ -152,7 +165,10 @@ async function handleQuery(req, env) {
   const cols = [...new Set((body.cols || []).map(cleanPath).filter(Boolean))].slice(0, 200);
   const res = { docs: {}, cols: {}, denied: [] };
 
-  const readable = docIds.filter(id => canRead(id, u));
+  const uc = docIds.concat(cols).some(p => segs(p)[0] === "chess") ? await forChess(env, "chess", u) : u;
+  const rd = p => canRead(p, segs(p)[0] === "chess" ? uc : u);
+  const uidOf = p => (segs(p)[0] === "chess" ? uc : u).uid;
+  const readable = docIds.filter(id => rd(id));
   docIds.filter(id => !readable.includes(id)).forEach(id => res.denied.push(id));
   if (readable.length) {
     const rows = await sbRows(env, "id", readable, "id,data");
@@ -162,17 +178,17 @@ async function handleQuery(req, env) {
 
   const fullCols = [], selfCols = [];
   for (const c of cols) {
-    if (canRead(c, u)) fullCols.push(c);
-    else if (u.uid && canRead(c + "/" + u.uid, u)) selfCols.push(c);
+    if (rd(c)) fullCols.push(c);
+    else if (uidOf(c) && rd(c + "/" + uidOf(c))) selfCols.push(c);
     else res.denied.push(c);
   }
   if (fullCols.length) {
     const rows = await sbRows(env, "col", fullCols, "id,col,data");
     fullCols.forEach(c => res.cols[c] = []);
-    rows.forEach(r => { if (canRead(r.id, u)) res.cols[r.col].push({ id: r.id, data: r.data }); });
+    rows.forEach(r => { if (rd(r.id)) res.cols[r.col].push({ id: r.id, data: r.data }); });
   }
   if (selfCols.length) {
-    const ids = selfCols.map(c => c + "/" + u.uid);
+    const ids = selfCols.map(c => c + "/" + uidOf(c));
     const rows = await sbRows(env, "id", ids, "id,col,data");
     selfCols.forEach(c => res.cols[c] = []);
     rows.forEach(r => res.cols[r.col] && res.cols[r.col].push({ id: r.id, data: r.data }));
@@ -186,7 +202,8 @@ async function handleWrite(req, env) {
   if (!b) return bad("bad body");
   const id = cleanPath(b.id);
   if (!id || segs(id).length % 2 !== 0) return bad("bad id");
-  if (!canWrite(id, u)) return bad("forbidden", 403);
+  if (/^chess\/t\/roles(\/|$)/.test(id) && u.level < LV.admin) return bad("forbidden", 403);
+  if (!canWrite(id, await forChess(env, id, u))) return bad("forbidden", 403);
   const col = segs(id).slice(0, -1).join("/");
   if (b.op === "delete") {
     const r = await sb(env, `/rest/v1/app_docs?id=eq.${encodeURIComponent(id)}`, { method: "DELETE" });
@@ -215,7 +232,7 @@ async function handleLogin(req, env) {
       if (!hit) return bad("phone", 401);
       name = hit.name || name;
     }
-    const token = await makeToken(env, { r: "admin", n: name, exp: Date.now() + 7 * 864e5 });
+    const token = await makeToken(env, { r: "admin", n: name, id: hash ? "adm_" + hash.slice(0, 20) : "adm_root", exp: Date.now() + 7 * 864e5 });
     return json({ token, role: "admin", name, hash });
   }
   if (env.STAFF_PASSWORD && sameSecret(pw, env.STAFF_PASSWORD)) {
@@ -247,8 +264,19 @@ async function handleAcct(req, env) {
   }
   if (!ok) return bad("not staff", 401);
   const r = lead ? "sup" : "staff";
-  const token = await makeToken(env, { r, n: name, exp: Date.now() + 30 * 864e5 });
+  const pid = "a_" + (await sha256hex("pid|" + intlPhone(b.phone || ""))).slice(0, 24);
+  const token = await makeToken(env, { r, n: name, id: pid, exp: Date.now() + 30 * 864e5 });
   return json({ token, role: r, name });
+}
+
+async function handlePeople(req, env) {
+  const u = await forChess(env, "chess", await who(req, env));
+  if (u.level < LV.admin) return bad("forbidden", 403);
+  const rows = await sbRows(env, "col", ["accts"], "id,data");
+  const out = [];
+  for (const r of rows) { const a = r.data || {}; if (a.status !== "active" || !STAFF_ROLES.includes(a.role) || !a.phone) continue;
+    out.push({ id: "a_" + (await sha256hex("pid|" + intlPhone(a.phone))).slice(0, 24), name: a.name || "", role: a.role }); }
+  return json({ people: out });
 }
 
 async function handleImport(req, env) {
@@ -282,7 +310,7 @@ async function putAsset(env, id, type, b64) {
   if (!r.ok) throw new Error("assets " + r.status + " " + (await r.text()).slice(0, 200));
 }
 async function handleUpload(req, env) {
-  const u = await who(req, env);
+  const u0 = await who(req, env); const u = await forChess(env, "chess", u0);
   if (u.level < LV.admin) return bad("forbidden", 403);
   const buf = await req.arrayBuffer();
   if (buf.byteLength > 15 * 1024 * 1024) return bad("too_large", 413);
@@ -322,6 +350,7 @@ export default {
         if (p === "/api/login") return await handleLogin(req, env);
         if (p === "/api/import") return await handleImport(req, env);
         if (p === "/api/acct") return await handleAcct(req, env);
+        if (p === "/api/people") return await handlePeople(req, env);
         if (p === "/api/upload") return await handleUpload(req, env);
         return bad("not found", 404);
       }
