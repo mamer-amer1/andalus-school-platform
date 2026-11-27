@@ -328,7 +328,7 @@ html[data-motion="off"] .al84>.r,html[data-motion="off"] .herocard::after{animat
     if(!isAdmin()) return;
     addCss();
     const b = document.createElement("div"); b.className = "anx-bar";
-    b.innerHTML = `<button type="button" id="anxOut">خروج (${ROLE === "admin" ? "الإدارة" : "المعلمون"})</button>` + (ROLE === "admin" ? `<button type="button" id="anxImp">استيراد نسخة</button>` : "");
+    b.innerHTML = `<button type="button" id="anxOut">خروج (${ROLE === "admin" ? "الإدارة" : "المعلمون"})</button>`; /* the one-time import from Claude is finished: its button is removed */
     document.body.appendChild(b);
     b.querySelector("#anxOut").onclick = () => logout(false);
     const imp = b.querySelector("#anxImp"); if(imp) imp.onclick = importBackup;
