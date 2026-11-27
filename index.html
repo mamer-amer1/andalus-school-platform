@@ -1189,6 +1189,7 @@ body.on-admin.side-open .shell{grid-template-columns:262px minmax(0,1fr)}
       <a href="#tp" data-nav="tp" data-staffonly hidden>👨‍🏫 بوابة المعلم</a>
       <a href="#subs" data-nav="subs" id="navSubs" hidden>⏱️ حصص الانتظار</a>
       <a href="#ann" data-nav="ann" hidden>📣 الإعلانات<span class="badge an" id="annBadge" hidden>0</span></a>
+      <a href="#circ" data-nav="circ" data-staffonly hidden>📋 التعاميم<span class="badge an" id="circBadge" hidden>0</span></a>
       <a href="#wp" data-nav="wp">📅 الخطة الأسبوعية</a>
       <a href="#rev" data-nav="rev">📚 خطة المراجعة</a>
       <a href="#tsk" data-nav="tsk">🧩 المهام الأدائية</a>
@@ -1441,7 +1442,8 @@ function render0(){
   else if(r==="contact") renderContact();
   else if(r==="cal"||r==="cals") renderCalendar();
   else if(r==="tp"||r.startsWith("tp-")) renderTP(r==="tp"?"":r.slice(3));
-  else if(r==="ann"||r.startsWith("ann-")) renderAnnPage(r==="ann"?"":r.slice(4));
+  else if(r==="ann"||r.startsWith("ann-")) renderAnnPage(r==="ann"?"":r.slice(4))
+  else if(r==="circ") renderAnnPage("","circ");
   else if(r==="studio") renderStudioPage();
   else if(r==="ga"||r.startsWith("ga-")) renderGA(r==="ga"?"dash":r.slice(3));
   else if(r==="tt"||r.startsWith("tt-")) renderTTC(r==="tt"?"cls":r.slice(3));
@@ -5962,7 +5964,11 @@ function annNorm(x){ if(!x) return null; if(x.sealed){ const d=kGet(x); if(!d) r
 function annState(a){ if(!a) return "draft"; if(a.status==="draft") return "draft"; if(a.status==="stop") return "stop"; const n=Date.now(); if(a.start&&Date.parse(a.start)>n) return "sched"; if(a.end&&Date.parse(a.end)<n) return "ended"; return "live"; }
 function annAll(){ kPending(); return (S.ann||[]).map(annNorm).filter(Boolean); }
 const annSort=(a,b)=>(b.pin?1:0)-(a.pin?1:0)||(b.urgent?1:0)-(a.urgent?1:0)||String(b.start||b.createdAt).localeCompare(String(a.start||a.createdAt));
-function annFor(V){ V=V||viewer(); return annAll().filter(a=>annState(a)==="live"&&(V.all?true:tgtOK(a,V))).sort(annSort); }
+/* two channels: «الإعلانات» for parents (teachers see one only when it is marked for them) and «التعاميم» for teachers only */
+const annChan=a=>{ const A=a.aud||[]; return A.length&&!A.some(x=>x==="par"||x==="stu")?"circ":"ann"; };
+const annForTea=a=>(a.aud||[]).includes("tea")||((a.aud||[]).includes("adm")&&annChan(a)==="circ");
+function annSeeOK(a,V){ if(V.all) return true; if(V.k==="tea"){ if(!annForTea(a)&&!((a.aud||[]).includes("adm")&&V.roles.includes("adm"))) return false; } return tgtOK(a,V); }
+function annFor(V,chan){ V=V||viewer(); return annAll().filter(a=>annState(a)==="live"&&annSeeOK(a,V)&&(!chan||annChan(a)===chan)).sort(annSort); }
 const annSeenLocal=()=>new Set(lsG("annSeen",[]));
 function annMarkLocal(ids){ const s=annSeenLocal(); ids.forEach(i=>s.add(i)); lsS("annSeen",[...s].slice(-400)); }
 /* ---- سجل المشاهدة والاطلاع (rlatt/{viewer}) ---- */
@@ -5975,7 +5981,7 @@ function annTrack(id,patch){ if(!S.db||!S.uid) return Promise.resolve(false); le
     D.updatedAt=now; await S.db.doc("rlatt/"+S.uid).set(D); ok=true; }catch(e){} }); return RL_TQ.then(()=>ok); }
 const ANN_IO=typeof IntersectionObserver!=="undefined"?new IntersectionObserver(es=>es.forEach(en=>{ if(!en.isIntersecting) return; const el=en.target; ANN_IO.unobserve(el); const id=el.dataset.annv; const k="annV|"+id; if(ssG(k,0)) return; ssS(k,1); annMarkLocal([id]); annTrack(id,{seen:true}); annBadge(); }),{threshold:.5}):null;
 function annObserve(root){ if(!ANN_IO||!root) return; root.querySelectorAll("[data-annv]").forEach(el=>ANN_IO.observe(el)); }
-function annBadge(){ const b=document.getElementById("annBadge"); if(!b) return; let n=0; try{ if(!cmAdmin()){ const s=annSeenLocal(); n=annFor().filter(a=>!s.has(a.id)).length; } }catch(e){} b.hidden=!n; b.textContent=n; const a=document.querySelector('nav.main a[data-nav="ann"]'); if(a){ const on=cmAdmin()||pubOn("ann")||isStaff(); a.hidden=!on; } }
+function annBadge(){ const b=document.getElementById("annBadge"); if(!b) return; let n=0; try{ if(!cmAdmin()){ const s=annSeenLocal(); n=annFor(null,"ann").filter(a=>!s.has(a.id)).length; const c=document.getElementById("circBadge"); if(c){ const k=annFor(null,"circ").filter(a=>!s.has(a.id)).length; c.hidden=!k; c.textContent=k; } } }catch(e){} b.hidden=!n; b.textContent=n; const a=document.querySelector('nav.main a[data-nav="ann"]'); if(a){ const on=cmAdmin()||pubOn("ann")||isStaff(); a.hidden=!on; } }
 
 /* ---- بطاقة الإعلان ---- */
 function annMediaParts(a){ const M=a.media||[]; return {imgs:M.filter(m=>m.kind==="img"&&m.enc!=="b64"),vids:M.filter(m=>m.kind==="video"&&m.enc!=="b64"),files:M.filter(m=>!(m.kind==="img"&&m.enc!=="b64")&&!(m.kind==="video"&&m.enc!=="b64"))}; }
@@ -6018,31 +6024,34 @@ function annMiniList(L,more){ const s=annSeenLocal(); return L.length?`<div clas
 function annHomeBlock(){ if(!pubOn("ann")&&!isStaff()) return ""; const L=annFor().slice(0,4); if(!L.length) return "";
   return `<section class="stack" style="gap:12px"><div class="row" style="justify-content:space-between"><h3 class="sec-title" style="margin:0">${ic("mega")} الإعلانات والتعاميم</h3><a class="btn sm ghost" href="#ann">كل الإعلانات</a></div><div class="an-feed" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">${L.map(a=>annCard(a,{compact:true,link:true})).join("")}</div></section>`; }
 /* ---- صفحة الإعلانات ---- */
-function renderAnnPage(id){ const app=$("#app"); const V=viewer(); const F=S.annPF=S.annPF||{k:"",q:""};
-  if(id){ const a=annAll().find(x=>x.id===id); const ok=a&&(V.all||(annState(a)==="live"&&tgtOK(a,V)));
+function renderAnnPage(id,chan){ const app=$("#app"); const V=viewer(); const F=S.annPF=S.annPF||{k:"",q:""}; chan=chan||"ann";
+  if(id){ const a=annAll().find(x=>x.id===id); const ok=a&&(V.all||(annState(a)==="live"&&annSeeOK(a,V)));
     app.innerHTML=`<div class="stack" style="gap:14px;max-width:860px;margin:auto;width:100%"><div><a class="btn sm ghost" href="#ann">→ كل الإعلانات</a></div>${ok?annCard(a,{}):'<div class="empty">هذا الإعلان غير متاح لك، أو انتهت مدة عرضه.</div>'}</div>`; annObserve(app); return; }
-  const all=annFor(V); const t=arNorm(F.q); const L=all.filter(a=>(!F.k||a.kind===F.k)&&(!t||arNorm(a.title+" "+a.body).includes(t)));
+  if(chan==="circ"&&!V.all&&V.k!=="tea"){ app.innerHTML='<div class="empty">التعاميم خاصة بالمعلمين. <a href="#login">سجّل الدخول بحساب المعلم</a></div>'; return; }
+  const all=annFor(V,chan); const t=arNorm(F.q); const L=all.filter(a=>(!F.k||a.kind===F.k)&&(!t||arNorm(a.title+" "+a.body).includes(t)));
   const kinds=ANN_K.filter(k=>all.some(a=>a.kind===k[0]));
-  app.innerHTML=`<div class="stack" style="gap:14px"><section class="panel stack" style="gap:8px"><div class="row" style="justify-content:space-between"><div><h1 class="sec-title" style="margin:0">${ic("mega")} الإعلانات والتعاميم</h1><p class="small muted" style="margin:4px 0 0">الرحلات والأنشطة والمسابقات والاختبارات والإجازات والاجتماعات والتعاميم المدرسية${V.k==="tea"?" المخصّصة لك":V.guest?"":" الخاصة بابنك"}.</p></div>${V.k==="par"||V.k==="stu"?vwModeHTML():""}</div>
+  app.innerHTML=`<div class="stack" style="gap:14px"><section class="panel stack" style="gap:8px"><div class="row" style="justify-content:space-between"><div><h1 class="sec-title" style="margin:0">${ic("mega")} ${chan==="circ"?"التعاميم":"الإعلانات"}</h1><p class="small muted" style="margin:4px 0 0">${chan==="circ"?"تعاميم الإدارة الموجّهة للمعلمين":"الرحلات والأنشطة والمسابقات والاختبارات والإجازات والاجتماعات"}${V.k==="tea"?" المخصّصة لك":V.guest?"":" الخاصة بابنك"}.</p></div>${V.k==="par"||V.k==="stu"?vwModeHTML():""}</div>
     <div class="row" style="gap:6px"><input class="in" id="anQ" placeholder="ابحث في الإعلانات" value="${esc(F.q)}" style="flex:1;min-width:180px"><select class="in" id="anK" style="width:auto"><option value="">كل الأنواع</option>${kinds.map(k=>`<option value="${k[0]}" ${F.k===k[0]?"selected":""}>${esc(k[1])}</option>`).join("")}</select></div></section>
     ${V.guest&&!cmAdmin()?'<div class="note info small">تظهر هنا الإعلانات العامة. سجّل الدخول لرؤية الإعلانات الخاصة بصف ابنك وفصله.</div>':""}
-    <div class="an-feed">${L.map(a=>annCard(a,{})).join("")||'<div class="empty">لا توجد إعلانات حالياً.</div>'}</div></div>`;
-  const q=app.querySelector("#anQ"); q.oninput=()=>{ F.q=q.value; clearTimeout(S.anT); S.anT=setTimeout(()=>{ renderAnnPage(); const n=$("#anQ"); n.focus(); n.setSelectionRange(n.value.length,n.value.length); },300); };
-  app.querySelector("#anK").onchange=e=>{ F.k=e.target.value; renderAnnPage(); }; annObserve(app); }
+    <div class="an-feed">${L.map(a=>annCard(a,{})).join("")||`<div class="empty">${chan==="circ"?"لا توجد تعاميم حالياً.":"لا توجد إعلانات حالياً."}</div>`}</div></div>`;
+  const q=app.querySelector("#anQ"); q.oninput=()=>{ F.q=q.value; clearTimeout(S.anT); S.anT=setTimeout(()=>{ renderAnnPage("",chan); const n=$("#anQ"); n.focus(); n.setSelectionRange(n.value.length,n.value.length); },300); };
+  app.querySelector("#anK").onchange=e=>{ F.k=e.target.value; renderAnnPage("",chan); }; annObserve(app); }
 
 /* ================= إدارة الإعلانات (مدير المنصة) ================= */
-function annAdmin(el){ rlAttLoad(); const F=S.annAF=S.annAF||{st:"",k:"",q:""}; if(S.annSel){ return annStats(el,S.annSel); }
-  const all=annAll().slice().sort((a,b)=>String(b.updatedAt||b.createdAt).localeCompare(String(a.updatedAt||a.createdAt))); const sealedN=(S.ann||[]).filter(x=>x.sealed&&!kGet(x)).length;
+function annAdmin(el){ rlAttLoad(); const F=S.annAF=S.annAF||{st:"",k:"",q:"",ch:""}; if(S.annSel){ return annStats(el,S.annSel); }
+  const all=annAll().filter(a=>!F.ch||annChan(a)===F.ch).slice().sort((a,b)=>String(b.updatedAt||b.createdAt).localeCompare(String(a.updatedAt||a.createdAt))); const sealedN=(S.ann||[]).filter(x=>x.sealed&&!kGet(x)).length;
   const t=arNorm(F.q); const L=all.filter(a=>(!F.st||annState(a)===F.st)&&(!F.k||a.kind===F.k)&&(!t||arNorm(a.title+" "+a.body).includes(t)));
   const cnt=k=>all.filter(a=>annState(a)===k).length; const RS=annRespIdx();
-  el.innerHTML=`<section class="panel stack" style="gap:8px"><div class="row" style="justify-content:space-between"><div><h2 class="sec-title" style="margin:0">${ic("mega")} الإعلانات والتعاميم</h2><p class="small muted" style="margin:4px 0 0">أنشئ الإعلان مرة واحدة وحدّد من يراه: أولياء الأمور، الطلاب، المعلمون، الإدارة والمشرفون، مع تخصيصه بصف أو فصل أو مادة.</p></div><div class="row" style="gap:6px"><button class="btn primary" id="anNew">${ic("plus")} إعلان جديد</button><button class="btn sm ghost" id="anSet">${ic("cog")} الإعدادات</button></div></div>
+  el.innerHTML=`<section class="panel stack" style="gap:8px"><div class="row" style="justify-content:space-between"><div><h2 class="sec-title" style="margin:0">${ic("mega")} الإعلانات والتعاميم</h2><p class="small muted" style="margin:4px 0 0">أنشئ الإعلان مرة واحدة وحدّد من يراه: أولياء الأمور، الطلاب، المعلمون، الإدارة والمشرفون، مع تخصيصه بصف أو فصل أو مادة.</p></div><div class="row" style="gap:6px"><button class="btn primary" id="anNew">${ic("plus")} إعلان لأولياء الأمور</button><button class="btn primary" id="anNewC">${ic("plus")} تعميم للمعلمين</button><button class="btn sm ghost" id="anSet">${ic("cog")} الإعدادات</button></div></div>
+    <div class="tabs">${[["","الكل"],["ann","📣 إعلانات أولياء الأمور"],["circ","📋 تعاميم المعلمين"]].map(([k,l])=>`<button data-ach="${k}" class="${(F.ch||"")===k?"on":""}">${l} <span class="num">${annAll().filter(a=>!k||annChan(a)===k).length}</span></button>`).join("")}</div>
     <div class="tabs">${[["","الكل",all.length],["live","منشور",cnt("live")],["sched","مجدول",cnt("sched")],["draft","مسودة",cnt("draft")],["ended","منتهي",cnt("ended")],["stop","موقوف",cnt("stop")]].map(([k,l,n])=>`<button data-ast="${k}" class="${F.st===k?"on":""}">${l} <span class="num">${n}</span></button>`).join("")}</div>
     <div class="row" style="gap:6px"><input class="in" id="anAQ" placeholder="بحث" value="${esc(F.q)}" style="flex:1;min-width:160px"><select class="in" id="anAK" style="width:auto"><option value="">كل الأنواع</option>${ANN_K.map(k=>`<option value="${k[0]}" ${F.k===k[0]?"selected":""}>${esc(k[1])}</option>`).join("")}</select></div></section>
     ${sealedN?`<div class="note warn small">${sealedN} إعلان خاص بالمعلمين أو الإدارة لم يُفتح بعد (مفتاح المحتوى الخاص غير محمّل).</div>`:""}
-    <div class="stack" style="gap:8px">${L.map(a=>{ const st=annState(a); const r=RS.get(a.id)||{v:0,ack:0,yes:0,no:0}; return `<div class="al-row"><div class="t"><div class="an-meta"><span class="an-k">${ic(annK(a.kind)[2])}${esc(annK(a.kind)[1])}</span><span class="pill ${ANN_ST[st][1]}">${ANN_ST[st][0]}</span>${a.urgent?'<span class="pill bad">عاجل</span>':""}${a.popup?'<span class="pill">نافذة منبثقة</span>':""}${a.sealed?`<span class="pill">${ic("lock")} ${a.sealed==="l"?"للإدارة والمشرفين":"للمعلمين"}</span>`:""}${a.legacy?'<span class="pill">إعلان سابق</span>':""}</div><b>${esc(a.title)}</b><span class="small muted">${esc(audSummary(a))} • ${a.start?esc(dtTxt(a.start)):"—"}${a.end?" ← "+esc(dtTxt(a.end)):""}</span><span class="small num">${ic("eye")} ${r.v} مشاهدة${a.ack==="seen"?` • ${ic("check")} ${r.ack} أكّدوا الاطلاع`:""}${a.ack==="consent"?` • موافق ${r.yes} • غير موافق ${r.no}`:""}</span></div>
+    <div class="stack" style="gap:8px">${L.map(a=>{ const st=annState(a); const r=RS.get(a.id)||{v:0,ack:0,yes:0,no:0}; return `<div class="al-row"><div class="t"><div class="an-meta">${annChan(a)==="circ"?'<span class="pill info">📋 تعميم للمعلمين</span>':`<span class="pill ok">📣 لأولياء الأمور</span>${(a.aud||[]).includes("tea")?'<span class="pill">يظهر للمعلمين</span>':""}`}<span class="an-k">${ic(annK(a.kind)[2])}${esc(annK(a.kind)[1])}</span><span class="pill ${ANN_ST[st][1]}">${ANN_ST[st][0]}</span>${a.urgent?'<span class="pill bad">عاجل</span>':""}${a.popup?'<span class="pill">نافذة منبثقة</span>':""}${a.sealed?`<span class="pill">${ic("lock")} ${a.sealed==="l"?"للإدارة والمشرفين":"للمعلمين"}</span>`:""}${a.legacy?'<span class="pill">إعلان سابق</span>':""}</div><b>${esc(a.title)}</b><span class="small muted">${esc(audSummary(a))} • ${a.start?esc(dtTxt(a.start)):"—"}${a.end?" ← "+esc(dtTxt(a.end)):""}</span><span class="small num">${ic("eye")} ${r.v} مشاهدة${a.ack==="seen"?` • ${ic("check")} ${r.ack} أكّدوا الاطلاع`:""}${a.ack==="consent"?` • موافق ${r.yes} • غير موافق ${r.no}`:""}</span></div>
       <div class="acts"><button class="btn sm" data-aed="${esc(a.id)}">${ic("pen")} تعديل</button><button class="btn sm ghost" data-apv="${esc(a.id)}">${ic("eye")} معاينة</button><button class="btn sm ghost" data-ast2="${esc(a.id)}">${ic("chart")} المتابعة</button>${st==="live"||st==="sched"?`<button class="btn sm ghost" data-astop="${esc(a.id)}">${ic("pause")} إيقاف</button>`:st==="stop"||st==="draft"?`<button class="btn sm ghost" data-ago="${esc(a.id)}">${ic("play")} نشر</button>`:""}<button class="btn sm ghost" data-adup="${esc(a.id)}">نسخ</button><button class="btn sm ghost" data-anot="${esc(a.id)}">${ic("msg")} إشعار</button><button class="btn sm danger" data-adel="${esc(a.id)}">${ic("trash")}</button></div></div>`; }).join("")||'<div class="empty">لا توجد إعلانات بهذه التصفية.</div>'}</div>`;
   const re=()=>annAdmin(el); const q=k=>el.querySelector(k);
-  q("#anNew").onclick=()=>openAnnEditor({},re); q("#anSet").onclick=()=>annSettings(re);
+  q("#anNew").onclick=()=>openAnnEditor({},re); q("#anNewC").onclick=()=>openAnnEditor({aud:["tea"],kind:"circ",guest:false},re); q("#anSet").onclick=()=>annSettings(re);
+  el.querySelectorAll("[data-ach]").forEach(b=>b.onclick=()=>{ F.ch=b.dataset.ach; re(); });
   el.querySelectorAll("[data-ast]").forEach(b=>b.onclick=()=>{ F.st=b.dataset.ast; re(); }); q("#anAK").onchange=e=>{ F.k=e.target.value; re(); };
   q("#anAQ").oninput=e=>{ F.q=e.target.value; clearTimeout(S.anAT); S.anAT=setTimeout(()=>{ re(); const n=el.querySelector("#anAQ"); n.focus(); n.setSelectionRange(n.value.length,n.value.length); },300); };
   const get=id=>all.find(x=>x.id===id);
@@ -6071,6 +6080,9 @@ function openAnnEditor(a0,after){ const isNew=!a0||!a0.id; const a={v:2,title:""
     <div class="ae-sec"><h4>${ic("image")} الصور والفيديو والملفات</h4><p class="small muted" style="margin:0">يمكن إضافة أكثر من مرفق. أول صورة تُعرض صورةً رئيسية. ملفات Word تُحفظ للتنزيل.</p><div id="aeM"></div></div>
     <div class="ae-sec"><h4>${ic("grid")} طريقة العرض</h4><div class="ae-lays">${ANN_L.map(([k,l,d])=>`<label><input type="radio" name="aeLay" value="${k}" ${a.layout===k?"checked":""}><span><b>${esc(l)}</b><br><small class="muted">${esc(d)}</small></span></label>`).join("")}</div>
       <div class="ae-chips"><label><input type="checkbox" id="aeU" ${a.urgent?"checked":""}> عاجل: يظهر بشكل بارز أعلى الصفحة الرئيسية</label><label><input type="checkbox" id="aeP" ${a.popup?"checked":""}> نافذة منبثقة عند الدخول</label><label><input type="checkbox" id="aePin" ${a.pin?"checked":""}> تثبيت أعلى القائمة</label></div></div>
+    <div class="ae-sec ae-chan"><h4>${ic("mega")} نوع النشر</h4><div class="ae-chips"><label><input type="radio" name="aeCh" value="ann" ${annChan(a)!=="circ"?"checked":""}> 📣 إعلان لأولياء الأمور</label><label><input type="radio" name="aeCh" value="circ" ${annChan(a)==="circ"?"checked":""}> 📋 تعميم للمعلمين فقط</label></div>
+      <div id="aeChA" class="ae-chips"><label><input type="checkbox" id="aeChT" ${(a.aud||[]).includes("tea")?"checked":""}> إظهاره للمعلمين أيضاً</label><label><input type="checkbox" id="aeChS" ${(a.aud||[]).includes("stu")?"checked":""}> إظهاره للطلاب</label></div>
+      <div id="aeChC" class="ae-chips"><label><input type="checkbox" id="aeChL" ${(a.aud||[]).includes("adm")?"checked":""}> والإدارة والمشرفين</label></div><p class="small muted" id="aeChN" style="margin:0"></p></div>
     <div class="ae-sec"><h4>${ic("users")} الفئات المستهدفة</h4>${chipsHTML("aa",AUD,a.aud)}
       <div class="ae-sub" id="aePS"><b class="small">تخصيص أولياء الأمور والطلاب (اتركه فارغاً لجميع الصفوف)</b><div class="small muted">الصف</div>${chipsHTML("ag",GRADES,a.grades)}<div class="small muted">الفصل</div>${secChipsHTML("as",a.secs)}<label class="check"><input type="checkbox" id="aeG" ${a.guest!==false?"checked":""}> يظهر أيضاً للزوار في الواجهة العامة (إذا لم يُخصَّص بصف أو فصل)</label></div>
       <div class="ae-sub" id="aeTS"><b class="small">تخصيص المعلمين (اتركه فارغاً لجميع المعلمين)</b><div class="small muted">الدور</div>${chipsHTML("ar",T_ROLES,a.troles)}<div class="small muted">المادة</div>${subjs.length?chipsHTML("aj",subjs,a.tsubj):'<span class="small muted">لا توجد مواد معرّفة بعد.</span>'}<div class="small muted">الصف الذي يدرّسه</div>${chipsHTML("atg",GRADES,a.tgrades)}</div>
@@ -6082,7 +6094,13 @@ function openAnnEditor(a0,after){ const isNew=!a0||!a0.id; const a={v:2,title:""
   const q=k=>m.querySelector(k); linksEditor(q("#aeL"),a.links); mediaEditor(q("#aeM"),a.media,removed);
   const sync=()=>{ const aud=chipsVal(m,"aa"); q("#aePS").hidden=!aud.some(x=>x==="par"||x==="stu"); q("#aeTS").hidden=!aud.includes("tea"); const t=tierOf(aud);
     q("#aeTier").innerHTML=!aud.length?"اختر فئة واحدة على الأقل.":t==="s"?`${ic("lock")} إعلان خاص بالمعلمين${aud.includes("adm")?" والإدارة":""}: يُحفظ مشفّراً ولا يظهر لأولياء الأمور والطلاب.`:t==="l"?`${ic("lock")} إعلان خاص بالإدارة والمشرفين: يُحفظ مشفّراً ولا يظهر للمعلمين ولا لأولياء الأمور.`:"يظهر للفئات المحددة فقط داخل المنصة."; q("#aeAQ").hidden=m.querySelector('[name="aeA"]:checked')?.value!=="consent"; };
-  m.querySelectorAll("[data-aa],[name=aeA]").forEach(i=>i.addEventListener("change",sync)); sync();
+  m.querySelectorAll("[data-aa],[name=aeA]").forEach(i=>i.addEventListener("change",sync));
+  const chSet=()=>{ const ch=m.querySelector('[name="aeCh"]:checked').value; q("#aeChA").hidden=ch!=="ann"; q("#aeChC").hidden=ch!=="circ";
+    const want=ch==="circ"?["tea",...(q("#aeChL").checked?["adm"]:[])]:["par",...(q("#aeChS").checked?["stu"]:[]),...(q("#aeChT").checked?["tea"]:[]),...((a.aud||[]).includes("adm")?["adm"]:[])];
+    m.querySelectorAll("[data-aa]").forEach(i=>{ i.checked=want.includes(i.getAttribute("data-aa")); });
+    if(ch==="circ"&&q("#aeK").value==="gen") q("#aeK").value="circ"; q("#aeG").checked=ch==="ann"&&q("#aeG").checked;
+    q("#aeChN").textContent=ch==="circ"?"يظهر في «التعاميم» للمعلمين فقط، ويُحفظ مشفّراً ولا يراه أولياء الأمور.":q("#aeChT").checked?"يظهر في «الإعلانات» لأولياء الأمور، ويظهر للمعلمين أيضاً.":"يظهر في «الإعلانات» لأولياء الأمور فقط، ولا يظهر للمعلمين."; sync(); };
+  m.querySelectorAll('[name="aeCh"],#aeChT,#aeChS,#aeChL').forEach(i=>i.addEventListener("change",chSet)); chSet();
   m.querySelectorAll("[data-aed2]").forEach(b=>b.onclick=()=>{ const d=+b.dataset.aed2; if(!d){ q("#aeE").value=""; return; } const s=new Date(q("#aeS").value||Date.now()); s.setDate(s.getDate()+d); q("#aeE").value=localDT(s.toISOString()); });
   const collect=()=>({...a,title:q("#aeT").value.trim(),kind:q("#aeK").value,body:q("#aeB").value.trim(),layout:m.querySelector('[name="aeLay"]:checked')?.value||"mix",urgent:q("#aeU").checked,popup:q("#aeP").checked,pin:q("#aePin").checked,links:cleanLinks(a.links),media:a.media,
     aud:chipsVal(m,"aa"),grades:chipsVal(m,"ag"),secs:chipsVal(m,"as"),guest:q("#aeG").checked,troles:chipsVal(m,"ar"),tsubj:chipsVal(m,"aj"),tgrades:chipsVal(m,"atg"),start:fromLocalDT(q("#aeS").value)||nowISO(),end:fromLocalDT(q("#aeE").value),
@@ -8499,7 +8517,7 @@ function qzBoot(db){
 const SN_GROUPS=[
   [null,["home","chess"]],
   ["التعلّم والخطط",["wp","rev","tsk","rl","exams","train"]],
-  ["الأخبار والمواعيد",["ann","cal","bell"]],
+  ["الأخبار والمواعيد",["ann","circ","cal","bell"]],
   ["أولياء الأمور",["parent","pres","cmap"]],
   ["المعلمون والإدارة",["tt","tp","subs","studio","ga"]],
   ["الحساب",["contact","login","admin"]]];
