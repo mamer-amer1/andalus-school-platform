@@ -1076,6 +1076,46 @@ input.qz-bigcode{font-size:2rem;text-align:center}
 .gs-chips{display:flex;flex-wrap:wrap;gap:6px}.gs-chip{border-radius:999px;padding:5px 12px;font:inherit;font-size:.85rem;border:1px solid var(--line,#e2e8f0);background:#f8fafc}.gs-chip.ok{background:#dcfce7;border-color:#86efac;color:#133986}.gs-chip.add{cursor:pointer;background:#fff;border-style:dashed}.gs-chip.add:hover{border-color:#1a6fc4;color:#1063b0}
 .gs-ul{margin:0;padding-inline-start:18px}.gs-note{border-inline-start:3px solid #86efac;padding:4px 10px;margin:6px 0;background:#f8fafc;border-radius:6px}
 
+
+/* ===== side navigation (phase 1) ===== */
+.shell{display:grid;grid-template-columns:262px minmax(0,1fr);gap:22px;align-items:start;max-width:1560px;margin:0 auto;padding:18px clamp(10px,2vw,22px) 0}
+.shell>#app{max-width:none!important;margin:0!important;width:auto!important;min-width:0}
+.sidenav{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;background:var(--ds-surface,#fff);border:1px solid var(--ds-line,#e2e8f0);border-radius:18px;padding:10px;box-shadow:var(--shadow,0 6px 18px #0001);scrollbar-width:thin}
+.sidenav nav.main{display:flex!important;flex-direction:column!important;flex-wrap:nowrap!important;overflow:visible!important;width:auto!important;gap:2px!important;background:none!important;padding:0!important;margin:0!important;position:static!important}
+.sidenav nav.main .navgrp{display:flex;flex-direction:column;gap:2px;padding:4px 0;border-top:1px solid var(--ds-line,#e2e8f0)}.sidenav nav.main .navgrp:first-child{border-top:0}
+.sidenav nav.main .navgrp:not(:has(a:not([hidden]))){display:none}
+.navgrp-h{font-size:.74rem;font-weight:700;color:var(--ds-muted,#64748b);padding:6px 12px 2px}
+.sidenav nav.main a{display:flex!important;align-items:center;justify-content:flex-start!important;gap:6px;width:100%;padding:9px 12px!important;font-size:.93rem!important;white-space:normal!important;border-radius:10px!important;min-height:42px;border:0!important;text-align:start}
+.sidenav nav.main a[hidden]{display:none!important}
+.sidenav nav.main a.on{background:var(--ds-navy,#123885)!important;color:#fff!important;font-weight:700!important}
+.sidenav nav.main a.on .badge{background:#fff!important;color:var(--ds-navy,#123885)!important}
+.sn-top{display:none;align-items:center;justify-content:space-between;padding:4px 6px 8px}
+.sn-x{border:0;background:none;font-size:1.2rem;cursor:pointer;color:inherit}
+.sn-share{display:block;width:100%;margin-top:8px;border:1px dashed var(--ds-line-2,#cbd5e1);background:none;border-radius:10px;padding:9px;font:inherit;font-size:.86rem;cursor:pointer;color:var(--ds-navy,#123885)}
+.sn-tog{border:1px solid var(--ds-line-2,#cbd5e1);background:var(--ds-surface,#fff);border-radius:10px;width:42px;height:42px;font-size:1.25rem;cursor:pointer;flex:none;color:var(--ds-navy,#123885)}
+.sn-back{display:none}
+body.side-off .shell{grid-template-columns:minmax(0,1fr)}body.side-off .sidenav{display:none}
+body.on-admin:not(.side-keep) .shell{grid-template-columns:minmax(0,1fr)}body.on-admin .sidenav{display:none}body.on-admin.side-open .sidenav{display:block}body.on-admin.side-open .shell{grid-template-columns:262px minmax(0,1fr)}
+@media (max-width:900px){
+ .shell{grid-template-columns:minmax(0,1fr)!important;padding-top:10px}
+ .sidenav{display:block!important;position:fixed;top:0;bottom:0;right:0;width:min(86vw,330px);max-height:none;border-radius:0 0 0 18px;z-index:60;transform:translateX(105%);transition:transform .22s ease;visibility:hidden}
+ body.side-open .sidenav{transform:none;visibility:visible}
+ .sn-top{display:flex}
+ body.side-open .sn-back{display:block;position:fixed;inset:0;background:rgba(5,20,30,.45);z-index:55}
+}
+.sh-qr{display:grid;place-items:center;min-height:180px}.sh-qr svg{width:min(240px,70vw);height:auto}
+.extbox{border:2px solid var(--ds-navy,#123885)!important}.extst{border:1px solid var(--ds-line,#e2e8f0);border-radius:10px;padding:8px 10px}
+.opt{font-size:.75rem;font-weight:700;color:var(--ds-navy,#123885);background:var(--ds-navy-soft,#e8eef9);border-radius:99px;padding:0 8px;margin-inline-start:4px}
+@media print{.sidenav,.sn-tog{display:none!important}.shell{display:block}}
+
+/* ===== report center ===== */
+.rc{display:grid;grid-template-columns:340px minmax(0,1fr);gap:16px;align-items:start}
+.rc-side{position:sticky;top:10px;max-height:calc(100vh - 20px);overflow:auto;padding-inline-end:4px}
+.rc-prev{width:100%;height:calc(100vh - 120px);min-height:560px;border:1px solid var(--ds-line,#e2e8f0);border-radius:12px;background:#e9edf3}
+.rc-tpls{display:grid;gap:4px}.rc-tpl{text-align:start;border:1px solid var(--ds-line,#e2e8f0);background:var(--ds-surface,#fff);border-radius:10px;padding:8px 10px;font:inherit;cursor:pointer}.rc-tpl.on{border-color:var(--ds-navy,#123885);background:var(--ds-navy,#123885);color:#fff}
+.rc-pals{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.rc-pal{border:2px solid transparent;background:none;border-radius:10px;padding:4px;cursor:pointer;display:flex;flex-wrap:wrap;gap:2px;justify-content:center;font:inherit}.rc-pal.on{border-color:var(--ds-navy,#123885)}.rc-pal i{width:12px;height:22px;border-radius:3px}.rc-pal small{width:100%;font-size:.68rem;text-align:center}
+.rc-sec{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--ds-line,#e2e8f0);border-radius:8px;padding:2px 8px}.rc-sec.off{opacity:.65;border-style:dashed}.rc-sec .check{margin:0}
+@media (max-width:1100px){.rc{grid-template-columns:1fr}.rc-side{position:static;max-height:none}.rc-prev{height:70vh}}
 </style>
 
 <header class="masthead noimg" id="masthead">
@@ -1224,7 +1264,7 @@ function acadCard(c){
     ${tr.length?`<div class="trk">${tr.map(t=>`<span class="pill local">${esc(t.name)}</span>`).join("")}</div>`:""}
     <div class="row" style="margin-top:4px"><a class="btn sm" href="#c-${esc(c.id)}">تفاصيل الأكاديمية والجدول</a>${c.status==="منتهية"||c.status==="التسجيل مغلق"?"":`<a class="btn sm primary" href="#parent" data-pick="${esc(c.id)}">سجّل ابنك</a>`}</div></div></article>`;
 }
-const pubComps=()=>S.comps.filter(c=>c.published!==false).sort((a,b)=>(a.order??999)-(b.order??999)||String(a.name).localeCompare(b.name,"ar"));
+const pubComps=()=>S.comps.filter(c=>c.published!==false&&!c.archived&&(c.access!=="private"||S.admin)).sort((a,b)=>(a.order??999)-(b.order??999)||String(a.name).localeCompare(b.name,"ar"));
 const gradeIdx=g=>/الأول|أول|1/.test(g||"")?0:/الثاني|ثاني|2/.test(g||"")?1:/الثالث|ثالث|3/.test(g||"")?2:-1;
 function confirmBtn(btn,label,fn){ if(btn.dataset.armed){ fn(); return; } btn.dataset.armed="1"; const old=btn.textContent; btn.textContent=label; setTimeout(()=>{ if(btn.isConnected){ delete btn.dataset.armed; btn.textContent=old; } },3500); }
 let audioCtx=null; document.addEventListener("pointerdown",()=>{ try{ audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} },{once:true});
@@ -1336,6 +1376,7 @@ function render0(){
   else if(r.startsWith("c-")) renderDetail(r.slice(2));
   else if(r.startsWith("n-")) renderNoticePage(r.slice(2));
   else if(r==="parent"||r==="register") renderParent();
+  else if(r.startsWith("parent-")){ S.pick=r.slice(7); location.replace("#parent"); return; }
   else if(r==="honor") renderHonorPage();
   else if(r==="login") renderAcctLogin();
   else if(r==="me") renderMe2();
@@ -1957,15 +1998,15 @@ async function submitRegistration(e){
 }
 
 /* ---------- admin ---------- */
-const TABS=[["dash","لوحة القيادة"],["ctl","🎛️ مركز التحكم"],["ann","📣 الإعلانات والتعاميم"],["tp","👨‍🏫 بوابة المعلم"],["stats","الإحصاءات والمشاركة"],["comps","المسابقات والتدريب"],["requests","طلبات التسجيل"],["students","الطلاب وأولياء الأمور"],["ach","الإنجازات"],["train","التدريب الذاتي"],["msg","مركز التواصل"],["posters","🎨 استوديو التصميم"],["calendar","📆 الأجندة المدرسية"],["exams","📝 جداول الاختبارات"],["rl","💻 التعليم عن بُعد"],["media","الصور والفعاليات"],["accounts","حسابات الدخول"],["usage","📈 الدخول والاستخدام"],["resets","🧹 إعادة تهيئة السجلات"],["downloads","⬇️ التنزيل والتقارير"],["theme","🎨 الهوية والألوان"],["settings","النصوص والإعدادات"]];
+const TABS=[["dash","لوحة القيادة"],["ctl","🎛️ مركز التحكم"],["ann","📣 الإعلانات والتعاميم"],["tp","👨‍🏫 بوابة المعلم"],["stats","الإحصاءات والمشاركة"],["comps","المسابقات والتدريب"],["requests","طلبات التسجيل"],["extreg","🏁 التسجيل الرسمي"],["data","🗂 البيانات والسنوات"],["reports","📑 مركز التقارير"],["students","الطلاب وأولياء الأمور"],["ach","الإنجازات"],["train","التدريب الذاتي"],["msg","مركز التواصل"],["posters","🎨 استوديو التصميم"],["calendar","📆 الأجندة المدرسية"],["exams","📝 جداول الاختبارات"],["rl","💻 التعليم عن بُعد"],["media","الصور والفعاليات"],["accounts","حسابات الدخول"],["usage","📈 الدخول والاستخدام"],["resets","🧹 إعادة تهيئة السجلات"],["downloads","⬇️ التنزيل والتقارير"],["theme","🎨 الهوية والألوان"],["settings","النصوص والإعدادات"]];
 function allRequests(){ const out=S.requests.map(r=>({...r,src:"manual"})); S.regs.forEach(d=>(d.items||[]).forEach(i=>out.push({...i,src:"platform",owner:d._id}))); return out.sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt))); }
 function updateBadge(){ const n=allRequests().filter(r=>r.status==="جديد").length; const b=$("#navBadge"); b.hidden=!n||!S.admin; b.textContent=n; document.title=(n&&S.admin?"("+n+") ":"")+"منصة المراكز التنافسية"; }
 function renderAdmin(tab){
   const urgent=dashAlerts().filter(a=>a.lvl==="bad").length+S.alerts.filter(a=>!a.done&&a.level==="عاجل").length;
-  const rail=TABS.map(([k,l])=>{ const n=k==="requests"?allRequests().filter(r=>r.status==="جديد").length:k==="dash"?urgent:0; return `<a href="#admin-${k}" class="${k===tab?"on":""}">${l}${n?`<span class="badge">${n}</span>`:""}</a>`; }).join("");
+  const rail=TABS.map(([k,l])=>{ const n=k==="requests"?allRequests().filter(r=>r.status==="جديد").length:k==="dash"?urgent:k==="extreg"?extPending().length:0; return `<a href="#admin-${k}" class="${k===tab?"on":""}">${l}${n?`<span class="badge">${n}</span>`:""}</a>`; }).join("");
   const pick=`<label class="adm-pick"><select class="in" aria-label="اختر قسم الإدارة" onchange="location.hash='#admin-'+this.value">${TABS.map(([k,l])=>`<option value="${k}" ${k===tab?"selected":""}>${"📂 "+String(l).replace(/<[^>]*>/g,"")}</option>`).join("")}</select></label>`;
   $("#app").innerHTML=`${pick}<div class="admin"><nav class="rail surface" aria-label="أقسام الإدارة">${S.site.logo?`<div class="rail-logo"><img alt="شعار مدارس الأندلس الأهلية" src="${blob(S.site.logo)}"></div>`:""}${rail}<button class="btn sm ghost" type="button" onclick="location.reload()" style="margin-top:8px" title="إعادة تحميل المنصة بآخر البيانات">🔄 تحديث المنصة</button></nav><div id="adm" class="stack" style="min-width:0;gap:18px"></div></div>`;
-  ({dash:admDash,ctl:admCtl,ann:annAdmin,tp:admTP,stats:admStats,comps:admComps,requests:admRequests,students:admStudents,ach:admAch,train:admTrain,msg:admMsg,commap:admCommap,calendar:el=>renderCalendar(el),media:admMedia,accounts:admAccounts,usage:admUsage,resets:admResets,posters:el=>fxStudio(el,true),exams:el=>{ exCssOnce(); exManage(el); },rl:el=>{ el.innerHTML='<div class="stack" style="gap:14px" id="rlBody"></div>'; rlAdmin(el.querySelector("#rlBody")); },downloads:admDownloads,theme:admTheme,settings:admSettings}[tab]||admDash)($("#adm"));
+  ({dash:admDash,ctl:admCtl,ann:annAdmin,tp:admTP,stats:admStats,comps:admComps,requests:admRequests,extreg:el=>admExt(el),data:el=>admData(el),reports:el=>admReports(el),students:admStudents,ach:admAch,train:admTrain,msg:admMsg,commap:admCommap,calendar:el=>renderCalendar(el),media:admMedia,accounts:admAccounts,usage:admUsage,resets:admResets,posters:el=>fxStudio(el,true),exams:el=>{ exCssOnce(); exManage(el); },rl:el=>{ el.innerHTML='<div class="stack" style="gap:14px" id="rlBody"></div>'; rlAdmin(el.querySelector("#rlBody")); },downloads:admDownloads,theme:admTheme,settings:admSettings}[tab]||admDash)($("#adm"));
   if(S.lastAdmTab!==tab){ S.lastAdmTab=tab; const r=document.querySelector(".admin .rail"), on=r&&r.querySelector("a.on"); if(r&&on&&r.scrollWidth>r.clientWidth){ requestAnimationFrame(()=>{ const rr=r.getBoundingClientRect(), oo=on.getBoundingClientRect(); r.scrollLeft+=(oo.left+oo.width/2)-(rr.left+rr.width/2); }); } }
 }
 /* ---------- admin: command dashboard ---------- */
@@ -2416,6 +2457,7 @@ function openCompEditor(id){
 
     <fieldset><legend>ما يظهر لولي الأمر</legend>
       <label class="check"><input type="checkbox" id="cPub" ${c.published!==false?"checked":""}> المسابقة منشورة وظاهرة لأولياء الأمور</label>
+      <label class="f">مستوى الوصول للصفحة ورابطها<select class="in" id="cAccess">${Object.entries(ACCESS).map(([k,v])=>`<option value="${k}" ${(c.access||"public")===k?"selected":""}>${v}</option>`).join("")}</select></label>
       <label class="check"><input type="checkbox" id="cShowSess" ${c.showSessions!==false?"checked":""}> الجدول التدريبي</label>
       <label class="check"><input type="checkbox" id="cShowPlan" ${c.showPlan!==false?"checked":""}> الخطة التشغيلية والفعاليات (بدون عمود المسؤول)</label>
       <label class="check"><input type="checkbox" id="cShowCounts" ${c.showCounts!==false?"checked":""}> أعداد الطلاب المسجلين</label>
@@ -2594,7 +2636,7 @@ function openCompEditor(id){
     const name=g("#cName").value.trim(); if(!name){ g("#cMsg").textContent="اكتب اسم المسابقة."; g("#cName").focus(); return; }
     const url=g("#cUrl").value.trim(); if(url&&!/^https?:\/\//.test(url)){ g("#cMsg").textContent="الرابط يجب أن يبدأ بـ https://"; return; }
     Object.assign(c,{name,kind:g("#cKind").value,domain:g("#cDomain").value.trim(),level:g("#cLevel").value,status:g("#cStatus").value,grades:g("#cGrades").value.trim(),coach:g("#cCoach").value.trim(),seats:g("#cSeats").value.trim(),order:Number(g("#cOrder").value)||999,summary:g("#cSummary").value.trim(),description:g("#cDesc").value,idea:g("#cIdea").value,url,regOpen:g("#cOpen").value,regClose:g("#cClose").value,compDate:g("#cDate").value,qualified:g("#cQual").value,
-      published:g("#cPub").checked,showSessions:g("#cShowSess").checked,showPlan:g("#cShowPlan").checked,showCounts:g("#cShowCounts").checked,showQualified:g("#cShowQual").checked,showCoach:g("#cShowCoach").checked,showFiles:g("#cShowFiles").checked,updatedAt:new Date().toISOString()});
+      published:g("#cPub").checked,access:g("#cAccess").value,showSessions:g("#cShowSess").checked,showPlan:g("#cShowPlan").checked,showCounts:g("#cShowCounts").checked,showQualified:g("#cShowQual").checked,showCoach:g("#cShowCoach").checked,showFiles:g("#cShowFiles").checked,updatedAt:new Date().toISOString()});
     if(c.kind==="academy"){
       c.academy={dates:g("#aDates").value.trim(),target:g("#aTarget").value.trim(),location:g("#aLoc").value.trim(),timing:g("#aTiming").value.trim(),capacity:g("#aCap").value.trim(),contact:normDigits(g("#aContact").value.trim()),fees:g("#aFees").value.trim(),feesNote:g("#aFeesNote").value.trim(),scheduleNote:g("#aSchedNote").value.trim(),
         stats:pipes(g("#aStats").value).map(p=>[p[0]||"",p[1]||""]),
@@ -2701,9 +2743,9 @@ function openTopList(after){
 }
 function admStudents(el){
   const q=S.stuFilter.trim();
-  const list=S.students.slice().sort((a,b)=>String(a.name).localeCompare(b.name,"ar")).filter(s=>!q||(s.name+" "+(s.guardian||"")+" "+(s.phone||"")+" "+(s.grade||"")).includes(q));
+  const list=S.students.slice().sort((a,b)=>String(a.name).localeCompare(b.name,"ar")).filter(s=>!q||(s.name+" "+(s.guardian||"")+" "+(s.phone||"")+" "+(s.grade||"")+" "+(s.no||"")).toUpperCase().includes(q.toUpperCase()));
   el.innerHTML=`<div class="row" style="justify-content:space-between"><h2 class="sec-title" style="font-size:1.5rem">الطلاب وأولياء الأمور <small class="muted num" style="font-size:.9rem">(${S.students.length})</small></h2><div class="row"><input class="in" id="sq" placeholder="بحث بالاسم أو الجوال أو الصف…" value="${esc(S.stuFilter)}" style="max-width:240px"><button class="btn primary sm" id="addStu">+ إضافة طالب</button><button class="btn sm" id="impStu">استيراد من Excel</button><button class="btn sm gold" id="topStu">⭐ قائمة المتفوقين (${S.students.filter(s=>s.top).length})</button>${S.downloads?'<button class="btn sm ghost" id="expStu">تصدير CSV</button>':""}</div></div>
-  ${list.length?`<div class="tbl-wrap"><table><thead><tr><th>الطالب</th><th>الصف / الفصل</th><th>ولي الأمر</th><th>الجوال</th><th>المسابقات</th><th></th></tr></thead><tbody>${list.map((s,i)=>`<tr><td><b>${esc(s.name)}</b>${s.top?` <span class="pill new" title="${esc(s.top.note||"متفوق")}">⭐ متفوق</span>`:""}${s.notes?`<br><small class="muted">${esc(s.notes)}</small>`:""}</td><td>${esc(s.grade)}${s.cls?" – "+esc(s.cls):""}</td><td>${esc(s.guardian)}</td><td class="num" dir="ltr">${esc(s.phone)}${s.phone2?"<br>"+esc(s.phone2):""}</td><td>${(s.comps||[]).map(id=>compById(id)).filter(Boolean).map(c=>`<span class="pill" style="margin:1px">${esc(c.name)}</span>`).join("")||'<span class="muted">—</span>'}</td><td><div class="row" style="gap:4px;flex-wrap:nowrap">${s.phone?`<a class="btn sm wa" target="_blank" rel="noopener" href="${esc(waLink(s.phone,"السلام عليكم "+(s.guardian||"")+"، "))}">واتساب</a>`:""}${s.phone?`<button class="btn sm" data-qms="${i}">رسالة جاهزة</button>`:""}<button class="btn sm" data-es="${i}">تعديل</button><button class="btn sm danger" data-ds="${i}">حذف</button></div></td></tr>`).join("")}</tbody></table></div>`:'<div class="empty">قاعدة بيانات الطلاب فارغة. أضف طالباً، أو استورد قائمة من Excel، أو حوّل طلبات التسجيل إلى ملفات طلاب.</div>'}`;
+  ${list.length?`<div class="tbl-wrap"><table><thead><tr><th>الطالب</th><th>الصف / الفصل</th><th>ولي الأمر</th><th>الجوال</th><th>المسابقات</th><th></th></tr></thead><tbody>${list.map((s,i)=>`<tr><td><b>${esc(s.name)}</b>${s.no?` <small class="num muted" title="الرقم الموحد">${esc(s.no)}</small>`:""}${s.top?` <span class="pill new" title="${esc(s.top.note||"متفوق")}">⭐ متفوق</span>`:""}${s.notes?`<br><small class="muted">${esc(s.notes)}</small>`:""}</td><td>${esc(s.grade)}${s.cls?" – "+esc(s.cls):""}</td><td>${esc(s.guardian)}</td><td class="num" dir="ltr">${esc(s.phone)}${s.phone2?"<br>"+esc(s.phone2):""}</td><td>${(s.comps||[]).map(id=>compById(id)).filter(Boolean).map(c=>`<span class="pill" style="margin:1px">${esc(c.name)}</span>`).join("")||'<span class="muted">—</span>'}</td><td><div class="row" style="gap:4px;flex-wrap:nowrap">${s.phone?`<a class="btn sm wa" target="_blank" rel="noopener" href="${esc(waLink(s.phone,"السلام عليكم "+(s.guardian||"")+"، "))}">واتساب</a>`:""}${s.phone?`<button class="btn sm" data-qms="${i}">رسالة جاهزة</button>`:""}<button class="btn sm" data-es="${i}">تعديل</button><button class="btn sm danger" data-ds="${i}">حذف</button></div></td></tr>`).join("")}</tbody></table></div>`:'<div class="empty">قاعدة بيانات الطلاب فارغة. أضف طالباً، أو استورد قائمة من Excel، أو حوّل طلبات التسجيل إلى ملفات طلاب.</div>'}`;
   const sq=$("#sq"); sq.oninput=()=>{ S.stuFilter=sq.value; admStudents(el); const n=$("#sq"); n.focus(); n.setSelectionRange(n.value.length,n.value.length); };
   $("#addStu").onclick=()=>openStudentEditor(null); $("#impStu").onclick=openImport; $("#topStu").onclick=()=>openTopList();
   if($("#expStu")) $("#expStu").onclick=()=>exportCSV("الطلاب.csv",["الطالب","الصف","الفصل","ولي الأمر","الجوال","جوال آخر","المسابقات","ملاحظات"],list.map(s=>[s.name,s.grade,s.cls,s.guardian,s.phone,s.phone2,(s.comps||[]).map(id=>compById(id)?.name).filter(Boolean).join(" | "),s.notes]));
@@ -2716,6 +2758,7 @@ function openStudentEditor(s){
   const m=document.createElement("div"); m.className="modal";
   m.innerHTML=`<div class="box"><div class="mh"><h3>${!isNewSt?"تعديل بيانات "+esc(s.name):"طالب جديد"}</h3><button class="btn sm ghost" data-x>إغلاق</button></div><div class="mb">
     <fieldset><legend>الطالب</legend><div class="grid2">
+      ${st.no?`<div class="note info small" style="grid-column:1/-1;margin:0">الرقم الموحد: <b class="num">${esc(st.no)}</b> — ثابت لا يتغير، وتُربط به كل مشاركات الطالب.</div>`:""}
       <label class="f">الاسم الثلاثي *<input class="in" id="sName" value="${esc(st.name)}"></label>
       <label class="f">الصف<select class="in" id="sGrade">${GRADES.map(x=>`<option ${x===st.grade?"selected":""}>${x}</option>`).join("")}</select></label>
       <label class="f">الفصل<input class="in" id="sCls" value="${esc(st.cls)}"></label>
@@ -2766,7 +2809,7 @@ function openImport(){
 }
 /* ---------- search the students database and register into a competition ---------- */
 function stuSearchHits(q){ q=String(q||"").trim(); if(q.length<2) return []; const d=normDigits(q).replace(/\D/g,"");
-  let hits=[]; if(d.length>=4) hits=S.students.filter(s=>[s.nid,s.phone,s.phone2].some(v=>normDigits(v||"").replace(/\D/g,"").includes(d.replace(/^0/,""))));
+  let hits=[]; { const h=typeof stuByNo==="function"&&stuByNo(q); if(h) return [h]; } if(d.length>=4) hits=S.students.filter(s=>[s.nid,s.phone,s.phone2].some(v=>normDigits(v||"").replace(/\D/g,"").includes(d.replace(/^0/,""))));
   if(!hits.length&&/[؀-ۿa-z]/i.test(q)) hits=findStudentsLoose(q);
   return hits.slice(0,8); }
 function stuSearchBox(cid,big){ return `<div class="cs-box${big?" big":""}" data-cs="${esc(cid)}"><div class="cs-in"><span aria-hidden="true">🔎</span><input class="in" type="search" data-csq placeholder="ابحث عن طالب لتسجيله: الاسم أو الجوال أو الهوية" autocomplete="off" aria-label="بحث عن طالب لتسجيله في المسابقة"></div><div class="cs-res" role="listbox" hidden></div></div>`; }
@@ -8393,8 +8436,575 @@ function qzBoot(db){
     db.collection("qzrooms").onSnapshot(s=>{ QZ.rooms=s.docs.map(d=>d.data()); if(route().startsWith("qzm-")) rerender(); },()=>{}); }
 }
 
+/* ================= المرحلة الأولى: القائمة الجانبية • المشاركة و QR • التسجيل الرسمي والإبلاغ ================= */
+/* ---------- side navigation (same links, same roles; only the layout changes) ---------- */
+const SN_GROUPS=[
+  [null,["home","chess"]],
+  ["التعلّم والخطط",["wp","rev","tsk","rl","exams","train"]],
+  ["الأخبار والمواعيد",["ann","cal"]],
+  ["أولياء الأمور",["parent","pres","cmap"]],
+  ["المعلمون والإدارة",["tp","subs","studio","ga","tt"]],
+  ["الحساب",["contact","login","admin"]]];
+const SN_ICON={parent:"👪",train:"🎯",contact:"☎️",login:"🔐",admin:"🛡️"};
+function buildSideNav(){
+  const nav=document.querySelector("header nav.main"), app=document.getElementById("app"); if(!nav||!app||document.getElementById("sidenav")) return;
+  const home=nav.querySelector('a[data-nav="home"]'); if(home){ home.innerHTML='🏠 <span>الرئيسية</span>'; home.title="الرئيسية — المسابقات والبرامج"; }
+  Object.entries(SN_ICON).forEach(([k,i])=>{ const a=nav.querySelector(`a[data-nav="${k}"]`); if(a&&!/^\W/.test(a.textContent.trim())) a.insertAdjacentHTML("afterbegin",i+" "); });
+  const byKey=k=>k==="chess"?nav.querySelector("a.nav-chess"):nav.querySelector(`a[data-nav="${k}"]`);
+  const placed=new Set();
+  const frag=document.createDocumentFragment();
+  SN_GROUPS.forEach(([h,keys])=>{ const g=document.createElement("div"); g.className="navgrp"; if(h) g.innerHTML=`<div class="navgrp-h">${h}</div>`;
+    keys.forEach(k=>{ const a=byKey(k); if(a){ g.appendChild(a); placed.add(a); } }); frag.appendChild(g); });
+  const rest=[...nav.querySelectorAll(":scope > a")].filter(a=>!placed.has(a)); if(rest.length){ const g=document.createElement("div"); g.className="navgrp"; rest.forEach(a=>g.appendChild(a)); frag.appendChild(g); }
+  nav.appendChild(frag);
+  const aside=document.createElement("aside"); aside.className="sidenav"; aside.id="sidenav"; aside.setAttribute("aria-label","القائمة الرئيسية");
+  aside.innerHTML=`<div class="sn-top"><b>القائمة</b><button type="button" class="sn-x" data-sn="close" aria-label="إغلاق القائمة">✕</button></div>`;
+  aside.appendChild(nav);
+  aside.insertAdjacentHTML("beforeend",`<button type="button" class="sn-share" data-share-here>🔗 مشاركة هذه الصفحة و QR</button>`);
+  const shell=document.createElement("div"); shell.className="shell"; app.parentNode.insertBefore(shell,app); shell.append(aside,app);
+  shell.insertAdjacentHTML("afterbegin",'<div class="sn-back" data-sn="close"></div>');
+  const wrap=document.querySelector("header.masthead .wrap"); if(wrap) wrap.insertAdjacentHTML("afterbegin",`<button type="button" class="sn-tog" data-sn="toggle" aria-controls="sidenav" aria-label="إظهار القائمة أو طيّها">☰</button>`);
+  try{ if(localStorage.getItem("snOff")==="1") document.body.classList.add("side-off"); }catch(e){}
+}
+const snMobile=()=>matchMedia("(max-width:900px)").matches;
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-sn]");
+  if(t){ if(t.dataset.sn==="toggle"){ if(snMobile()||document.body.classList.contains("on-admin")) document.body.classList.toggle("side-open"); else { const off=document.body.classList.toggle("side-off"); try{ localStorage.setItem("snOff",off?"1":"0"); }catch(err){} } } else document.body.classList.remove("side-open"); return; }
+  if(e.target.closest("#sidenav nav.main a")) document.body.classList.remove("side-open");
+  if(e.target.closest("[data-share-here]")){ document.body.classList.remove("side-open"); shareModal(location.href.split("#")[0]+(location.hash||"#home"),document.title.replace(/\s*[|–-].*$/,"")||"المراكز التنافسية"); }
+});
+addEventListener("hashchange",()=>{ document.body.classList.toggle("on-admin",route().startsWith("admin")); });
+buildSideNav(); document.body.classList.toggle("on-admin",route().startsWith("admin"));
+
+/* ---------- unified share: copy • QR (image / print) • WhatsApp ---------- */
+let qrP=null;
+const qrLib=()=>qrP||(qrP=new Promise((res,rej)=>{ if(window.qrcode) return res(window.qrcode); const s=document.createElement("script"); s.src="/chess/lib/qrcode.js"; s.onload=()=>res(window.qrcode); s.onerror=()=>{ qrP=null; rej(new Error("qr")); }; document.head.appendChild(s); }));
+async function qrMake(text){ const q=await qrLib(); const qr=q(0,"M"); qr.addData(text); qr.make(); return qr; }
+async function qrPng(text,title){
+  const qr=await qrMake(text), n=qr.getModuleCount(), W=720, pad=60, cs=Math.floor((W-2*pad)/n), H=W+150, c=document.createElement("canvas"); c.width=W; c.height=H;
+  const x=c.getContext("2d"); x.fillStyle="#fff"; x.fillRect(0,0,W,H); x.fillStyle="#0b1b3a"; const off=Math.floor((W-cs*n)/2);
+  for(let r=0;r<n;r++) for(let k=0;k<n;k++) if(qr.isDark(r,k)) x.fillRect(off+k*cs,off+r*cs,cs,cs);
+  x.direction="rtl"; x.textAlign="center"; x.font="700 30px 'IBM Plex Sans Arabic',Tahoma,sans-serif"; x.fillText(String(title||"").slice(0,48),W/2,W+40);
+  x.font="400 20px 'IBM Plex Sans Arabic',Tahoma,sans-serif"; x.fillStyle="#55625f"; x.fillText("مدارس الأندلس الأهلية — المراكز التنافسية",W/2,W+84);
+  x.fillStyle="#17a9d9"; x.fillRect(0,H-10,W/4,10); x.fillStyle="#0f69b2"; x.fillRect(W/4,H-10,W/4,10); x.fillStyle="#9b4fa3"; x.fillRect(W/2,H-10,W/4,10); x.fillStyle="#e8665d"; x.fillRect(3*W/4,H-10,W/4,10);
+  return c;
+}
+function shareModal(url,title,extra){
+  const m=document.createElement("div"); m.className="modal"; m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true");
+  const wa="https://wa.me/?text="+encodeURIComponent(title+"\n"+url);
+  m.innerHTML=`<div class="box" style="max-width:560px"><div class="mh"><h3>🔗 مشاركة: ${esc(title)}</h3><button class="btn sm ghost" data-x>إغلاق</button></div><div class="mb stack" style="gap:12px">
+   <div class="sh-qr" id="shQr"><span class="muted small">جارٍ إنشاء QR…</span></div>
+   <label class="f">الرابط<input class="in num copysrc" dir="ltr" readonly value="${esc(url)}" onclick="this.select()"></label>
+   <div class="row" style="gap:8px"><button class="btn primary" data-copy="${esc(url)}">نسخ الرابط</button><a class="btn wa" target="_blank" rel="noopener" href="${esc(wa)}">مشاركة عبر واتساب</a><button class="btn" data-shq="png">تنزيل QR صورة</button><button class="btn" data-shq="print">طباعة QR</button><a class="btn ghost" href="${esc(url)}" target="_blank" rel="noopener">فتح الصفحة</a></div>
+   ${extra||""}<p class="muted small" style="margin:0">الرابط ثابت: تعديل محتوى الصفحة لا يغيّره. صفحة المشاركة لا تعرض أدوات الإدارة ولا بيانات الطلاب.</p></div></div>`;
+  document.body.appendChild(m);
+  m.addEventListener("click",async e=>{ if(e.target===m||e.target.closest("[data-x]")){ m.remove(); return; }
+    const b=e.target.closest("[data-shq]"); if(!b) return;
+    try{ const c=await qrPng(url,title);
+      if(b.dataset.shq==="png"){ c.toBlob(bl=>{ const a=document.createElement("a"); a.href=URL.createObjectURL(bl); a.download="QR-"+String(title).replace(/[\\/:*?"<>|\s]+/g,"-").slice(0,60)+".png"; document.body.appendChild(a); a.click(); a.remove(); },"image/png"); }
+      else { const f=document.createElement("iframe"); f.style.cssText="position:fixed;width:1px;height:1px;border:0;opacity:0;bottom:0"; f.srcdoc=`<html dir="rtl"><body style="margin:0;display:grid;place-items:center;min-height:100vh"><img src="${c.toDataURL("image/png")}" style="width:12cm"><p style="font:14px sans-serif;direction:ltr">${esc(url)}</p></body></html>`; document.body.appendChild(f); f.onload=()=>setTimeout(()=>{ try{ f.contentWindow.print(); }catch(err){} setTimeout(()=>f.remove(),60000); },300); }
+    }catch(err){ toast("تعذّر إنشاء QR — تحقق من الاتصال","bad"); } });
+  qrMake(url).then(qr=>{ const el=m.querySelector("#shQr"); if(el) el.innerHTML=qr.createSvgTag({cellSize:5,margin:2,scalable:true}); }).catch(()=>{ const el=m.querySelector("#shQr"); if(el) el.innerHTML='<span class="muted small">تعذّر إنشاء QR الآن.</span>'; });
+}
+const siteBase=()=>location.origin+location.pathname;
+const compUrl=c=>siteBase()+"#c-"+c.id, compRegUrl=c=>siteBase()+"#parent-"+c.id;
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-share-comp]"); if(!b) return; const c=compById(b.dataset.shareComp); if(!c) return;
+  const kind=isAcad(c)?"الأكاديمية":c.kind==="program"?"البرنامج":"المسابقة";
+  shareModal(compUrl(c),c.name,`<div class="note info small" style="margin:0">رابط نموذج التسجيل في ${kind} مباشرة: <bdi><a href="${esc(compRegUrl(c))}" dir="ltr" style="word-break:break-all">${esc(compRegUrl(c))}</a></bdi> <button class="btn sm" data-copy="${esc(compRegUrl(c))}">نسخ</button>${S.admin?`<br>مستوى الوصول: <b>${esc(ACCESS[c.access||"public"])}</b> (يُغيَّر من «تعديل هذه المسابقة»)`:""}</div>`); });
+
+/* ---------- access level per activity: public • members (signed-in) • private (management) ---------- */
+const ACCESS={public:"عام — لأي زائر",members:"للمسجلين فقط — بعد تسجيل الدخول",private:"خاص — للإدارة فقط"};
+const signedIn=()=>!!(S.admin||(S.session&&(S.session.profiles||[]).length)||isStaff());
+
+/* ---------- official (external) registration: report → review ---------- */
+const EXT_ST={reported:["أبلغ بإتمام التسجيل — بانتظار المراجعة","warn"],approved:["معتمد","ok"],incomplete:["يحتاج إلى استكمال","bad"]};
+S.myExt=S.myExt||null; S.extrev=S.extrev||{}; S.extAll=S.extAll||[];
+const extState=it=>{ const r=S.extrev[it.id]; return r&&r.status?r.status:"reported"; };
+const myExtItems=cid=>(((S.myExt&&S.myExt.items)||[]).filter(x=>!cid||x.compId===cid));
+const myKids=()=>{ const P=(S.session&&S.session.profiles)||[]; const L=[]; const seen=new Set(); P.forEach(p=>(p.students||[]).forEach(s=>{ const k=String(s.name||"").trim(); if(k&&!seen.has(k)){ seen.add(k); L.push({name:k,grade:s.grade||""}); } })); return L; };
+function extBlock(c){
+  const mine=myExtItems(c.id);
+  return `<div class="panel stack extbox" style="gap:10px"><h3 class="sec-title" style="font-size:1.05rem">التسجيل الرسمي لدى الجهة المنظمة</h3>
+   <p class="small muted" style="margin:0">التسجيل الفعلي في ${esc(c.name)} يتم في <b>الموقع الرسمي للجهة المنظمة</b>. أما زر «تسجيل ابني» فيسجّله في متابعة المدرسة وتدريبها فقط.</p>
+   <a class="btn primary" href="${esc(c.url)}" target="_blank" rel="noopener">التسجيل في الموقع الرسمي ↗</a>
+   <button class="btn" type="button" data-extrep="${esc(c.id)}">✅ تم التسجيل في الموقع الرسمي</button>
+   ${mine.length?`<div class="stack" style="gap:6px">${mine.map(it=>{ const st=EXT_ST[extState(it)], rv=S.extrev[it.id]; return `<div class="extst"><b>${esc(it.student)}</b> <span class="pill ${st[1]}">${st[0]}</span>${rv&&rv.note?`<div class="small">ملاحظة المسؤول: ${esc(rv.note)}</div>`:""}<div class="small muted num">أُبلغ في ${esc(fmtDT(it.at))}</div>${extState(it)==="incomplete"?`<button class="btn sm" data-extrep="${esc(c.id)}" data-again="${esc(it.id)}">استكمال الإبلاغ</button>`:""}</div>`; }).join("")}</div>`:""}
+   <p class="small muted" style="margin:0">الإبلاغ لا يعني اعتماد التسجيل؛ يراجعه مسؤول المسابقة ويعتمده.</p></div>`;
+}
+const fmtDT=s=>{ const d=new Date(s); return isNaN(d)?"":d.toLocaleString("ar-SA-u-ca-gregory-nu-latn",{dateStyle:"medium",timeStyle:"short"}); };
+function extReportModal(cid,againId){
+  const c=compById(cid); if(!c) return; const kids=myKids(), prev=againId?myExtItems().find(x=>x.id===againId):null;
+  const m=document.createElement("div"); m.className="modal"; m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true");
+  m.innerHTML=`<div class="box" style="max-width:560px"><div class="mh"><h3>✅ تم التسجيل في الموقع الرسمي — ${esc(c.name)}</h3><button class="btn sm ghost" data-x>إلغاء</button></div><form class="mb stack" style="gap:12px" id="extF" novalidate>
+   <p class="small muted" style="margin:0">أبلغنا بعد إتمام التسجيل في موقع الجهة المنظمة، ليراجعه مسؤول المسابقة.</p>
+   ${kids.length&&!prev?`<fieldset class="stack" style="gap:6px"><legend>اختر الابن *</legend>${kids.map((k,i)=>`<label class="check"><input type="checkbox" name="kid" value="${i}" ${kids.length===1?"checked":""}> ${esc(k.name)}${k.grade?` <span class="muted small">(${esc(k.grade)})</span>`:""}</label>`).join("")}<label class="check"><input type="checkbox" name="other" id="extOther"> طالب آخر</label></fieldset>`:""}
+   <div class="grid2" id="extManual" ${kids.length&&!prev?"hidden":""}><label class="f">اسم الطالب الثلاثي *<input class="in" name="student" maxlength="120" value="${esc(prev?prev.student:"")}"></label><label class="f">الصف *<select class="in" name="grade"><option value="">اختر الصف</option>${GRADES.map(g=>`<option ${prev&&prev.grade===g?"selected":""}>${g}</option>`).join("")}</select></label></div>
+   <div class="grid2"><label class="f">جوال ولي الأمر *<input class="in num" name="phone" dir="ltr" inputmode="tel" placeholder="05xxxxxxxx" value="${esc(prev?prev.phone:(S.session&&S.session.phone)||"")}"></label><label class="f">رقم التسجيل لدى الجهة <span class="opt">اختياري</span><input class="in num" name="orgNo" dir="ltr" maxlength="40" value="${esc(prev?prev.orgNo||"":"")}"></label></div>
+   <label class="f">إثبات التسجيل <span class="opt">اختياري</span><input class="in" type="file" name="proof" accept="image/*,application/pdf"><span class="h">صورة شاشة أو PDF لرسالة التأكيد، حتى 3 ميجابايت</span></label>
+   <label class="f">ملاحظات <span class="opt">اختياري</span><textarea class="in" name="note" maxlength="500">${esc(prev?prev.note||"":"")}</textarea></label>
+   <div id="extMsg" role="alert"></div><div class="row"><button class="btn primary" type="submit">إرسال الإبلاغ</button></div></form></div>`;
+  document.body.appendChild(m);
+  m.addEventListener("click",e=>{ if(e.target===m||e.target.closest("[data-x]")) m.remove(); });
+  const o=m.querySelector("#extOther"); if(o) o.onchange=()=>{ m.querySelector("#extManual").hidden=!o.checked; };
+  m.querySelector("#extF").onsubmit=async e=>{ e.preventDefault(); const f=e.target, msg=m.querySelector("#extMsg"), err=t=>{ msg.innerHTML=`<div class="note bad">${t}</div>`; };
+    const list=[]; f.querySelectorAll('input[name=kid]:checked').forEach(x=>list.push(kids[+x.value]));
+    const manual=!m.querySelector("#extManual").hidden; if(manual){ const n=f.student.value.trim(), g=f.grade.value; if(n.split(/\s+/).length<2) return err("اكتب اسم الطالب الثلاثي."); if(!g) return err("اختر الصف."); list.push({name:n,grade:g}); }
+    if(!list.length) return err("اختر الابن الذي سجّلته.");
+    const phone=normDigits(f.phone.value).replace(/\D/g,""); if(!/^05\d{8}$/.test(phone)) return err("رقم الجوال يجب أن يكون بصيغة 05xxxxxxxx.");
+    if(!S.db||!S.uid) return err("تعذّر الاتصال، أعد تحميل الصفحة.");
+    const btn=f.querySelector("button[type=submit]"); btn.disabled=true; btn.textContent="جارٍ الإرسال…";
+    try{
+      let proof=""; const file=f.proof.files[0];
+      if(file){ if(file.size>3*1024*1024) { btn.disabled=false; btn.textContent="إرسال الإبلاغ"; return err("حجم الملف أكبر من 3 ميجابايت."); }
+        const data=await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); });
+        const rr=await fetch("/api/extproof",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({data})}); const j=await rr.json().catch(()=>({})); if(!rr.ok) throw new Error("proof"); proof=j.id; }
+      const at=new Date().toISOString(); let items=((S.myExt&&S.myExt.items)||[]).slice();
+      if(prev) items=items.filter(x=>x.id!==prev.id);
+      list.forEach(k=>items.push({id:"x"+Date.now().toString(36)+Math.random().toString(36).slice(2,7),compId:c.id,compName:c.name,student:k.name,grade:k.grade,phone,orgNo:f.orgNo.value.trim(),note:f.note.value.trim(),proof:proof||(prev&&prev.proof)||"",at,again:prev?prev.id:""}));
+      await S.db.doc("extreg/"+S.uid).set({items:items.slice(-60),updatedAt:at}); S.myExt={items:items.slice(-60),updatedAt:at};
+      m.remove(); toast("✓ أُرسل الإبلاغ — بانتظار مراجعة مسؤول المسابقة"); render();
+    }catch(ex){ btn.disabled=false; btn.textContent="إرسال الإبلاغ"; err(ex.message==="proof"?"تعذّر رفع الإثبات — جرّب صورة أصغر أو أرسل بدون إثبات.":"تعذّر الإرسال، حاول مرة أخرى."); }
+  };
+}
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-extrep]"); if(b) extReportModal(b.dataset.extrep,b.dataset.again||""); });
+
+/* competition page: access gate + share + official registration */
+{ const _rd=renderDetail;
+  renderDetail=function(id){
+    const c=compById(id);
+    if(c&&!S.admin&&c.access==="private"){ $("#app").innerHTML='<div class="empty">هذه الصفحة خاصة بإدارة المدرسة. <a href="#home">العودة للرئيسية</a></div>'; return; }
+    if(c&&!S.admin&&c.access==="members"&&!signedIn()){ $("#app").innerHTML=`<div class="regbox" style="max-width:520px"><div class="panel stack" style="gap:12px;text-align:center"><h2>🔒 ${esc(c.name)}</h2><p>هذه الصفحة متاحة للمسجلين في المنصة فقط. سجّل الدخول بحسابك ثم افتح الرابط مرة أخرى.</p><div class="row" style="justify-content:center"><a class="btn primary" href="#login">تسجيل الدخول</a><a class="btn" href="#home">الرئيسية</a></div></div></div>`; return; }
+    _rd(id); if(!c) return;
+    const top=document.querySelector("#app .stack > .row"); if(top&&!top.querySelector("[data-share-comp]")) top.insertAdjacentHTML("beforeend",`<button class="btn" type="button" data-share-comp="${esc(c.id)}">🔗 مشاركة ورمز QR</button>${c.access&&c.access!=="public"&&S.admin?`<span class="pill warn">${esc(ACCESS[c.access])}</span>`:""}`);
+    const aside=document.querySelector("#app .detail-top > aside"); const closed=c.status==="منتهية";
+    if(aside&&c.url&&!closed){ aside.querySelectorAll(`a.btn.ghost[href="${CSS.escape(c.url)}"]`).forEach(a=>a.remove()); aside.insertAdjacentHTML("afterbegin",extBlock(c)); }
+  }; }
+/* parent page: show the official-registration reports too */
+{ const _rp=renderParent;
+  renderParent=function(){ _rp(); const L=myExtItems(); if(!L.length) return; const box=document.querySelector("#app .regbox"); if(!box) return;
+    box.insertAdjacentHTML("beforeend",`<div class="surface stack" style="gap:10px;padding:20px;margin-top:16px"><h3 class="sec-title">إبلاغات التسجيل في المواقع الرسمية</h3>${L.slice().reverse().map(it=>{ const st=EXT_ST[extState(it)], rv=S.extrev[it.id]; return `<div class="extst"><b>${esc(it.student)}</b> — ${esc(it.compName)} <span class="pill ${st[1]}">${st[0]}</span>${rv&&rv.note?`<div class="small">ملاحظة المسؤول: ${esc(rv.note)}</div>`:""}${extState(it)==="incomplete"?` <a class="btn sm" href="#c-${esc(it.compId)}">استكمال</a>`:""}</div>`; }).join("")}</div>`); }; }
+
+/* ---------- admin: review official-registration reports ---------- */
+const extFlat=()=>S.extAll.flatMap(d=>(d.items||[]).map(it=>({...it,uid:d._id}))).filter(it=>!S.extAll.some(d=>(d.items||[]).some(y=>y.again===it.id)));
+const extPending=()=>extFlat().filter(it=>extState(it)==="reported");
+S.extF=S.extF||{comp:"",st:"reported",q:""};
+function admExt(el){
+  const all=extFlat(), F=S.extF, comps=S.comps.filter(c=>c.url).sort((a,b)=>String(a.name).localeCompare(b.name,"ar"));
+  let L=all.filter(it=>(!F.comp||it.compId===F.comp)&&(!F.st||extState(it)===F.st)&&(!F.q||arNorm(it.student).includes(arNorm(F.q)))).sort((a,b)=>String(b.at).localeCompare(a.at));
+  const n=s=>all.filter(it=>extState(it)===s).length;
+  const sum=comps.map(c=>{ const R=all.filter(it=>it.compId===c.id), roster=compRoster(c.id), rep=new Set(R.map(it=>arNorm(it.student))); return {c,reported:R.filter(it=>extState(it)==="reported").length,ok:R.filter(it=>extState(it)==="approved").length,inc:R.filter(it=>extState(it)==="incomplete").length,none:roster.filter(s=>!rep.has(arNorm(s.name))).length}; }).filter(x=>x.reported+x.ok+x.inc+x.none>0);
+  el.innerHTML=`<div class="stack" style="gap:16px"><div><h2 class="sec-title">🏁 التسجيل الرسمي لدى الجهات المنظمة</h2><p class="muted small" style="margin:0">إبلاغات أولياء الأمور بإتمام التسجيل في المواقع الرسمية. الإبلاغ ليس اعتماداً: راجِع ثم اعتمد أو أعِد للاستكمال مع ملاحظة.</p></div>
+   <div class="statrow num">${[["بانتظار المراجعة",n("reported")],["معتمد",n("approved")],["يحتاج إلى استكمال",n("incomplete")],["إجمالي الإبلاغات",all.length]].map(([l,v])=>`<div><b>${v}</b><small>${l}</small></div>`).join("")}</div>
+   ${sum.length?`<div class="panel stack" style="gap:8px"><h3 class="sec-title" style="font-size:1rem">ملخص حسب المسابقة</h3><div class="tbl-wrap"><table><thead><tr><th>المسابقة</th><th>المسؤول</th><th>لم يبلغ ولي الأمر</th><th>بانتظار المراجعة</th><th>معتمد</th><th>يحتاج استكمال</th></tr></thead><tbody>${sum.map(x=>`<tr><td><a href="#c-${esc(x.c.id)}">${esc(x.c.name)}</a></td><td>${esc(x.c.coach||"—")}</td><td class="num">${x.none}</td><td class="num">${x.reported}</td><td class="num">${x.ok}</td><td class="num">${x.inc}</td></tr>`).join("")}</tbody></table></div><p class="muted small" style="margin:0">«لم يبلغ» = طلاب مسجلون في المسابقة داخل المنصة لم يصل عنهم إبلاغ تسجيل رسمي.</p></div>`:""}
+   <div class="panel row" style="gap:10px;align-items:end"><label class="f" style="flex:1 1 200px">المسابقة<select class="in" id="exC"><option value="">الكل</option>${comps.map(c=>`<option value="${esc(c.id)}" ${F.comp===c.id?"selected":""}>${esc(c.name)}</option>`).join("")}</select></label>
+    <label class="f" style="flex:1 1 170px">الحالة<select class="in" id="exS"><option value="">الكل</option>${Object.entries(EXT_ST).map(([k,v])=>`<option value="${k}" ${F.st===k?"selected":""}>${v[0]}</option>`).join("")}</select></label>
+    <label class="f" style="flex:2 1 200px">بحث باسم الطالب<input class="in" id="exQ" value="${esc(F.q)}"></label></div>
+   ${L.length?`<div class="tbl-wrap"><table><thead><tr><th>الطالب</th><th>المسابقة</th><th>الجوال</th><th>رقم التسجيل لدى الجهة</th><th>وقت الإبلاغ</th><th>الإثبات</th><th>الحالة</th><th></th></tr></thead><tbody>${L.map(it=>{ const st=EXT_ST[extState(it)], rv=S.extrev[it.id]; return `<tr><td><b>${esc(it.student)}</b><div class="small muted">${esc(it.grade||"")}</div>${it.note?`<div class="small">${esc(it.note)}</div>`:""}</td><td>${esc(it.compName)}</td><td class="num" dir="ltr">${esc(it.phone)}</td><td class="num" dir="ltr">${esc(it.orgNo||"—")}</td><td class="num small">${esc(fmtDT(it.at))}</td><td>${it.proof?`<a href="${blob(it.proof)}" target="_blank" rel="noopener">عرض</a>`:"—"}</td><td><span class="pill ${st[1]}">${st[0]}</span>${rv&&rv.note?`<div class="small">${esc(rv.note)}</div>`:""}${rv&&rv.by?`<div class="small muted">${esc(rv.by)} • ${esc(fmtDT(rv.at))}</div>`:""}</td>
+     <td><div class="row" style="gap:6px;flex-wrap:nowrap"><button class="btn sm primary" data-exa="approved" data-id="${esc(it.id)}">اعتماد</button><button class="btn sm" data-exa="incomplete" data-id="${esc(it.id)}">يحتاج استكمال</button>${it.phone?`<a class="btn sm wa" target="_blank" rel="noopener" href="${esc(waLink(it.phone,`السلام عليكم، بخصوص تسجيل ${it.student} في ${it.compName}: `))}">واتساب</a>`:""}</div></td></tr>`; }).join("")}</tbody></table></div>`:'<div class="empty">لا توجد إبلاغات بهذه التصفية.</div>'}</div>`;
+  el.querySelector("#exC").onchange=e=>{ F.comp=e.target.value; admExt(el); };
+  el.querySelector("#exS").onchange=e=>{ F.st=e.target.value; admExt(el); };
+  el.querySelector("#exQ").oninput=e=>{ F.q=e.target.value; clearTimeout(F.t); F.t=setTimeout(()=>{ admExt(el); const i=el.querySelector("#exQ"); i.focus(); i.setSelectionRange(i.value.length,i.value.length); },300); };
+  el.querySelectorAll("[data-exa]").forEach(b=>b.onclick=async()=>{ const st=b.dataset.exa; let note="";
+    if(st==="incomplete"){ note=prompt("ما المطلوب من ولي الأمر استكماله؟ (تظهر له هذه الملاحظة)",""); if(note===null) return; note=note.trim(); if(!note){ toast("اكتب الملاحظة المطلوبة","bad"); return; } }
+    const prev=S.extrev[b.dataset.id]||{}; const rv={status:st,note,at:new Date().toISOString(),by:admMe(),history:[...(prev.history||[]),{status:st,note,at:new Date().toISOString(),by:admMe()}].slice(-20)};
+    try{ await S.db.doc("extrev/"+b.dataset.id).set(rv); S.extrev[b.dataset.id]=rv; toast(st==="approved"?"✓ اعتُمد التسجيل الرسمي":"✓ أُعيد لولي الأمر للاستكمال"); admExt(el); }catch(e){ toast("تعذّر الحفظ","bad"); } });
+}
+{ const _da=dashAlerts; dashAlerts=function(){ const out=_da(); try{ const p=extPending().length; if(p) out.unshift({lvl:"bad",text:`${p} إبلاغ بإتمام التسجيل في موقع رسمي بانتظار المراجعة`,label:"مراجعة الإبلاغات",href:"#admin-extreg"}); }catch(e){} return out; }; }
+function extBoot(db){
+  if(S.uid) db.doc("extreg/"+S.uid).onSnapshot(d=>{ S.myExt=d.exists?d.data():null; rerender(); },()=>{});
+  db.collection("extrev").onSnapshot(s=>{ const o={}; s.docs.forEach(d=>{ o[d.id]=d.data(); }); S.extrev=o; rerender(); },()=>{});
+  if(S.admin){ let first=true; db.collection("extreg").onSnapshot(s=>{ const before=new Set(extFlat().map(x=>x.id)); S.extAll=s.docs.map(d=>({...d.data(),_id:d.id})); if(!first){ const fresh=extFlat().filter(x=>!before.has(x.id)); if(fresh.length) toast(`إبلاغ تسجيل رسمي جديد: ${fresh[0].student} — ${fresh[0].compName}`); } first=false; rerender(); },()=>{}); }
+}
+
+/* ================= البيانات الموحدة: الرقم الموحد • الاستيراد والتصدير • السنوات الدراسية • الأرشفة الذكية ================= */
+/* ---------- academic years ---------- */
+const yearOfDate=s=>{ const d=new Date(s); if(isNaN(d)) return ""; const y=d.getFullYear(), m=d.getMonth()+1; return m>=8?`${y}–${y+1}`:`${y-1}–${y}`; };
+const curYear=()=>(S.site&&S.site.curYear)||yearOfDate(new Date().toISOString());
+const compYear=c=>c.year||yearOfDate(c.createdAt||"")||curYear();
+const reqYear=r=>r.year||yearOfDate(r.createdAt||r.at||"")||curYear();
+const allYears=()=>[...new Set([curYear(),...S.comps.map(compYear),...allRequests().map(reqYear)].filter(Boolean))].sort().reverse();
+S.viewYear=S.viewYear||"";
+const viewYear=()=>S.viewYear||curYear();
+const yl=y=>"\u2066"+y+"\u2069";
+const isArch=c=>!!c.archived;
+
+/* ---------- unified student number ---------- */
+const STU_PFX="AS-";
+const stuNoNum=s=>+(String(s.no||"").replace(/\D/g,""))||0;
+let stuNoBusy=false;
+async function ensureStuNos(){
+  if(!S.admin||stuNoBusy||!S.gotStu) return; const miss=S.students.filter(s=>!s.no); if(!miss.length) return; stuNoBusy=true;
+  let n=S.students.reduce((m,s)=>Math.max(m,stuNoNum(s)),0);
+  miss.sort((a,b)=>String(a.createdAt||"").localeCompare(String(b.createdAt||""))||String(a.name).localeCompare(b.name,"ar"));
+  for(const s of miss){ n++; const no=STU_PFX+String(n).padStart(5,"0"); try{ await S.db.doc("students/"+s.id).update({no}); s.no=no; }catch(e){ break; } }
+  stuNoBusy=false;
+}
+const stuByNo=no=>{ const k=String(no||"").toUpperCase().replace(/\s/g,""); return k?S.students.find(s=>String(s.no||"").toUpperCase()===k):null; };
+/* find an existing record for incoming data: unified number → national id → name+phone → name+grade */
+function stuMatch(o){
+  if(o.no){ const h=stuByNo(o.no); if(h) return h; }
+  const nid=normDigits(o.nid||"").replace(/\D/g,""); if(nid.length>=10){ const h=S.students.find(s=>normDigits(s.nid||"").replace(/\D/g,"")===nid); if(h) return h; }
+  const nm=arNorm(o.name), ph=intlPhone(o.phone||"");
+  if(nm&&ph){ const h=S.students.find(s=>arNorm(s.name)===nm&&(intlPhone(s.phone)===ph||intlPhone(s.phone2)===ph)); if(h) return h; }
+  if(nm&&o.grade){ const L=S.students.filter(s=>arNorm(s.name)===nm&&s.grade===o.grade); if(L.length===1) return L[0]; }
+  return null;
+}
+
+/* ---------- Excel helpers ---------- */
+async function xlsxLib(){ try{ return await loadXlsxLib(); }catch(e){ return await new Promise((ok,no)=>{ const s=document.createElement("script"); s.src="/chess/lib/xlsx.js"; s.onload=()=>window.XLSX?ok(window.XLSX):no(e); s.onerror=()=>no(e); document.head.append(s); }); } }
+async function xlsxOut(name,sheets){ const X=await xlsxLib(); const wb=X.utils.book_new(); sheets.forEach(sh=>{ const ws=X.utils.aoa_to_sheet(sh.rows); ws["!cols"]=sh.rows[0].map((_,i)=>({wch:Math.min(40,Math.max(10,...sh.rows.map(r=>String(r[i]??"").length+2)))})); X.utils.book_append_sheet(wb,ws,sh.name.slice(0,31)); }); wb.Workbook={Views:[{RTL:true}]}; X.writeFile(wb,name); }
+async function xlsxIn(file){ const X=await xlsxLib(); const wb=X.read(await file.arrayBuffer(),{type:"array"}); const ws=wb.Sheets[wb.SheetNames[0]]; return X.utils.sheet_to_json(ws,{header:1,defval:"",raw:false}).map(r=>r.map(v=>String(v??"").trim())); }
+const STU_COLS=[["no","الرقم الموحد",/الرقم الموحد|رقم موحد|^no$/i],["name","اسم الطالب",/اسم الطالب|^الاسم|^الطالب$|name/i],["grade","الصف",/^الصف|grade/i],["cls","الفصل",/الفصل|الشعبة|class/i],["nid","رقم الهوية",/هوية|السجل المدني|nid|id number/i],["guardian","ولي الأمر",/ولي|guardian|parent/i],["phone","الجوال",/^الجوال$|جوال ولي|^جوال$|phone|mobile/i],["phone2","جوال آخر",/جوال آخر|جوال اخر|جوال 2|phone ?2/i],["notes","ملاحظات",/ملاحظ|notes/i]];
+const TEA_COLS=[["name","الاسم",/الاسم|اسم|name/i],["title","التخصص / الصفة",/تخصص|الصفة|title/i],["phone","الجوال",/جوال|phone|mobile/i],["nid","رقم الهوية",/هوية|nid/i],["comps","البرامج (مفصولة بفاصلة)",/برامج|مسابقات|programs/i],["active","مفعّل (نعم/لا)",/مفعل|مفعّل|active/i]];
+function mapCols(head,COLS){ const used=new Set(); return head.map(h=>{ const c=COLS.find(([k,,re])=>!used.has(k)&&re.test(h)); if(c){ used.add(c[0]); return c[0]; } return ""; }); }
+
+/* ---------- students import with preview, update-in-place and undo ---------- */
+async function stuImportPreview(rows,m){
+  const head=rows[0]||[], map=mapCols(head,STU_COLS), body=rows.slice(1).filter(r=>r.some(Boolean));
+  const out={add:[],upd:[],bad:[],dup:[]}; const seen=new Map();
+  if(!map.includes("name")) return {err:"لم يُعثر على عمود «اسم الطالب» في الصف الأول."};
+  body.forEach((r,i)=>{ const o={}; map.forEach((k,j)=>{ if(k) o[k]=r[j]; }); o.phone=normDigits(o.phone||""); o.phone2=normDigits(o.phone2||""); o.nid=normDigits(o.nid||"");
+    if(!o.name||o.name.split(/\s+/).length<2){ out.bad.push([i+2,o.name||"—","الاسم ناقص (المطلوب الاسم الثلاثي)"]); return; }
+    if(o.grade&&!GRADES.includes(o.grade)){ const g=GRADES.find(x=>arNorm(x).includes(arNorm(o.grade))||arNorm(o.grade).includes(arNorm(x).replace("ال",""))); if(g) o.grade=g; }
+    const key=o.no||o.nid||arNorm(o.name)+"|"+(o.phone||o.grade||""); if(seen.has(key)){ out.dup.push([i+2,o.name,"مكرر في الملف نفسه (الصف "+seen.get(key)+")"]); return; } seen.set(key,i+2);
+    const hit=stuMatch(o); if(hit) out.upd.push({row:i+2,o,hit}); else if(o.no){ out.bad.push([i+2,o.name,"الرقم الموحد "+o.no+" غير موجود"]); } else out.add.push({row:i+2,o}); });
+  return out;
+}
+async function stuImportRun(P,m){
+  const at=new Date().toISOString(); const before=P.upd.map(x=>({...x.hit}));
+  const snap={at,by:admMe(),added:[],before};
+  let n=0; const msg=m.querySelector("#siMsg");
+  for(const x of P.upd){ const patch={}; Object.entries(x.o).forEach(([k,v])=>{ if(v&&k!=="no") patch[k]=v; }); patch.updatedAt=at; try{ await S.db.doc("students/"+x.hit.id).update(patch); n++; }catch(e){} msg.textContent=`جارٍ الحفظ… ${n}`; }
+  let maxNo=S.students.reduce((a,s)=>Math.max(a,stuNoNum(s)),0);
+  for(const x of P.add){ const id=uid("s-"); maxNo++; const o={id,no:STU_PFX+String(maxNo).padStart(5,"0"),name:x.o.name,grade:x.o.grade||"",cls:x.o.cls||"",nid:x.o.nid||"",guardian:x.o.guardian||"",phone:x.o.phone||"",phone2:x.o.phone2||"",notes:x.o.notes||"",comps:[],createdAt:at,src:"استيراد Excel"};
+    try{ await S.db.doc("students/"+id).set(o); snap.added.push(id); n++; }catch(e){} msg.textContent=`جارٍ الحفظ… ${n}`; }
+  try{ await S.db.doc("secure/lastimport").set({kind:"students",...snap}); }catch(e){}
+  return {added:snap.added.length,updated:P.upd.length};
+}
+function openStuImportX(){
+  const m=document.createElement("div"); m.className="modal"; m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true");
+  m.innerHTML=`<div class="box" style="max-width:760px"><div class="mh"><h3>📥 استيراد وتحديث الطلاب من Excel</h3><button class="btn sm ghost" data-x>إغلاق</button></div><div class="mb stack" style="gap:12px">
+   <div class="note info small" style="margin:0">ارفع ملف Excel صفه الأول عناوين الأعمدة. يُطابَق كل صف بسجل موجود (الرقم الموحد، ثم رقم الهوية، ثم الاسم والجوال) فيُحدَّث بدل إنشاء طالب مكرر. تُحفظ نسخة قبل الاستيراد ويمكن التراجع عنه.</div>
+   <div class="row"><input type="file" class="in" id="siF" accept=".xlsx,.xls,.csv"><button class="btn sm" id="siT">⬇ تنزيل القالب</button></div><div id="siP"></div><div id="siMsg" class="small"></div></div></div>`;
+  document.body.append(m); m.querySelector("[data-x]").onclick=()=>m.remove();
+  m.querySelector("#siT").onclick=()=>xlsxOut("قالب-استيراد-الطلاب.xlsx",[{name:"الطلاب",rows:[STU_COLS.map(c=>c[1]),["","محمد أحمد العتيبي",GRADES[0],"1","","أحمد العتيبي","05xxxxxxxx","",""]]}]);
+  m.querySelector("#siF").onchange=async e=>{ const f=e.target.files[0]; if(!f) return; const box=m.querySelector("#siP"); box.innerHTML='<div class="muted small">جارٍ القراءة…</div>';
+    let rows; try{ rows=await xlsxIn(f); }catch(err){ box.innerHTML='<div class="note bad">تعذّر قراءة الملف.</div>'; return; }
+    const P=await stuImportPreview(rows,m); if(P.err){ box.innerHTML=`<div class="note bad">${P.err}</div>`; return; }
+    const lst=(arr,f2)=>arr.slice(0,8).map(f2).join("")+(arr.length>8?`<div class="muted small">و${arr.length-8} غيرها…</div>`:"");
+    box.innerHTML=`<div class="statrow num">${[["طلاب جدد",P.add.length],["سجلات ستُحدَّث",P.upd.length],["مرفوضة",P.bad.length],["مكررة في الملف",P.dup.length]].map(([l,v])=>`<div><b>${v}</b><small>${l}</small></div>`).join("")}</div>
+     ${P.upd.length?`<details><summary>السجلات التي ستُحدَّث</summary>${lst(P.upd,x=>`<div class="small">صف ${x.row}: ${esc(x.o.name)} ← ${esc(x.hit.no||"")} ${esc(x.hit.name)}</div>`)}</details>`:""}
+     ${P.add.length?`<details><summary>الطلاب الجدد</summary>${lst(P.add,x=>`<div class="small">صف ${x.row}: ${esc(x.o.name)} — ${esc(x.o.grade||"")}</div>`)}</details>`:""}
+     ${P.bad.length+P.dup.length?`<details open><summary>صفوف لن تُستورد</summary>${lst([...P.bad,...P.dup],r=>`<div class="small">صف ${r[0]}: ${esc(r[1])} — ${esc(r[2])}</div>`)}</details>`:""}
+     <div class="row"><button class="btn primary" id="siGo" ${P.add.length+P.upd.length?"":"disabled"}>اعتماد الاستيراد (${P.add.length+P.upd.length})</button></div>`;
+    const go=m.querySelector("#siGo"); if(go) go.onclick=async()=>{ go.disabled=true; const r=await stuImportRun(P,m); toast(`✓ أُضيف ${r.added} وحُدِّث ${r.updated}`); m.remove(); render(); }; };
+}
+async function undoLastImport(){
+  let d=null; try{ const x=await S.db.doc("secure/lastimport").get(); d=x.exists?x.data():null; }catch(e){}
+  if(!d||d.undone){ toast("لا يوجد استيراد يمكن التراجع عنه","bad"); return; }
+  if(!confirm(`التراجع عن استيراد ${fmtDT(d.at)}؟ سيُحذف ${d.added.length} طالب أُضيفوا، وتعود ${d.before.length} سجلات إلى ما كانت عليه.`)) return;
+  for(const id of d.added){ const s=S.students.find(x=>x.id===id); if(s&&(s.comps||[]).length) continue; try{ await S.db.doc("students/"+id).delete(); }catch(e){} }
+  for(const s of d.before){ try{ await S.db.doc("students/"+s.id).set(s); }catch(e){} }
+  try{ await S.db.doc("secure/lastimport").set({...d,undone:true,undoneAt:new Date().toISOString(),undoneBy:admMe()}); }catch(e){}
+  toast("✓ تم التراجع عن آخر استيراد"); render();
+}
+async function stuExportX(){
+  const rows=S.students.slice().sort((a,b)=>stuNoNum(a)-stuNoNum(b)).map(s=>[s.no||"",s.name,s.grade||"",s.cls||"",s.nid||"",s.guardian||"",s.phone||"",s.phone2||"",s.notes||"",(s.comps||[]).map(id=>compById(id)?.name).filter(Boolean).join("، ")]);
+  await xlsxOut("الطلاب-"+new Date().toISOString().slice(0,10)+".xlsx",[{name:"الطلاب",rows:[[...STU_COLS.map(c=>c[1]),"المسابقات والبرامج"],...rows]}]);
+}
+/* ---------- trainers / teachers ---------- */
+async function teaExportX(){ await xlsxOut("المدربون-والمعلمون.xlsx",[{name:"المدربون",rows:[TEA_COLS.map(c=>c[1]),...S.teachers.map(t=>[t.name,t.title||"",t.phone||"",t.nid||"",(t.comps||[]).map(id=>compById(id)?.name).filter(Boolean).join("، "),t.active===false?"لا":"نعم"])]}]); }
+function openTeaImportX(){
+  const m=document.createElement("div"); m.className="modal"; m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true");
+  m.innerHTML=`<div class="box" style="max-width:680px"><div class="mh"><h3>📥 استيراد وتحديث المدربين والمعلمين</h3><button class="btn sm ghost" data-x>إغلاق</button></div><div class="mb stack" style="gap:12px">
+   <div class="note info small" style="margin:0">يُطابَق كل صف بالجوال (أو رقم الهوية) فيُحدَّث المدرب الموجود بدل تكراره. أسماء البرامج تُربط بالمسابقات الموجودة بالاسم.</div>
+   <div class="row"><input type="file" class="in" id="tiF" accept=".xlsx,.xls,.csv"><button class="btn sm" id="tiT">⬇ تنزيل القالب</button></div><div id="tiP"></div></div></div>`;
+  document.body.append(m); m.querySelector("[data-x]").onclick=()=>m.remove();
+  m.querySelector("#tiT").onclick=()=>xlsxOut("قالب-المدربين.xlsx",[{name:"المدربون",rows:[TEA_COLS.map(c=>c[1]),["أ. خالد محمد","مدرب الروبوت","05xxxxxxxx","","أكاديمية تمكين، بيبراس","نعم"]]}]);
+  m.querySelector("#tiF").onchange=async e=>{ const f=e.target.files[0]; if(!f) return; const box=m.querySelector("#tiP"); let rows; try{ rows=await xlsxIn(f); }catch(err){ box.innerHTML='<div class="note bad">تعذّر قراءة الملف.</div>'; return; }
+    const map=mapCols(rows[0]||[],TEA_COLS); if(!map.includes("name")){ box.innerHTML='<div class="note bad">لم يُعثر على عمود «الاسم».</div>'; return; }
+    const items=S.teachers.map(t=>({...t})); let add=0,upd=0,bad=0;
+    rows.slice(1).filter(r=>r.some(Boolean)).forEach(r=>{ const o={}; map.forEach((k,j)=>{ if(k) o[k]=r[j]; }); if(!o.name){ bad++; return; }
+      const ph=intlPhone(o.phone||""), nid=normDigits(o.nid||"").replace(/\D/g,""); let t=items.find(x=>(ph&&intlPhone(x.phone)===ph)||(nid&&normDigits(x.nid||"")===nid));
+      const comps=String(o.comps||"").split(/[،,]/).map(x=>x.trim()).filter(Boolean).map(n=>S.comps.find(c=>arNorm(c.name)===arNorm(n))?.id).filter(Boolean);
+      const patch={name:o.name,...(o.title?{title:o.title}:{}),...(o.phone?{phone:normDigits(o.phone)}:{}),...(nid?{nid}:{}),...(comps.length?{comps}:{}),...(o.active?{active:!/لا|no|0/i.test(o.active)}:{})};
+      if(t){ Object.assign(t,patch); upd++; } else { items.push({id:uid("tc-"),active:true,comps:[],...patch}); add++; } });
+    box.innerHTML=`<div class="statrow num">${[["جدد",add],["تحديث",upd],["مرفوض",bad]].map(([l,v])=>`<div><b>${v}</b><small>${l}</small></div>`).join("")}</div><button class="btn primary" id="tiGo">اعتماد</button>`;
+    box.querySelector("#tiGo").onclick=async()=>{ try{ await S.db.doc("secure/lastimport_teachers").set({at:new Date().toISOString(),by:admMe(),before:S.teachers}); }catch(err){} if(await saveTeachers(items)){ m.remove(); } }; };
+}
+
+/* ---------- duplicates: merge two student records (keeps everything) ---------- */
+function stuDupGroups(){ const by=new Map(); S.students.forEach(s=>{ const k=normDigits(s.nid||"").replace(/\D/g,"").length>=10?"n"+normDigits(s.nid):"a"+arNorm(s.name)+"|"+(s.grade||""); if(!by.has(k)) by.set(k,[]); by.get(k).push(s); }); return [...by.values()].filter(g=>g.length>1); }
+async function mergeStudentsX(keep,drop){
+  const merged={...drop,...keep}; ["phone","phone2","guardian","nid","cls","notes","sphone","email"].forEach(k=>{ if(!keep[k]&&drop[k]) merged[k]=drop[k]; });
+  merged.comps=[...new Set([...(keep.comps||[]),...(drop.comps||[])])]; merged.mergedFrom=[...(keep.mergedFrom||[]),{id:drop.id,no:drop.no||"",at:new Date().toISOString(),by:admMe()}]; merged.id=keep.id; merged.no=keep.no||drop.no;
+  await S.db.doc("secure/merged_"+drop.id).set({at:new Date().toISOString(),by:admMe(),drop,keep});
+  await S.db.doc("students/"+keep.id).set(merged); await S.db.doc("students/"+drop.id).delete();
+}
+
+/* ---------- competitions: years + smart archive + copy to the new season ---------- */
+async function archiveComp(id,on){ const c=compById(id); if(!c) return; try{ await S.db.doc("competitions/"+id).update(on?{archived:true,archivedAt:new Date().toISOString(),archivedBy:admMe(),year:compYear(c),published:false,prePublished:c.published!==false}:{archived:false,published:c.prePublished!==false}); toast(on?"✓ أُرشفت — بياناتها كاملة محفوظة":"✓ استُعيدت من الأرشيف"); }catch(e){ toast("تعذّر الحفظ","bad"); } }
+async function copyCompToSeason(id){
+  const c=compById(id); if(!c) return; const y=curYear();
+  const n=JSON.parse(JSON.stringify(c)); n.id=uid("c-"); n.year=y; n.createdAt=new Date().toISOString(); n.copiedFrom={id:c.id,year:compYear(c)};
+  ["archived","archivedAt","archivedBy","prePublished","qualified","regOpen","regClose","compDate"].forEach(k=>delete n[k]);
+  n.published=false; n.status="التسجيل مفتوح"; n.order=(S.comps.length||0)+1;
+  (n.sessions||[]).forEach(s=>{ delete s.date; });
+  try{ await S.db.doc("competitions/"+n.id).set(n); toast(`✓ نُسخت للموسم ${yl(y)} كمسودة — راجع المواعيد ثم انشرها`); openCompEditor(n.id); }catch(e){ toast("تعذّر النسخ","bad"); }
+}
+S.compF=S.compF||"active";
+{ const _ac=admComps;
+  admComps=function(el){
+    const all=S.comps, y=viewYear(), F=S.compF;
+    S.comps=all.filter(c=>F==="arch"?isArch(c):(!isArch(c)&&(F==="all"||compYear(c)===y)));
+    try{ _ac(el); } finally { S.comps=all; }
+    const nA=all.filter(isArch).length;
+    el.insertAdjacentHTML("afterbegin",`<div class="panel row" style="gap:10px;align-items:center;margin-bottom:12px"><b>السنة الدراسية:</b>${yearSel()}<div class="chips">${[["active","أنشطة السنة المختارة"],["all","كل السنوات"],["arch",`🗄 الأرشيف (${nA})`]].map(([k,l])=>`<button class="chip ${F===k?"on":""}" data-cf="${k}">${l}</button>`).join("")}</div></div>`);
+    el.querySelectorAll(".adm-item").forEach(it=>{ const id=(it.querySelector("[data-edit]")||{}).dataset?.edit; const c=id&&compById(id); if(!c) return; const box=it.querySelector(".row");
+      box&&box.insertAdjacentHTML("beforeend",`<span class="pill">${esc(yl(compYear(c)))}</span>${isArch(c)?`<button class="btn sm primary" data-carc="0" data-id="${esc(c.id)}">استعادة</button>`:`<button class="btn sm" data-carc="1" data-id="${esc(c.id)}">🗄 أرشفة</button>`}<button class="btn sm" data-ccopy="${esc(c.id)}">📋 نسخ للموسم الجديد</button><button class="btn sm" data-share-comp="${esc(c.id)}">🔗 مشاركة</button>`); });
+    el.querySelectorAll("[data-cf]").forEach(b=>b.onclick=()=>{ S.compF=b.dataset.cf; admComps(el); });
+    el.querySelectorAll("[data-carc]").forEach(b=>b.onclick=()=>archiveComp(b.dataset.id,b.dataset.carc==="1"));
+    el.querySelectorAll("[data-ccopy]").forEach(b=>b.onclick=()=>copyCompToSeason(b.dataset.ccopy));
+    wireYearSel(el,()=>admComps(el));
+  }; }
+const yearSel=()=>`<select class="in" data-ysel style="width:auto">${allYears().map(y=>`<option value="${esc(y)}" ${y===viewYear()?"selected":""}>${esc(yl(y))}</option>`).join("")}</select>${viewYear()!==curYear()?'<span class="pill warn">تعرض سنة سابقة</span>':""}`;
+function wireYearSel(el,redraw){ el.querySelectorAll("[data-ysel]").forEach(s=>s.onchange=()=>{ S.viewYear=s.value===curYear()?"":s.value; redraw(); }); }
+/* archived activities: hidden from the portal lists; their page stays reachable by link, marked as archived */
+{ const _rd2=renderDetail; renderDetail=function(id){ _rd2(id); const c=compById(id); if(c&&isArch(c)){ const st=document.querySelector("#app .stack"); if(st) st.insertAdjacentHTML("afterbegin",`<div class="note warn">🗄 هذه صفحة مؤرشفة من موسم ${esc(yl(compYear(c)))}. البيانات للاطلاع فقط.</div>`); } }; }
+
+/* ---------- admin tab: data, numbers, years ---------- */
+function admData(el){
+  const y=viewYear(), miss=S.students.filter(s=>!s.no).length, dups=stuDupGroups();
+  const years=allYears().slice(0,4);
+  const stat=yy=>{ const C=S.comps.filter(c=>compYear(c)===yy), R=allRequests().filter(r=>reqYear(r)===yy); const X=extFlat().filter(it=>yearOfDate(it.at)===yy);
+    return [C.length,C.filter(isArch).length,R.length,R.filter(r=>r.status==="مقبول").length,new Set(R.map(r=>arNorm(r.student))).size,X.filter(it=>extState(it)==="approved").length]; };
+  el.innerHTML=`<div class="stack" style="gap:16px"><h2 class="sec-title">🗂 البيانات الموحدة والسنوات الدراسية</h2>
+   <div class="panel stack" style="gap:10px"><h3 class="sec-title" style="font-size:1.05rem">السنة الدراسية الحالية</h3>
+    <div class="row" style="gap:10px;align-items:end"><label class="f">السنة الحالية للمنصة<input class="in num" id="dyCur" dir="ltr" value="${esc(curYear())}" style="max-width:160px"></label><button class="btn primary sm" id="dySave">حفظ</button><span class="muted small">الأنشطة الجديدة تُنسب لهذه السنة. الأنشطة القديمة تُنسب لسنة إنشائها ولا تختلط.</span></div></div>
+   <div class="panel stack" style="gap:10px"><h3 class="sec-title" style="font-size:1.05rem">مقارنة السنوات</h3>
+    <div class="tbl-wrap"><table><thead><tr><th>المؤشر</th>${years.map(yy=>`<th>${esc(yl(yy))}</th>`).join("")}</tr></thead><tbody>${["الأنشطة","منها مؤرشفة","طلبات التسجيل","الطلبات المقبولة","طلاب مختلفون سجّلوا","تسجيلات رسمية معتمدة"].map((l,i)=>`<tr><td>${l}</td>${years.map(yy=>`<td class="num">${stat(yy)[i]}</td>`).join("")}</tr>`).join("")}</tbody></table></div></div>
+   <div class="panel stack" style="gap:10px"><h3 class="sec-title" style="font-size:1.05rem">الرقم الموحد للطالب</h3>
+    <p class="small" style="margin:0">لكل طالب رقم ثابت (مثل <b class="num">${STU_PFX}00012</b>) يرتبط به كل تسجيلاته ونتائجه، مهما تعددت المسابقات والبرامج. ${miss?`<b>${miss}</b> طالب بلا رقم بعد.`:"كل الطلاب لهم أرقام."}</p>
+    ${miss?'<div class="row"><button class="btn primary sm" id="dyNos">إعطاء الأرقام الآن</button></div>':""}
+    <h4 style="margin:6px 0 0">سجلات محتملة التكرار (${dups.length})</h4>${dups.length?`<div class="tbl-wrap"><table><thead><tr><th>السجلات</th><th></th></tr></thead><tbody>${dups.slice(0,30).map((g,gi)=>`<tr><td>${g.map(s=>`<div><b>${esc(s.name)}</b> <span class="num small">${esc(s.no||"")}</span> <span class="muted small">${esc(s.grade||"")} • ${(s.comps||[]).length} نشاط • ${esc(s.phone||"")}</span></div>`).join("")}</td><td><button class="btn sm" data-dmg="${gi}">دمج في الأول</button></td></tr>`).join("")}</tbody></table></div>`:'<p class="muted small" style="margin:0">لا توجد سجلات مكررة ظاهرة.</p>'}</div>
+   <div class="panel stack" style="gap:10px"><h3 class="sec-title" style="font-size:1.05rem">الاستيراد والتصدير الجماعي (Excel)</h3>
+    <div class="row" style="gap:8px"><button class="btn primary sm" id="dyImpS">📥 استيراد / تحديث الطلاب</button><button class="btn sm" id="dyExpS">⬇ تصدير الطلاب</button><button class="btn sm" id="dyUndo">↩ التراجع عن آخر استيراد</button></div>
+    <div class="row" style="gap:8px"><button class="btn primary sm" id="dyImpT">📥 استيراد / تحديث المدربين والمعلمين</button><button class="btn sm" id="dyExpT">⬇ تصدير المدربين</button></div></div>
+   <div class="panel stack" style="gap:8px"><h3 class="sec-title" style="font-size:1.05rem">الأرشفة الذكية</h3><p class="small" style="margin:0">من «المسابقات والتدريب»: زر «🗄 أرشفة» يحفظ النشاط المنتهي بكل تفاصيله (الوصف والجداول والملفات والطلاب والنتائج) ويخفيه من البوابة، وزر «📋 نسخ للموسم الجديد» ينشئ نسخة مسودة بالمحتوى والإعدادات دون الطلاب أو النتائج.</p><a class="btn sm" href="#admin-comps">فتح المسابقات والتدريب</a></div></div>`;
+  el.querySelector("#dySave").onclick=async()=>{ const v=el.querySelector("#dyCur").value.trim(); if(!/^\d{4}\s*[–-]\s*\d{4}$/.test(v)){ toast("اكتب السنة بصيغة 2026–2027","bad"); return; }
+    const old=curYear(), nv=v.replace(/\s*[-–]\s*/,"–");
+    try{ if(nv!==old){ for(const c of S.comps.filter(c=>!c.year)){ try{ await S.db.doc("competitions/"+c.id).update({year:compYear(c)}); }catch(e){} } }
+      await S.db.doc("site/main").set({...S.site,curYear:nv}); S.site.curYear=nv; S.viewYear=""; toast("✓ حُفظت السنة الدراسية"); admData(el); }catch(e){ toast("تعذّر الحفظ","bad"); } };
+  const b=el.querySelector("#dyNos"); if(b) b.onclick=async()=>{ b.disabled=true; await ensureStuNos(); toast("✓ أُعطيت الأرقام الموحدة"); admData(el); };
+  el.querySelectorAll("[data-dmg]").forEach(x=>x.onclick=()=>confirmBtn(x,"تأكيد الدمج",async()=>{ const g=dups[+x.dataset.dmg]; const keep=g.slice().sort((a,b)=>(stuNoNum(a)||1e9)-(stuNoNum(b)||1e9))[0]; try{ for(const d of g.filter(s=>s.id!==keep.id)) await mergeStudentsX(keep,d); toast("✓ دُمجت السجلات في "+(keep.no||keep.name)); }catch(e){ toast("تعذّر الدمج","bad"); } }));
+  el.querySelector("#dyImpS").onclick=openStuImportX; el.querySelector("#dyExpS").onclick=()=>stuExportX().catch(()=>toast("تعذّر التصدير","bad"));
+  el.querySelector("#dyUndo").onclick=undoLastImport; el.querySelector("#dyImpT").onclick=openTeaImportX; el.querySelector("#dyExpT").onclick=()=>teaExportX().catch(()=>toast("تعذّر التصدير","bad"));
+}
+/* new students (editor, registration, roster import) get their number automatically */
+setInterval(()=>{ if(S.admin&&S.gotStu&&S.students.some(s=>!s.no)) ensureStuNos(); },20000);
+
+/* ================= مركز التقارير والتصميمات ================= */
+/* palettes taken from the Andalus emblem (navy, sky, blue, purple, coral) */
+const RC_PAL={
+  navy:{n:"كحلي رسمي",p:"#123885",s:"#17A9D9",a:"#9B4FA3"},
+  sky:{n:"سماوي",p:"#0F69B2",s:"#17A9D9",a:"#123885"},
+  purple:{n:"بنفسجي",p:"#6E3A86",s:"#9B4FA3",a:"#17A9D9"},
+  coral:{n:"مرجاني",p:"#B5473F",s:"#E8665D",a:"#123885"},
+  rainbow:{n:"ألوان الشعار",p:"#123885",s:"#9B4FA3",a:"#E8665D"}};
+const RC_RAIN=["#123885","#17A9D9","#0F69B2","#9B4FA3","#E8665D"];
+const mix=(hex,t)=>{ const n=parseInt(hex.slice(1),16), r=n>>16, g=n>>8&255, b=n&255, f=c=>Math.round(c+(255-c)*t).toString(16).padStart(2,"0"); return "#"+f(r)+f(g)+f(b); };
+const RC_STYLE={formal:"رسمي كلاسيكي",modern:"حديث بطاقات",visual:"مصوّر",compact:"مختصر"};
+/* report sections: each reads live platform data */
+const RC_SEC={
+  intro:{n:"المقدمة / نص حر",kind:"text"},
+  kpis:{n:"المؤشرات الرئيسية",kind:"kpi"},
+  charts:{n:"الرسوم البيانية",kind:"chart"},
+  acts:{n:"جدول الأنشطة والبرامج",kind:"table"},
+  profiles:{n:"بطاقات الأنشطة المصوّرة",kind:"visual"},
+  students:{n:"جدول الطلاب المشاركين",kind:"table"},
+  ach:{n:"الإنجازات والنتائج",kind:"table"},
+  official:{n:"التسجيل الرسمي لدى الجهات",kind:"table"},
+  ready:{n:"الجاهزية والملاحظات",kind:"table"},
+  recs:{n:"التوصيات / نص حر",kind:"text"},
+  sign:{n:"التوقيعات والاعتماد",kind:"sign"}};
+const RC_BASE=[
+  {id:"official",name:"التقرير الرسمي",style:"formal",pal:"navy",secs:["intro","kpis","acts","ach","recs","sign"]},
+  {id:"stats",name:"التقرير الإحصائي",style:"modern",pal:"sky",secs:["kpis","charts","acts","official"]},
+  {id:"visual",name:"التقرير التعريفي المصوّر",style:"visual",pal:"rainbow",secs:["intro","profiles","ach"]},
+  {id:"tables",name:"التقرير التفصيلي بالجداول",style:"formal",pal:"navy",secs:["acts","students","official","ready","ach"]},
+  {id:"results",name:"تقرير الإنجازات والنتائج",style:"modern",pal:"purple",secs:["intro","kpis","ach","charts","sign"]},
+  {id:"exec",name:"التقرير التنفيذي المختصر",style:"compact",pal:"navy",secs:["kpis","charts","recs"]}];
+const RC_SEC_ALL=Object.keys(RC_SEC);
+/* state survives template/colour switches (only layout changes, never the data or the texts) */
+const RC=S.rc=S.rc||{base:"official",pal:"navy",style:"formal",secs:null,scope:"",cover:null,texts:{intro:"",recs:""},opts:{images:true,maxRows:60,charts:["byAct","byGrade","kinds"]},tplId:""};
+const rcLogo=()=>{ const i=document.querySelector("#logoBox img"); return i&&i.src||""; };
+function rcCoverDefault(){ return {title:"",sub:"",school:(S.site&&S.site.schoolName)||"مدارس الأندلس الأهلية",branch:"فرع حي الزهراء",stage:"المرحلة المتوسطة",year:curYear(),date:new Date().toISOString().slice(0,10),by:admMe()||"",show:true}; }
+function rcTplList(){ return [...RC_BASE.map(t=>({...t,builtin:true,status:"approved"})),...(S.rtpl||[]).filter(t=>t.status==="approved"||rcCan("design"))]; }
+/* permissions: designers create/edit templates, approvers approve them; everyone in the admin portal can issue reports */
+const rcPerm=()=>(S.site&&S.site.rptPerm)||{designers:[],approvers:[]};
+function rcCan(what){ const me=arNorm(admMe()||""); const P=rcPerm(); const L=what==="approve"?P.approvers:P.designers; if(!L||!L.length) return true; return L.some(n=>arNorm(n)===me); }
+
+/* ---------- data from the platform ---------- */
+function rcData(){
+  const y=RC.yearSel||viewYear();
+  let comps=S.comps.filter(c=>!c.archived||RC.inclArch).filter(c=>compYear(c)===y);
+  if(RC.scope) comps=comps.filter(c=>c.id===RC.scope||c.kind===RC.scope);
+  const ids=new Set(comps.map(c=>c.id));
+  const roster=comps.map(c=>({c,R:compRoster(c.id)}));
+  const stuNames=new Map(); roster.forEach(({c,R})=>R.forEach(s=>{ const k=arNorm(s.name); if(!stuNames.has(k)) stuNames.set(k,{name:s.name,grade:s.grade||"",acts:[]}); stuNames.get(k).acts.push(c.name); }));
+  const names=new Set(comps.map(c=>arNorm(c.name)));
+  const ach=S.ach.filter(a=>(!RC.scope||names.has(arNorm(a.compName)))&&(!a.date||yearOfDate(a.date)===y||!y));
+  const reqs=allRequests().filter(r=>ids.has(r.compId)&&reqYear(r)===y);
+  const ext=extFlat().filter(it=>ids.has(it.compId));
+  const sess=comps.reduce((s,c)=>s+(c.sessions||[]).length,0);
+  const ready=comps.map(c=>({c,r:compReady(c)}));
+  return {y,comps,roster,students:[...stuNames.values()].sort((a,b)=>a.name.localeCompare(b.name,"ar")),ach,reqs,ext,sess,ready};
+}
+const top3=a=>/الأول|الثاني|الثالث/.test(a.rank||"");
+/* ---------- rendering ---------- */
+function rcCss(P,style){
+  const p=P.p,s=P.s,a=P.a, L=mix(p,.92), L2=mix(p,.85), SL=mix(s,.88);
+  return `@page{size:A4;margin:14mm 13mm 16mm}*{box-sizing:border-box}html,body{margin:0}body{direction:rtl;font-family:"IBM Plex Sans Arabic","Cairo","Segoe UI",Tahoma,sans-serif;color:#1f2733;font-size:11pt;line-height:1.65;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .pg{background:#fff}.screen .pg{width:210mm;min-height:297mm;margin:0 auto 14px;padding:14mm 13mm 16mm;box-shadow:0 4px 18px #0002}
+  .cover{display:flex;flex-direction:column;justify-content:space-between;min-height:265mm;break-after:page}
+  .cv-top{display:flex;justify-content:space-between;align-items:center;gap:12px}.logo{height:22mm;width:auto;max-width:70mm;object-fit:contain}
+  .cv-band{height:6px;display:flex}.cv-band i{flex:1}
+  .cv-mid{padding:16mm 0}.cv-mid h1{font-size:28pt;line-height:1.3;margin:0 0 6mm;color:${p}}.cv-mid p{font-size:14pt;color:#4a5566;margin:0}
+  .cv-meta{display:grid;grid-template-columns:1fr 1fr;gap:3mm 8mm;font-size:11pt;border-top:2px solid ${p};padding-top:6mm}.cv-meta b{color:${p}}
+  .hdr{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid ${p};padding-bottom:3mm;margin-bottom:6mm}.hdr .logo{height:12mm}.hdr span{color:#5b6575;font-size:9.5pt}
+  h2{color:${p};font-size:15pt;margin:8mm 0 3mm;break-after:avoid;page-break-after:avoid}
+  h3{color:${a};font-size:12pt;margin:4mm 0 2mm;break-after:avoid}
+  p{margin:0 0 3mm}
+  .sec{break-inside:auto}.keep{break-inside:avoid;page-break-inside:avoid}
+  table{width:100%;border-collapse:collapse;font-size:9.8pt;margin:2mm 0 4mm}thead{display:table-header-group}tr{break-inside:avoid;page-break-inside:avoid}
+  th{background:${p};color:#fff;font-weight:700;padding:2.2mm 2.5mm;text-align:right}td{padding:2mm 2.5mm;border-bottom:1px solid ${L2};vertical-align:top}tbody tr:nth-child(even) td{background:${L}}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:3mm;margin:2mm 0 4mm}.kpi{border:1px solid ${L2};border-top:4px solid ${s};border-radius:3mm;padding:3mm;background:#fff;break-inside:avoid}.kpi b{display:block;font-size:18pt;color:${p};line-height:1.2}.kpi span{font-size:9pt;color:#5b6575}
+  .charts{display:grid;grid-template-columns:1fr 1fr;gap:4mm}.chart{border:1px solid ${L2};border-radius:3mm;padding:3mm;break-inside:avoid}.chart h4{margin:0 0 2mm;color:${p};font-size:10.5pt}.chart svg{width:100%;height:auto;display:block}
+  .profiles{display:grid;grid-template-columns:1fr 1fr;gap:4mm}.prof{border:1px solid ${L2};border-radius:3mm;overflow:hidden;break-inside:avoid;background:#fff}.prof img{width:100%;height:38mm;object-fit:cover;display:block}.prof .ph{height:14mm;background:linear-gradient(90deg,${p},${s})}.prof div.t{padding:3mm}.prof b{color:${p};font-size:11.5pt}.prof small{display:block;color:#5b6575}
+  .note{background:${SL};border-inline-start:4px solid ${s};padding:3mm 4mm;border-radius:2mm;break-inside:avoid}
+  .sign{display:grid;grid-template-columns:repeat(3,1fr);gap:8mm;margin-top:12mm;break-inside:avoid}.sign div{border-top:1px solid #8892a2;padding-top:2mm;text-align:center;font-size:10pt}
+  .pill{display:inline-block;border-radius:99px;padding:0 2.5mm;font-size:8.5pt;background:${L2};color:${p}}.ok{background:#e3f6ea;color:#156c3a}.bad{background:#fde8e6;color:#b3261e}
+  .foot{position:running(f)}
+  ${style==="modern"?`h2{background:${L};padding:2mm 4mm;border-radius:2mm;border-inline-start:5px solid ${s}}th{background:${s}}.kpi{background:${L};border:0;border-top:4px solid ${p}}`:""}
+  ${style==="visual"?`h2{font-size:17pt;border-bottom:3px solid ${s};padding-bottom:1mm}.cv-mid h1{font-size:32pt}.cover{background:linear-gradient(160deg,${L} 0%,#fff 55%)}.screen .cover{padding:14mm 13mm}`:""}
+  ${style==="compact"?`body{font-size:10.5pt}h2{font-size:13pt;margin-top:5mm}.cv-mid h1{font-size:24pt}.kpis{grid-template-columns:repeat(4,1fr)}.cover{min-height:auto;break-after:auto;justify-content:flex-start;gap:6mm}.cv-mid{padding:6mm 0}`:""}
+  ${style==="formal"?`h2{border-bottom:1px solid ${L2};padding-bottom:1.5mm}`:""}`;
+}
+function rcBars(rows,P,horizontal){ if(!rows.length) return '<p style="color:#5b6575">لا توجد بيانات.</p>'; const max=Math.max(1,...rows.map(r=>r[1])), W=360, bh=18, gap=7, H=rows.length*(bh+gap)+6;
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" font-family="Tahoma" font-size="10" style="direction:rtl">${rows.map((r,i)=>{ const y=i*(bh+gap)+3, w=Math.max(2,(W-150)*r[1]/max), col=RC.pal==="rainbow"?RC_RAIN[i%5]:(i%2?P.s:P.p); return `<text x="${W-2}" y="${y+13}" text-anchor="start" fill="#333">${esc(String(r[0]).slice(0,22))}</text><rect x="${W-140-w}" y="${y}" width="${w}" height="${bh}" rx="4" fill="${col}"/><text x="${W-146-w}" y="${y+13}" text-anchor="start" fill="#333" font-weight="bold">${r[1]}</text>`; }).join("")}</svg>`; }
+function rcDonut(rows,P){ const tot=rows.reduce((s,r)=>s+r[1],0); if(!tot) return '<p style="color:#5b6575">لا توجد بيانات.</p>'; let a0=-Math.PI/2; const R=60,cx=75,cy=75, cols=[P.p,P.s,P.a,...RC_RAIN];
+  const arcs=rows.map((r,i)=>{ const a1=a0+2*Math.PI*r[1]/tot, large=a1-a0>Math.PI?1:0, d=r[1]===tot?`M${cx} ${cy-R}A${R} ${R} 0 1 1 ${cx-.01} ${cy-R}Z`:`M${cx} ${cy}L${cx+R*Math.cos(a0)} ${cy+R*Math.sin(a0)}A${R} ${R} 0 ${large} 1 ${cx+R*Math.cos(a1)} ${cy+R*Math.sin(a1)}Z`; a0=a1; return `<path d="${d}" fill="${cols[i%cols.length]}"/>`; }).join("");
+  return `<svg viewBox="0 0 360 150" xmlns="http://www.w3.org/2000/svg" font-family="Tahoma" font-size="11" style="direction:rtl">${arcs}<circle cx="${cx}" cy="${cy}" r="32" fill="#fff"/><text x="${cx}" y="${cy+4}" text-anchor="middle" font-weight="bold">${tot}</text>${rows.map((r,i)=>`<rect x="330" y="${20+i*22}" width="12" height="12" rx="2" fill="${cols[i%cols.length]}"/><text x="324" y="${30+i*22}" text-anchor="start">${esc(r[0])} (${r[1]})</text>`).join("")}</svg>`; }
+const rcT=(head,rows)=>rows.length?`<table><thead><tr>${head.map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(v=>`<td>${v&&v.html?v.html:esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>`:'<p style="color:#5b6575">لا توجد بيانات في النطاق المختار.</p>';
+function rcSecData(k,D){ /* tables for Excel/Word too */
+  const lim=+RC.opts.maxRows||60;
+  if(k==="acts") return {head:["النشاط","النوع","الحالة","الطلاب","الحصص","الجاهزية"],rows:D.roster.map(({c,R})=>[c.name,kindLabel(c.kind),c.status||"",R.length,(c.sessions||[]).length,compReady(c).score+"%"])};
+  if(k==="students") return {head:["#","الطالب","الصف","الأنشطة"],rows:D.students.slice(0,lim).map((s,i)=>[i+1,s.name,s.grade,s.acts.join("، ")])};
+  if(k==="ach") return {head:["الطالب","المسابقة","المستوى","النتيجة","التاريخ"],rows:D.ach.slice().sort((a,b)=>String(b.date||"").localeCompare(a.date||"")).slice(0,lim).map(a=>[a.student,a.compName,a.level||"",a.rank||"",a.date?fmtDate(a.date):""])};
+  if(k==="official") return {head:["النشاط","أبلغ — بانتظار المراجعة","معتمد","يحتاج استكمال"],rows:D.comps.filter(c=>c.url).map(c=>{ const X=D.ext.filter(it=>it.compId===c.id); return [c.name,X.filter(it=>extState(it)==="reported").length,X.filter(it=>extState(it)==="approved").length,X.filter(it=>extState(it)==="incomplete").length]; })};
+  if(k==="ready") return {head:["النشاط","الجاهزية","ما ينقص"],rows:D.ready.map(({c,r})=>[c.name,r.score+"%",r.missing.join("، ")||"مكتمل"])};
+  if(k==="kpis") return {head:["المؤشر","القيمة"],rows:rcKpis(D)};
+  return null;
+}
+function rcKpis(D){ return [["الأنشطة والبرامج",D.comps.length],["الطلاب المشاركون",D.students.length],["طلبات التسجيل",D.reqs.length],["الطلبات المقبولة",D.reqs.filter(r=>r.status==="مقبول").length],["الحصص التدريبية",D.sess],["الإنجازات المسجلة",D.ach.length],["مراكز متقدمة (1–3)",D.ach.filter(top3).length],["تسجيلات رسمية معتمدة",D.ext.filter(it=>extState(it)==="approved").length],["متوسط الجاهزية",(D.ready.length?Math.round(D.ready.reduce((s,x)=>s+x.r.score,0)/D.ready.length):0)+"%"]]; }
+function rcSection(k,D,P){
+  const S1=RC_SEC[k]; if(!S1) return "";
+  if(k==="intro"||k==="recs"){ const t=(RC.texts[k]||"").trim(); if(!t) return ""; return `<section class="sec"><h2>${k==="intro"?"المقدمة":"التوصيات"}</h2>${t.split(/\n+/).map(x=>`<p>${esc(x)}</p>`).join("")}</section>`; }
+  if(k==="kpis") return `<section class="sec keep"><h2>المؤشرات الرئيسية</h2><div class="kpis">${rcKpis(D).map(([l,v])=>`<div class="kpi"><b>${esc(v)}</b><span>${esc(l)}</span></div>`).join("")}</div></section>`;
+  if(k==="charts"){ const ch=RC.opts.charts||[]; const byAct=D.roster.map(({c,R})=>[c.name,R.length]).sort((a,b)=>b[1]-a[1]).slice(0,10); const byGrade=GRADES.map(g=>[g,D.students.filter(s=>s.grade===g).length]); const kinds=[["مسابقة","competition"],["برنامج","program"],["أكاديمية","academy"]].map(([l,k2])=>[l,D.comps.filter(c=>(c.kind||"competition")===k2).length]).filter(r=>r[1]);
+    const items=[ch.includes("byAct")&&`<div class="chart"><h4>الطلاب حسب النشاط</h4>${rcBars(byAct,P)}</div>`,ch.includes("byGrade")&&`<div class="chart"><h4>الطلاب حسب الصف</h4>${rcBars(byGrade,P)}</div>`,ch.includes("kinds")&&`<div class="chart"><h4>أنواع الأنشطة</h4>${rcDonut(kinds,P)}</div>`,ch.includes("achLvl")&&`<div class="chart"><h4>الإنجازات حسب المستوى</h4>${rcBars(ACH_LEVELS.map(([l])=>[l,D.ach.filter(a=>a.level===l).length]).filter(r=>r[1]),P)}</div>`].filter(Boolean);
+    return items.length?`<section class="sec"><h2>الرسوم البيانية</h2><div class="charts">${items.join("")}</div></section>`:""; }
+  if(k==="profiles") return `<section class="sec"><h2>الأنشطة والبرامج</h2><div class="profiles">${D.roster.map(({c,R})=>`<div class="prof">${RC.opts.images&&c.cover?`<img src="${location.origin}${blob(c.cover)}" alt="">`:'<div class="ph"></div>'}<div class="t"><b>${esc(c.name)}</b><small>${esc([kindLabel(c.kind),c.domain,c.grades].filter(Boolean).join(" • "))}</small><p style="margin:2mm 0 0;font-size:9.5pt">${esc(String(c.summary||c.description||"").slice(0,220))}</p><small>${R.length} طالب • ${(c.sessions||[]).length} حصة${c.coach?" • "+esc(c.coach):""}</small></div></div>`).join("")||'<p>لا توجد أنشطة.</p>'}</div></section>`;
+  if(k==="sign") return `<section class="sign"><div>معدّ التقرير<br><b>${esc(RC.cover.by||"")}</b></div><div>منسق المراكز التنافسية</div><div>مدير المدرسة</div></section>`;
+  const t=rcSecData(k,D); if(!t) return ""; const title={acts:"الأنشطة والبرامج",students:"الطلاب المشاركون",ach:"الإنجازات والنتائج",official:"التسجيل الرسمي لدى الجهات المنظمة",ready:"الجاهزية وما ينقص"}[k];
+  return `<section class="sec"><h2>${title}</h2>${k==="ach"&&t.rows.length?`<div class="note">إجمالي الإنجازات: <b>${D.ach.length}</b> • مراكز متقدمة: <b>${D.ach.filter(top3).length}</b></div>`:""}${rcT(t.head,t.rows)}${k==="students"&&D.students.length>t.rows.length?`<p style="color:#5b6575">يعرض أول ${t.rows.length} من ${D.students.length} طالبًا. الجدول الكامل في ملف Excel.</p>`:""}</section>`;
+}
+function rcHtml(screen){
+  const P=RC_PAL[RC.pal]||RC_PAL.navy, D=rcData(), C=RC.cover, logo=rcLogo(), secs=(RC.secs||[]).filter(k=>RC_SEC[k]);
+  const title=C.title||(rcTplList().find(t=>t.id===RC.base)||{}).name||"تقرير";
+  const band=`<div class="cv-band">${RC_RAIN.map(c=>`<i style="background:${c}"></i>`).join("")}</div>`;
+  const cover=C.show!==false?`<div class="pg cover"><div><div class="cv-top">${logo?`<img class="logo" src="${logo}" alt="شعار مدارس الأندلس الأهلية">`:""}<div style="text-align:left;color:#5b6575;font-size:10pt">${esc(C.date||"")}</div></div>${band}</div>
+    <div class="cv-mid"><h1>${esc(title)}</h1>${C.sub?`<p>${esc(C.sub)}</p>`:""}</div>
+    <div><div class="cv-meta"><div><b>المدرسة:</b> ${esc(C.school)}</div><div><b>الفرع:</b> ${esc(C.branch)}</div><div><b>المرحلة:</b> ${esc(C.stage)}</div><div><b>السنة الدراسية:</b> <bdi dir="ltr">${esc(C.year)}</bdi></div><div><b>تاريخ الإصدار:</b> <bdi dir="ltr">${esc(C.date)}</bdi></div><div><b>إعداد:</b> ${esc(C.by)}</div></div>${band}</div></div>`:"";
+  const hdr=`<div class="hdr">${logo?`<img class="logo" src="${logo}" alt="">`:"<span></span>"}<span>${esc(title)} • <bdi dir="ltr">${esc(C.year)}</bdi></span></div>`;
+  const body=secs.map(k=>rcSection(k,D,P)).join("")||'<p>اختر أقسامًا لإظهارها في التقرير.</p>';
+  return `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${rcCss(P,RC.style)}</style></head><body class="${screen?"screen":""}" style="${screen?"background:#e9edf3;padding:12px 0":""}">${cover}<div class="pg">${hdr}${body}</div></body></html>`;
+}
+/* ---------- exports ---------- */
+function rcPrint(){ const f=document.createElement("iframe"); f.style.cssText="position:fixed;width:1px;height:1px;border:0;opacity:0;bottom:0"; f.srcdoc=rcHtml(false); document.body.appendChild(f); f.onload=()=>setTimeout(()=>{ try{ f.contentWindow.focus(); f.contentWindow.print(); toast("اختر «حفظ بصيغة PDF» من نافذة الطباعة"); }catch(e){} setTimeout(()=>f.remove(),60000); },700); }
+function rcWord(){ const h=rcHtml(false).replace('<html lang="ar" dir="rtl">','<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" lang="ar" dir="rtl">').replace("<head>",'<head><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View></w:WordDocument></xml><![endif]--><style>@page Section1{size:21cm 29.7cm;margin:1.4cm}div.pg{page:Section1}</style>').replace(/class="pg cover"/,'class="pg cover" style="page-break-after:always"');
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob(["﻿",h],{type:"application/msword"})); a.download=rcFileName()+".doc"; document.body.appendChild(a); a.click(); a.remove(); }
+async function rcExcel(){ const D=rcData(); const sheets=[]; const add=(n,t)=>{ if(t&&t.rows.length) sheets.push({name:n,rows:[t.head,...t.rows]}); };
+  add("المؤشرات",rcSecData("kpis",D)); add("الأنشطة",rcSecData("acts",D)); add("الطلاب",{head:["#","الطالب","الصف","الأنشطة"],rows:D.students.map((s,i)=>[i+1,s.name,s.grade,s.acts.join("، ")])}); add("الإنجازات",{...rcSecData("ach",D),rows:D.ach.map(a=>[a.student,a.compName,a.level||"",a.rank||"",a.date||""])}); add("التسجيل الرسمي",rcSecData("official",D)); add("الجاهزية",rcSecData("ready",D));
+  try{ await xlsxOut(rcFileName()+".xlsx",sheets); }catch(e){ toast("تعذّر إنشاء ملف Excel","bad"); } }
+const rcFileName=()=>String(RC.cover.title||(rcTplList().find(t=>t.id===RC.base)||{}).name||"تقرير").replace(/[\\/:*?"<>|]+/g,"").replace(/\s+/g,"-")+"-"+(RC.cover.date||"");
+/* ---------- custom templates (shared by all branches) ---------- */
+async function rcSaveTpl(asNew){
+  if(!rcCan("design")){ toast("حفظ القوالب لمصممي القوالب فقط","bad"); return; }
+  const cur=(S.rtpl||[]).find(t=>t.id===RC.tplId); const name=prompt("اسم القالب",cur&&!asNew?cur.name:((rcTplList().find(t=>t.id===RC.base)||{}).name||"قالب")+" — مخصص"); if(!name) return;
+  const id=cur&&!asNew?cur.id:uid("rt-"); const at=new Date().toISOString();
+  const t={id,name:name.trim(),style:RC.style,pal:RC.pal,secs:RC.secs.slice(),opts:{...RC.opts},texts:{...RC.texts},coverTpl:{title:RC.cover.title,sub:RC.cover.sub,branch:RC.cover.branch,stage:RC.cover.stage},status:rcCan("approve")?"approved":"draft",by:admMe(),at,history:[...((cur&&!asNew&&cur.history)||[]),{at,by:admMe(),what:asNew||!cur?"إنشاء":"تعديل"}]};
+  try{ await S.db.doc("rtpl/"+id).set(t); RC.tplId=id; RC.base=id; toast(t.status==="approved"?"✓ حُفظ القالب واعتُمد":"✓ حُفظ القالب — بانتظار الاعتماد"); }catch(e){ toast("تعذّر الحفظ","bad"); } }
+function rcApply(id){ const t=rcTplList().find(x=>x.id===id); if(!t) return; RC.base=id; RC.tplId=t.builtin?"":id; RC.style=t.style; RC.pal=t.pal; RC.secs=t.secs.slice(); if(t.opts) RC.opts={...RC.opts,...t.opts}; if(t.texts) Object.keys(t.texts).forEach(k=>{ if(!RC.texts[k]) RC.texts[k]=t.texts[k]; }); if(t.coverTpl) Object.entries(t.coverTpl).forEach(([k,v])=>{ if(v&&!RC.cover[k]) RC.cover[k]=v; }); }
+
+/* ---------- the editor ---------- */
+function admReports(el){
+  if(!RC.cover) RC.cover=rcCoverDefault(); if(!RC.secs) rcApply(RC.base);
+  const tpls=rcTplList(), cur=(S.rtpl||[]).find(t=>t.id===RC.tplId), P=rcPerm();
+  const scopes=[["","كل الأنشطة"],["competition","المسابقات فقط"],["academy","الأكاديميات فقط"],["program","البرامج فقط"],...S.comps.filter(c=>!c.archived).map(c=>[c.id,"— "+c.name])];
+  const secRow=(k,i,on)=>`<div class="rc-sec ${on?"":"off"}"><label class="check"><input type="checkbox" data-rcs="${k}" ${on?"checked":""}> ${esc(RC_SEC[k].n)}</label>${on?`<span class="row" style="gap:2px"><button class="btn sm ghost" data-rcu="${i}" ${i?"":"disabled"} aria-label="أعلى">▲</button><button class="btn sm ghost" data-rcd="${i}" ${i<RC.secs.length-1?"":"disabled"} aria-label="أسفل">▼</button></span>`:""}</div>`;
+  el.innerHTML=`<div class="rc"><div class="rc-side stack" style="gap:12px">
+   <div class="row" style="justify-content:space-between"><h2 class="sec-title" style="margin:0">📑 مركز التقارير</h2></div>
+   <div class="panel stack" style="gap:8px"><b>القالب</b><div class="rc-tpls">${tpls.map(t=>`<button class="rc-tpl ${RC.base===t.id?"on":""}" data-rct="${esc(t.id)}">${esc(t.name)}${t.builtin?"":t.status==="approved"?' <span class="pill ok">مخصص</span>':' <span class="pill warn">مسودة</span>'}</button>`).join("")}</div>
+    <div class="row" style="gap:6px">${rcCan("design")?`<button class="btn sm" id="rcSave">💾 حفظ كقالب</button>${cur?`<button class="btn sm" id="rcSaveAs">حفظ نسخة جديدة</button>`:""}`:""}${cur&&cur.status!=="approved"&&rcCan("approve")?`<button class="btn sm primary" id="rcApprove">اعتماد القالب</button>`:""}${cur&&rcCan("design")?`<button class="btn sm ghost" id="rcDel">حذف القالب</button>`:""}</div></div>
+   <div class="panel stack" style="gap:8px"><b>الألوان والتصميم</b><div class="rc-pals">${Object.entries(RC_PAL).map(([k,p])=>`<button class="rc-pal ${RC.pal===k?"on":""}" data-rcp="${k}" title="${p.n}">${k==="rainbow"?RC_RAIN.map(c=>`<i style="background:${c}"></i>`).join(""):`<i style="background:${p.p}"></i><i style="background:${p.s}"></i><i style="background:${p.a}"></i>`}<small>${p.n}</small></button>`).join("")}</div>
+    <label class="f">شكل التصميم<select class="in" id="rcStyle">${Object.entries(RC_STYLE).map(([k,v])=>`<option value="${k}" ${RC.style===k?"selected":""}>${v}</option>`).join("")}</select></label></div>
+   <div class="panel stack" style="gap:8px"><b>نطاق البيانات</b><div class="grid2"><label class="f">السنة<select class="in" id="rcYear">${allYears().map(y=>`<option value="${esc(y)}" ${(RC.yearSel||viewYear())===y?"selected":""}>${esc(yl(y))}</option>`).join("")}</select></label><label class="f">الأنشطة<select class="in" id="rcScope">${scopes.map(([v,l])=>`<option value="${esc(v)}" ${RC.scope===v?"selected":""}>${esc(l)}</option>`).join("")}</select></label></div><label class="check"><input type="checkbox" id="rcArch" ${RC.inclArch?"checked":""}> تضمين الأنشطة المؤرشفة</label></div>
+   <div class="panel stack" style="gap:6px"><b>الأقسام (إظهار وترتيب)</b>${RC.secs.map((k,i)=>secRow(k,i,true)).join("")}${RC_SEC_ALL.filter(k=>!RC.secs.includes(k)).map(k=>secRow(k,-1,false)).join("")}
+    <details><summary>خيارات المحتوى</summary><div class="stack" style="gap:6px;margin-top:6px"><label class="check"><input type="checkbox" id="rcImg" ${RC.opts.images?"checked":""}> إظهار صور الأنشطة</label>
+     <div><span class="small muted">الرسوم البيانية:</span>${[["byAct","الطلاب حسب النشاط"],["byGrade","الطلاب حسب الصف"],["kinds","أنواع الأنشطة"],["achLvl","الإنجازات حسب المستوى"]].map(([k,l])=>`<label class="check"><input type="checkbox" data-rcc="${k}" ${(RC.opts.charts||[]).includes(k)?"checked":""}> ${l}</label>`).join("")}</div>
+     <label class="f">أقصى عدد صفوف في الجداول<input class="in num" id="rcMax" type="number" min="5" max="500" value="${esc(RC.opts.maxRows)}"></label>
+     <label class="f">نص المقدمة<textarea class="in" id="rcIntro" rows="3">${esc(RC.texts.intro)}</textarea></label><label class="f">نص التوصيات<textarea class="in" id="rcRecs" rows="3">${esc(RC.texts.recs)}</textarea></label></div></details></div>
+   <div class="panel stack" style="gap:8px"><details ${RC.coverOpen?"open":""} id="rcCovD"><summary><b>الغلاف</b></summary><div class="stack" style="gap:6px;margin-top:6px">
+    <label class="check"><input type="checkbox" id="rcCovOn" ${RC.cover.show!==false?"checked":""}> إظهار صفحة الغلاف</label>
+    ${[["title","عنوان التقرير (فارغ = اسم القالب)"],["sub","عنوان فرعي"],["school","اسم المدرسة"],["branch","الفرع"],["stage","المرحلة"],["year","السنة الدراسية"],["date","تاريخ الإصدار"],["by","اسم معدّ التقرير"]].map(([k,l])=>`<label class="f">${l}<input class="in" data-rcv="${k}" ${k==="date"?'type="date"':""} value="${esc(RC.cover[k]||"")}"></label>`).join("")}</div></details></div>
+   ${rcCan("approve")?`<div class="panel stack" style="gap:6px"><details><summary><b>صلاحيات القوالب</b></summary><p class="small muted" style="margin:6px 0">اكتب الأسماء كما في «مستخدمي بوابة الإدارة»، اسمًا في كل سطر. القائمة الفارغة = كل مستخدمي الإدارة. إصدار التقارير متاح لكل مستخدمي الإدارة.</p>
+    <label class="f">من يُنشئ القوالب ويعدّلها<textarea class="in" id="rcPD" rows="2">${esc((P.designers||[]).join("\n"))}</textarea></label><label class="f">من يعتمد القوالب<textarea class="in" id="rcPA" rows="2">${esc((P.approvers||[]).join("\n"))}</textarea></label><button class="btn sm" id="rcPS">حفظ الصلاحيات</button></details></div>`:""}
+  </div>
+  <div class="rc-main stack" style="gap:10px"><div class="row rc-bar" style="gap:8px"><button class="btn primary" id="rcPdf">⬇ PDF / طباعة</button><button class="btn" id="rcDoc">⬇ Word</button><button class="btn" id="rcXls">⬇ Excel</button><span class="muted small">المعاينة تتحدث فورًا، والبيانات من المنصة مباشرة.</span></div>
+   <iframe class="rc-prev" id="rcPrev" title="معاينة التقرير"></iframe></div></div>`;
+  const prev=()=>{ const f=el.querySelector("#rcPrev"); if(f){ const y=f.contentWindow?f.contentWindow.scrollY:0; f.srcdoc=rcHtml(true); f.onload=()=>{ try{ f.contentWindow.scrollTo(0,y); }catch(e){} }; } };
+  const redraw=()=>{ if(document.body.contains(el)) admReports(el); }; window.rcRedraw=redraw;
+  prev(); let lt=null; window.rcLiveRefresh=()=>{ clearTimeout(lt); lt=setTimeout(()=>{ if(document.body.contains(el)) prev(); },800); };
+  el.querySelectorAll("[data-rct]").forEach(b=>b.onclick=()=>{ rcApply(b.dataset.rct); redraw(); });
+  el.querySelectorAll("[data-rcp]").forEach(b=>b.onclick=()=>{ RC.pal=b.dataset.rcp; redraw(); });
+  el.querySelector("#rcStyle").onchange=e=>{ RC.style=e.target.value; prev(); };
+  el.querySelector("#rcYear").onchange=e=>{ RC.yearSel=e.target.value; RC.cover.year=e.target.value; redraw(); };
+  el.querySelector("#rcScope").onchange=e=>{ RC.scope=e.target.value; prev(); };
+  el.querySelector("#rcArch").onchange=e=>{ RC.inclArch=e.target.checked; prev(); };
+  el.querySelectorAll("[data-rcs]").forEach(c=>c.onchange=()=>{ const k=c.dataset.rcs; RC.secs=c.checked?[...RC.secs,k]:RC.secs.filter(x=>x!==k); redraw(); });
+  el.querySelectorAll("[data-rcu]").forEach(b=>b.onclick=()=>{ const i=+b.dataset.rcu; [RC.secs[i-1],RC.secs[i]]=[RC.secs[i],RC.secs[i-1]]; redraw(); });
+  el.querySelectorAll("[data-rcd]").forEach(b=>b.onclick=()=>{ const i=+b.dataset.rcd; [RC.secs[i+1],RC.secs[i]]=[RC.secs[i],RC.secs[i+1]]; redraw(); });
+  el.querySelector("#rcImg").onchange=e=>{ RC.opts.images=e.target.checked; prev(); };
+  el.querySelectorAll("[data-rcc]").forEach(c=>c.onchange=()=>{ const k=c.dataset.rcc; RC.opts.charts=c.checked?[...(RC.opts.charts||[]),k]:(RC.opts.charts||[]).filter(x=>x!==k); prev(); });
+  el.querySelector("#rcMax").onchange=e=>{ RC.opts.maxRows=Math.max(5,+e.target.value||60); prev(); };
+  let tt=null; const later=()=>{ clearTimeout(tt); tt=setTimeout(prev,350); };
+  el.querySelector("#rcIntro").oninput=e=>{ RC.texts.intro=e.target.value; later(); };
+  el.querySelector("#rcRecs").oninput=e=>{ RC.texts.recs=e.target.value; later(); };
+  el.querySelector("#rcCovOn").onchange=e=>{ RC.cover.show=e.target.checked; prev(); };
+  el.querySelector("#rcCovD").ontoggle=e=>{ RC.coverOpen=e.target.open; };
+  el.querySelectorAll("[data-rcv]").forEach(i=>i.oninput=()=>{ RC.cover[i.dataset.rcv]=i.value; later(); });
+  el.querySelector("#rcPdf").onclick=rcPrint; el.querySelector("#rcDoc").onclick=rcWord; el.querySelector("#rcXls").onclick=rcExcel;
+  const sv=el.querySelector("#rcSave"); if(sv) sv.onclick=()=>rcSaveTpl(false);
+  const sa=el.querySelector("#rcSaveAs"); if(sa) sa.onclick=()=>rcSaveTpl(true);
+  const ap=el.querySelector("#rcApprove"); if(ap) ap.onclick=async()=>{ try{ await S.db.doc("rtpl/"+cur.id).update({status:"approved",approvedBy:admMe(),approvedAt:new Date().toISOString()}); toast("✓ اعتُمد القالب"); }catch(e){ toast("تعذّر الاعتماد","bad"); } };
+  const dl=el.querySelector("#rcDel"); if(dl) dl.onclick=()=>confirmBtn(dl,"تأكيد الحذف",async()=>{ try{ await S.db.doc("rtpl/"+cur.id).delete(); RC.tplId=""; rcApply("official"); toast("حُذف القالب"); redraw(); }catch(e){ toast("تعذّر الحذف","bad"); } });
+  const ps=el.querySelector("#rcPS"); if(ps) ps.onclick=async()=>{ const L=id=>el.querySelector(id).value.split(/\n+/).map(x=>x.trim()).filter(Boolean); const rptPerm={designers:L("#rcPD"),approvers:L("#rcPA")}; if(rptPerm.approvers.length&&!rptPerm.approvers.some(n=>arNorm(n)===arNorm(admMe()||""))){ toast("أضف اسمك إلى قائمة المعتمدين حتى لا تفقد الصلاحية","bad"); return; } try{ await S.db.doc("site/main").set({...S.site,rptPerm}); S.site.rptPerm=rptPerm; toast("✓ حُفظت الصلاحيات"); }catch(e){ toast("تعذّر الحفظ","bad"); } };
+}
+function rcBoot(db){ if(S.admin) db.collection("rtpl").onSnapshot(s=>{ S.rtpl=s.docs.map(d=>({...d.data(),id:d.id})); if(route()==="admin-reports"&&window.rcRedraw){ const ae=document.activeElement; if(!(ae&&ae.closest&&ae.closest(".rc-side")&&/INPUT|TEXTAREA/.test(ae.tagName))) window.rcRedraw(); } },()=>{}); }
+
 /* ---------- data wiring ---------- */
-function rerender(){ if(Date.now()-(window.__lastTouch||0)<1500){ clearTimeout(S.rrT); S.rrT=setTimeout(rerender,1600); return; } updateBadge(); if(S.admin){ try{ ppAutoSync(); }catch(e){} } if(S.ppDirty&&/^(rev|tsk)-(my|subj|design)$/.test(route())) return; if(S.admin){ maybeSync(); maybePubCounts(); } if(S.editing) return; if(/^ga(-|$)/.test(route())&&S.gaReady){ gaRe(); return; } if(route()==="tt"&&document.querySelector("#ttHost")) return; if(/^(quiz$|qzplay$|qzr-|qzh-)/.test(route())) return; if(document.querySelector(".modal")) return; if([...document.querySelectorAll("#app [data-csq]")].some(i=>i.value.trim())) return; const ae=document.activeElement; if(ae&&ae.matches&&ae.matches("input,textarea,select")&&$("#app").contains(ae)) return; render(); }
+function rerender(){ if(route()==="admin-reports"&&window.rcLiveRefresh&&document.querySelector(".rc")){ updateBadge(); window.rcLiveRefresh(); return; } if(Date.now()-(window.__lastTouch||0)<1500){ clearTimeout(S.rrT); S.rrT=setTimeout(rerender,1600); return; } updateBadge(); if(S.admin){ try{ ppAutoSync(); }catch(e){} } if(S.ppDirty&&/^(rev|tsk)-(my|subj|design)$/.test(route())) return; if(S.admin){ maybeSync(); maybePubCounts(); } if(S.editing) return; if(/^ga(-|$)/.test(route())&&S.gaReady){ gaRe(); return; } if(route()==="tt"&&document.querySelector("#ttHost")) return; if(/^(quiz$|qzplay$|qzr-|qzh-)/.test(route())) return; if(document.querySelector(".modal")) return; if([...document.querySelectorAll("#app [data-csq]")].some(i=>i.value.trim())) return; const ae=document.activeElement; if(ae&&ae.matches&&ae.matches("input,textarea,select")&&$("#app").contains(ae)) return; render(); }
 function sub(path,cb){ return S.db.collection(path).onSnapshot(snap=>cb(snap.docs.map(d=>({...d.data(),_id:d.id}))),()=>{}); }
 (async()=>{
   render();
@@ -8430,6 +9040,8 @@ function sub(path,cb){ return S.db.collection(path).onSnapshot(snap=>cb(snap.doc
   db.doc("site/pubtpl").onSnapshot(d=>{ S.pubTpl=(d.exists&&d.data().items)||[]; rerender(); },()=>{});
   loadProg().then(()=>{ if(/^(train|t-)/.test(route())) render(); });
   if(S.uid) db.doc("registrations/"+S.uid).onSnapshot(d=>{ S.myReg=d.exists?d.data():null; rerender(); },()=>{});
+  try{ extBoot(db); }catch(e){}
+  try{ rcBoot(db); }catch(e){}
   if(S.admin){
     let gotA=false,gotB=false; S.notified=new Set();
     const onReq=()=>{ if(!S.firstReqSnap){ const fresh=allRequests().filter(r=>r.status==="جديد"&&!S.seen.has(r.id)&&!S.notified.has(r.id)); if(fresh.length){ fresh.forEach(r=>S.notified.add(r.id)); toast("طلب تسجيل جديد: "+fresh[0].student+" – "+fresh[0].compName,"gold"); chime(); } } else allRequests().forEach(r=>S.notified.add(r.id)); if(gotA&&gotB){ S.firstReqSnap=false; S.gotReq=true; } rerender(); };

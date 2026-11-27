@@ -7,6 +7,8 @@ const RULES = [["", "view", "admin"], ["students", "admin", "admin"], ["requests
 const LV = { view: 0, interact: 1, admin: 2 };
 /* «شطرنج أندلس» lives under chess/… with the rules it had on Claude ("owner" → platform admin). */
 const CHESS_RULES = [["", "view", "admin"], ["private", "admin", "admin"], ["members", "admin", "admin"], ["finance", "admin", "admin"], ["roles", "admin", "admin"], ["backups", "admin", "admin"], ["audit", "interact", "admin"], ["incidents", "interact", "admin"], ["requests", "admin", "admin"], ["survey", "admin", "admin"]];
+/* official (external) registration reports: each family writes its own; reviews are admin-only (readable by status id) */
+RULES.push(["rtpl", "admin", "admin"], ["extreg", "admin", "admin"], ["extreg/{self}", "view", "view"], ["extrev", "view", "admin"]);
 RULES.push(...CHESS_RULES.map(([p, r, w]) => [p ? "chess/t/" + p : "chess", r, w]));
 /* each visitor may send and follow their own registration request / survey answer */
 RULES.push(["chess/t/requests/{self}", "view", "view"], ["chess/t/survey/{self}", "view", "view"]);
@@ -352,6 +354,16 @@ async function handleChessCard(req, env) {
   return json({ ok: true, id, no: p.no, name: p.name, cat: p.cat, type: p.type, status: p.status, paid: !!p.paid, season: p.season, photo: q.photo || "" });
 }
 
+/* proof of official registration (optional): small image or PDF from a parent */
+async function handleExtProof(req, env) {
+  const b = await req.json().catch(() => null); if (!b) return bad("bad body");
+  const m = /^data:(image\/(?:jpeg|png|webp)|application\/pdf);base64,([A-Za-z0-9+/=]+)$/.exec(String(b.data || ""));
+  if (!m) return bad("type"); if (m[2].length > 4200000) return bad("size", 413);
+  const id = "xp" + [...crypto.getRandomValues(new Uint8Array(12))].map(x => x.toString(16).padStart(2, "0")).join("");
+  await putAsset(env, id, m[1], m[2]);
+  return json({ id, url: "/_blob/" + id });
+}
+
 async function handleImport(req, env) {
   const u = await who(req, env);
   if (u.level < LV.admin) return bad("forbidden", 403);
@@ -426,6 +438,7 @@ export default {
         if (p === "/api/people") return await handlePeople(req, env);
         if (p === "/api/chess/register") return await handleChessRegister(req, env);
         if (p === "/api/chess/card") return await handleChessCard(req, env);
+        if (p === "/api/extproof") return await handleExtProof(req, env);
         if (p === "/api/upload") return await handleUpload(req, env);
         return bad("not found", 404);
       }
