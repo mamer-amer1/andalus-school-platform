@@ -1170,7 +1170,8 @@ body.on-admin.side-open .shell{grid-template-columns:262px minmax(0,1fr)}
 .bl-t td{vertical-align:middle;padding:4px 6px}.bl-t .in.sm{padding:5px 8px;min-height:34px;font-size:.88rem}
 .bl-t tr.bl-assembly td,.bl-t tr.bl-prayer td{background:#fbe3ef}.bl-t tr.bl-break td{background:#e1ecf8}
 .bl-mode{display:grid;gap:4px}
-@media (max-width:1000px){.bl{grid-template-columns:1fr}.bl-prev{position:static}}
+.bl-t select.in.sm{min-width:118px}
+@media (max-width:1400px){.bl{grid-template-columns:1fr}.bl-prev{position:static;max-width:640px;margin-inline:auto;width:100%}}
 </style>
 
 <header class="masthead noimg" id="masthead">
@@ -1195,7 +1196,7 @@ body.on-admin.side-open .shell{grid-template-columns:262px minmax(0,1fr)}
       <a href="#exams" data-nav="exams">📝 جداول الاختبارات</a>
       <a href="#studio" data-nav="studio" data-staffonly hidden>🎨 استوديو التصميم</a>
       <a href="#ga" data-nav="ga" data-staffonly hidden>📊 تحليل درجات الاختبارات</a>
-      <a href="#tt" data-nav="tt" data-adminonly hidden>🗓️ إدارة الجداول الدراسية</a>
+      <a href="#tt" data-nav="tt" data-adminonly hidden>🗓️ جدول الحصص والجدول الزمني</a>
       <a href="#pres" data-nav="pres" id="navPres" hidden>📊 نتائج ابني</a>
       <a href="#cal" data-nav="cal">📆 الأجندة المدرسية</a>
       <a href="#bell" data-nav="bell">⏰ الجدول الزمني للحصص</a>
@@ -2055,7 +2056,7 @@ async function submitRegistration(e){
 }
 
 /* ---------- admin ---------- */
-const TABS=[["dash","لوحة القيادة"],["ctl","🎛️ مركز التحكم"],["ann","📣 الإعلانات والتعاميم"],["tp","👨‍🏫 بوابة المعلم"],["stats","الإحصاءات والمشاركة"],["comps","المسابقات والتدريب"],["requests","طلبات التسجيل"],["extreg","🏁 التسجيل الرسمي"],["data","🗂 البيانات والسنوات"],["reports","📑 مركز التقارير"],["bell","⏰ الجدول الزمني"],["students","الطلاب وأولياء الأمور"],["ach","الإنجازات"],["train","التدريب الذاتي"],["msg","مركز التواصل"],["posters","🎨 استوديو التصميم"],["calendar","📆 الأجندة المدرسية"],["exams","📝 جداول الاختبارات"],["rl","💻 التعليم عن بُعد"],["media","الصور والفعاليات"],["accounts","حسابات الدخول"],["usage","📈 الدخول والاستخدام"],["resets","🧹 إعادة تهيئة السجلات"],["downloads","⬇️ التنزيل والتقارير"],["theme","🎨 الهوية والألوان"],["settings","النصوص والإعدادات"]];
+const TABS=[["dash","لوحة القيادة"],["ctl","🎛️ مركز التحكم"],["ann","📣 الإعلانات والتعاميم"],["tp","👨‍🏫 بوابة المعلم"],["stats","الإحصاءات والمشاركة"],["comps","المسابقات والتدريب"],["requests","طلبات التسجيل"],["extreg","🏁 التسجيل الرسمي"],["data","🗂 البيانات والسنوات"],["reports","📑 مركز التقارير"],["students","الطلاب وأولياء الأمور"],["ach","الإنجازات"],["train","التدريب الذاتي"],["msg","مركز التواصل"],["posters","🎨 استوديو التصميم"],["calendar","📆 الأجندة المدرسية"],["exams","📝 جداول الاختبارات"],["rl","💻 التعليم عن بُعد"],["media","الصور والفعاليات"],["accounts","حسابات الدخول"],["usage","📈 الدخول والاستخدام"],["resets","🧹 إعادة تهيئة السجلات"],["downloads","⬇️ التنزيل والتقارير"],["theme","🎨 الهوية والألوان"],["settings","النصوص والإعدادات"]];
 function allRequests(){ const out=S.requests.map(r=>({...r,src:"manual"})); S.regs.forEach(d=>(d.items||[]).forEach(i=>out.push({...i,src:"platform",owner:d._id}))); return out.sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt))); }
 function updateBadge(){ const n=allRequests().filter(r=>r.status==="جديد").length; const b=$("#navBadge"); b.hidden=!n||!S.admin; b.textContent=n; document.title=(n&&S.admin?"("+n+") ":"")+"منصة المراكز التنافسية"; }
 function renderAdmin(tab){
@@ -2063,7 +2064,7 @@ function renderAdmin(tab){
   const rail=TABS.map(([k,l])=>{ const n=k==="requests"?allRequests().filter(r=>r.status==="جديد").length:k==="dash"?urgent:k==="extreg"?extPending().length:0; return `<a href="#admin-${k}" class="${k===tab?"on":""}">${l}${n?`<span class="badge">${n}</span>`:""}</a>`; }).join("");
   const pick=`<label class="adm-pick"><select class="in" aria-label="اختر قسم الإدارة" onchange="location.hash='#admin-'+this.value">${TABS.map(([k,l])=>`<option value="${k}" ${k===tab?"selected":""}>${"📂 "+String(l).replace(/<[^>]*>/g,"")}</option>`).join("")}</select></label>`;
   $("#app").innerHTML=`${pick}<div class="admin"><nav class="rail surface" aria-label="أقسام الإدارة">${S.site.logo?`<div class="rail-logo"><img alt="شعار مدارس الأندلس الأهلية" src="${blob(S.site.logo)}"></div>`:""}${rail}<button class="btn sm ghost" type="button" onclick="location.reload()" style="margin-top:8px" title="إعادة تحميل المنصة بآخر البيانات">🔄 تحديث المنصة</button></nav><div id="adm" class="stack" style="min-width:0;gap:18px"></div></div>`;
-  ({dash:admDash,ctl:admCtl,ann:annAdmin,tp:admTP,stats:admStats,comps:admComps,requests:admRequests,extreg:el=>admExt(el),data:el=>admData(el),reports:el=>admReports(el),bell:el=>admBell(el),students:admStudents,ach:admAch,train:admTrain,msg:admMsg,commap:admCommap,calendar:el=>renderCalendar(el),media:admMedia,accounts:admAccounts,usage:admUsage,resets:admResets,posters:el=>fxStudio(el,true),exams:el=>{ exCssOnce(); exManage(el); },rl:el=>{ el.innerHTML='<div class="stack" style="gap:14px" id="rlBody"></div>'; rlAdmin(el.querySelector("#rlBody")); },downloads:admDownloads,theme:admTheme,settings:admSettings}[tab]||admDash)($("#adm"));
+  ({dash:admDash,ctl:admCtl,ann:annAdmin,tp:admTP,stats:admStats,comps:admComps,requests:admRequests,extreg:el=>admExt(el),data:el=>admData(el),reports:el=>admReports(el),bell:el=>{ location.replace("#tt-bell"); },students:admStudents,ach:admAch,train:admTrain,msg:admMsg,commap:admCommap,calendar:el=>renderCalendar(el),media:admMedia,accounts:admAccounts,usage:admUsage,resets:admResets,posters:el=>fxStudio(el,true),exams:el=>{ exCssOnce(); exManage(el); },rl:el=>{ el.innerHTML='<div class="stack" style="gap:14px" id="rlBody"></div>'; rlAdmin(el.querySelector("#rlBody")); },downloads:admDownloads,theme:admTheme,settings:admSettings}[tab]||admDash)($("#adm"));
   if(S.lastAdmTab!==tab){ S.lastAdmTab=tab; const r=document.querySelector(".admin .rail"), on=r&&r.querySelector("a.on"); if(r&&on&&r.scrollWidth>r.clientWidth){ requestAnimationFrame(()=>{ const rr=r.getBoundingClientRect(), oo=on.getBoundingClientRect(); r.scrollLeft+=(oo.left+oo.width/2)-(rr.left+rr.width/2); }); } }
 }
 /* ---------- admin: command dashboard ---------- */
@@ -5426,7 +5427,7 @@ function gaEntAdm(el){ const re=()=>gaEntAdm(el); const L=gaEntAll(); const F=S.
   el.querySelectorAll("[data-eed]").forEach(b=>b.onclick=()=>gaEntEditAdm(V[+b.dataset.eed],re)); el.querySelectorAll("[data-eo]").forEach(b=>b.onclick=()=>{ const it=V[+b.dataset.eo]; const m=document.createElement("div"); m.className="modal"; m.innerHTML=`<div class="box" style="max-width:600px"><div class="mh"><h3>${esc(it.typeN)} • ${esc(it.subj)} • ${esc(it.sec)}</h3><button class="btn sm ghost" data-x>إغلاق</button></div><div class="mb"><div class="small muted">المعلم: ${esc(it.by||"")} • الدرجة العظمى ${esc(String(it.mx))}</div><div class="tbl-wrap" style="max-height:460px;overflow:auto"><table><thead><tr><th>الطالب</th><th>الدرجة</th><th>النسبة</th></tr></thead><tbody>${(it.rows||[]).map(r=>{ const n=gaNum(r.v); return `<tr><td>${esc(r.name)}</td><td class="num">${esc(String(r.v||"—"))}</td><td class="num">${n!=null?gaP(n/(+it.mx||1)):""}</td></tr>`; }).join("")}</tbody></table></div></div></div>`; document.body.append(m); m.querySelector("[data-x]").onclick=()=>m.remove(); }); }
 
 /* ================= إدارة الجداول الدراسية (المصدر المركزي للجداول والإسنادات) ================= */
-const TT_TABS=[["cls","📅 جداول الفصول"],["tch","👨‍🏫 جداول المعلمين"],["asg","🔗 الإسنادات"],["chk","⚠️ التعارضات"],["arch","🗄️ النسخ والأرشيف"],["log","📜 سجل التعديلات"],["use","🔌 الأقسام المرتبطة"]];
+const TT_TABS=[["cls","📅 جداول الفصول"],["bell","⏰ الجدول الزمني للحصص"],["tch","👨‍🏫 جداول المعلمين"],["asg","🔗 الإسنادات"],["chk","⚠️ التعارضات"],["arch","🗄️ النسخ والأرشيف"],["log","📜 سجل التعديلات"],["use","🔌 الأقسام المرتبطة"]];
 const TT_DAYS=["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس"];
 const ttCol=()=>(S.pttMode||"")+"wptt";
 function ttCells(){ const out=[]; (S.ptt||[]).forEach(sec=>{ const g=GRADES[(+sec.grade||0)-1]||""; (sec.days||[]).forEach((row,d)=>(row||[]).forEach((c,p)=>{ if(!c||(!c.s&&!c.t)) return; out.push({sid:sec.id,label:sec.label||sec.id,g,n:+sec.sec||0,sec:gaSecKey(g,String(+sec.sec||0)),d,p,s:String(c.s||"").trim(),sm:c.s?ppSubjMap(c.s):null,t:String(c.t||"").replace(/\s+/g," ").trim()}); })); }); return out; }
@@ -5458,7 +5459,7 @@ function renderTTC(view){ const app=$("#app"); view=view||"cls";
   app.innerHTML=`<section class="panel stack" style="gap:10px"><div class="row" style="justify-content:space-between;gap:8px"><div><h1 class="sec-title" style="margin:0">🗓️ إدارة الجداول الدراسية</h1><div class="small muted" id="ttSub">${ttSubTxt()}</div></div><span id="ttPill">${ttPillTxt(nBad)}</span></div>
     <nav class="ga-tabs">${TT_TABS.map(([k,l])=>`<a class="btn sm ${k===view?"primary":"ghost"}" href="#tt${k==="cls"?"":"-"+k}">${l}</a>`).join("")}</nav></section><div id="ttBody" class="stack" style="gap:14px"></div>`;
   const el=$("#ttBody"); if(!S.pttReady&&view!=="cls"){ el.innerHTML='<div class="empty">جارٍ تحميل الجداول…</div>'; return; }
-  ({cls:ttViewCls,tch:ttViewTch,asg:ttViewAsg,chk:ttViewChk,arch:ttViewArch,log:ttViewLog,use:ttViewUse}[view]||ttViewCls)(el,()=>renderTTC(view)); }
+  ({cls:ttViewCls,bell:el=>admBell(el),tch:ttViewTch,asg:ttViewAsg,chk:ttViewChk,arch:ttViewArch,log:ttViewLog,use:ttViewUse}[view]||ttViewCls)(el,()=>renderTTC(view)); }
 function ttViewCls(el){ el.innerHTML=`<div class="note info small">هنا تُدخل الإدارة جدول كل فصل مرة واحدة (المادة والمعلم لكل حصة)، أو تستورده من ملف. كل الأقسام تستمد منه الإسنادات تلقائياً. التعديلات تُسجَّل في «سجل التعديلات»، ولا تغيّر الدرجات أو الخطط المحفوظة سابقاً.</div><div class="wpx wp-host" style="max-width:100%;overflow:hidden"><div id="ttHost" class="stack" style="min-width:0"></div></div>`;
   const h=el.querySelector("#ttHost"); if(window.wpTTHost) window.wpTTHost(h); else h.innerHTML='<div class="empty">جارٍ تحميل محرر الجداول…</div>'; }
 function ttGrid(cells,label){ const P=ttPeriods(); return `<div class="tbl-wrap"><table class="ga-heat"><thead><tr><th>اليوم</th>${[...Array(P)].map((_,p)=>`<th>ح${p+1}</th>`).join("")}<th>المجموع</th></tr></thead><tbody>${TT_DAYS.map((dn,d)=>{ const row=cells.filter(c=>c.d===d); return `<tr><th>${dn}</th>${[...Array(P)].map((_,p)=>{ const L=row.filter(c=>c.p===p); return `<td class="small" ${L.length>1?'style="background:#fee2e2"':""}>${L.map(c=>label(c)).join("<hr style='margin:2px 0'>")}</td>`; }).join("")}<td class="num">${row.length}</td></tr>`; }).join("")}</tbody></table></div>`; }
@@ -8500,7 +8501,7 @@ const SN_GROUPS=[
   ["التعلّم والخطط",["wp","rev","tsk","rl","exams","train"]],
   ["الأخبار والمواعيد",["ann","cal","bell"]],
   ["أولياء الأمور",["parent","pres","cmap"]],
-  ["المعلمون والإدارة",["tp","subs","studio","ga","tt"]],
+  ["المعلمون والإدارة",["tt","tp","subs","studio","ga"]],
   ["الحساب",["contact","login","admin"]]];
 const SN_ICON={parent:"👪",train:"🎯",contact:"☎️",login:"🔐",admin:"🛡️"};
 function buildSideNav(){
@@ -9210,12 +9211,12 @@ async function blDownload(kind,D){
 
 /* ---------- public page #bell ---------- */
 function renderBell(){
-  const D=blData(); $("#app").innerHTML=`<div class="stack" style="gap:14px"><div class="row" style="justify-content:space-between"><h2 class="sec-title">⏰ الجدول الزمني للحصص</h2><div class="row" style="gap:8px"><button class="btn primary sm" data-blx="png">⬇ صورة</button><button class="btn sm" data-blx="pdf">⬇ PDF</button><button class="btn sm" data-blx="print">🖨 طباعة</button>${S.admin?'<a class="btn sm ghost" href="#admin-bell">تعديل</a>':""}</div></div>
+  const D=blData(); $("#app").innerHTML=`<div class="stack" style="gap:14px"><div class="row" style="justify-content:space-between"><h2 class="sec-title">⏰ الجدول الزمني للحصص</h2><div class="row" style="gap:8px"><button class="btn primary sm" data-blx="png">⬇ صورة</button><button class="btn sm" data-blx="pdf">⬇ PDF</button><button class="btn sm" data-blx="print">🖨 طباعة</button>${S.admin?'<a class="btn sm ghost" href="#tt-bell">تعديل</a>':""}</div></div>
    <div class="bl-poster" id="blPub"><div class="muted">جارٍ تجهيز الجدول…</div></div>
    <div class="grid2">${D.groups.map(g=>{ const C=blCompute(g); return `<div class="panel"><h3 class="sec-title" style="font-size:1.05rem">${esc(blDaysLabel(g))}</h3><div class="tbl-wrap"><table><thead><tr><th>الفترة</th><th>من</th><th>إلى</th><th>المدة</th></tr></thead><tbody>${C.rows.map(r=>`<tr><td>${esc(r.label||BL_TYPES[r.type])}</td><td class="num" dir="ltr">${blFmt(r.s,D.fmt)}</td><td class="num" dir="ltr">${blFmt(r.e,D.fmt)}</td><td class="num">${r.dur} د</td></tr>`).join("")}</tbody></table></div></div>`; }).join("")}</div></div>`;
   blPoster(D).then(c=>{ const el=$("#blPub"); if(el){ el.innerHTML=""; c.style.cssText="width:100%;max-width:720px;height:auto;display:block;margin:auto;border-radius:16px;box-shadow:0 8px 28px #12388526"; el.appendChild(c); } });
 }
-document.addEventListener("click",e=>{ const b=e.target.closest("[data-blx]"); if(b) blDownload(b.dataset.blx,S.blDraft&&route()==="admin-bell"?S.blDraft:null); });
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-blx]"); if(b) blDownload(b.dataset.blx,S.blDraft&&route()==="tt-bell"?S.blDraft:null); });
 
 /* ---------- admin editor ---------- */
 S.blG=S.blG||0;
@@ -9243,7 +9244,8 @@ function admBell(el){
       <td><div class="row" style="gap:2px;flex-wrap:nowrap"><button class="btn sm ghost" data-blu="${i}" ${i?"":"disabled"}>▲</button><button class="btn sm ghost" data-bldn="${i}" ${i<C.rows.length-1?"":"disabled"}>▼</button><button class="btn sm ghost" data-blrm="${i}" title="حذف">✕</button></div></td></tr>`).join("")}</tbody></table></div>
     <div class="row" style="gap:6px">${[["period","+ حصة"],["break","+ فسحة"],["prayer","+ صلاة"],["assembly","+ طابور"],["other","+ فترة أخرى"]].map(([k,l])=>`<button class="btn sm" data-bladd="${k}">${l}</button>`).join("")}</div>
     <div class="row" style="gap:6px;justify-content:space-between"><span class="small">نهاية اليوم: <b class="num" dir="ltr">${blFmt(C.end,D.fmt)}</b> • عدد الحصص: <b>${C.rows.filter(r=>r.type==="period").length}</b></span><span class="row" style="gap:6px"><button class="btn sm" id="blCopyG">نسخ هذا الجدول لأيام أخرى</button>${D.groups.length>1?`<button class="btn sm ghost" id="blDelG">حذف هذا الجدول</button>`:""}</span></div></div>
-   <p class="muted small">الأيام غير المحددة في أي جدول لا تظهر. الرابط العام للجدول: <a href="#bell">#bell</a></p></div>
+   <div class="panel stack" style="gap:6px"><label class="check"><input type="checkbox" id="blSync" checked> عند الحفظ: طبّق أوقات الحصص والفسحة (لجدول الأحد) على الجداول الدراسية والخطة الأسبوعية وحصص الانتظار</label><div class="row"><button class="btn sm" id="blImp">⬇ جلب الأوقات الحالية من الجداول الدراسية</button></div></div>
+   <p class="muted small">الأيام غير المحددة في أي جدول لا تظهر. الصفحة العامة لأولياء الأمور: <a href="#bell">الجدول الزمني للحصص</a></p></div>
   <div class="bl-prev stack" style="gap:8px"><div class="row" style="gap:6px"><button class="btn primary sm" data-blx="png">⬇ صورة PNG</button><button class="btn sm" data-blx="pdf">⬇ PDF</button><button class="btn sm" data-blx="print">🖨 طباعة</button><button class="btn sm" data-share-here>🔗 مشاركة</button></div><div id="blPrev" class="bl-poster"></div></div></div>`;
   const redraw=()=>admBell(el), prev=()=>blPoster(D).then(c=>{ const p=el.querySelector("#blPrev"); if(p){ p.innerHTML=""; c.style.cssText="width:100%;height:auto;display:block;border-radius:14px;box-shadow:0 6px 22px #12388522"; p.appendChild(c); } });
   prev(); let tt=null; const later=()=>{ clearTimeout(tt); tt=setTimeout(redraw,500); };
@@ -9272,7 +9274,25 @@ function admBell(el){
   el.querySelector("#blReset").onclick=()=>{ S.blDraft=null; redraw(); };
   el.querySelector("#blSave").onclick=async()=>{ const bad=D.groups.find(x=>!(x.days||[]).length); if(bad){ toast("حدّد الأيام لكل جدول","bad"); return; }
     const save=JSON.parse(JSON.stringify(D)); save.groups.forEach(x=>{ const C2=blCompute(x); x.rows=x.rows.map((r,i)=>({...r,dur:C2.rows[i].dur})); }); save.updatedAt=new Date().toISOString(); save.by=admMe();
-    try{ await S.db.doc("site/bell").set(save); S.bell=save; S.blDraft=JSON.parse(JSON.stringify(save)); toast("✓ حُفظ الجدول الزمني ونُشر"); redraw(); }catch(e){ toast("تعذّر الحفظ","bad"); } };
+    try{ await S.db.doc("site/bell").set(save); S.bell=save; S.blDraft=JSON.parse(JSON.stringify(save));
+      let synced=false; if(el.querySelector("#blSync")?.checked!==false){ try{ await blSyncToTT(save); synced=true; }catch(e){} }
+      toast(synced?"✓ حُفظ الجدول الزمني ونُشر، وطُبّقت الأوقات على الجداول الدراسية":"✓ حُفظ الجدول الزمني ونُشر"); redraw(); }catch(e){ toast("تعذّر الحفظ","bad"); } };
+  const im=el.querySelector("#blImp"); if(im) im.onclick=async()=>{ try{ const d=await S.db.doc("wp/config").get(); const cfg=d.exists?d.data():null; if(!cfg||!(cfg.periods||[]).length){ toast("لا توجد أوقات محفوظة في الجداول الدراسية","bad"); return; }
+      const mm=t=>blMin(String(t||"").padStart(5,"0")); const P=cfg.periods.map(x=>[mm(x[0]),mm(x[1])]).filter(x=>x[0]!=null&&x[1]!=null); if(!P.length){ toast("أوقات الجداول غير مكتملة","bad"); return; }
+      const asm=g.rows.find(r=>r.type==="assembly"), pr=g.rows.filter(r=>r.type==="prayer").pop(); const rows=[]; if(asm) rows.push({...asm});
+      const gaps=P.slice(1).map((x,i)=>x[0]-P[i][1]); const ba=+cfg.breakAfter||0, bt=(cfg.breakTime||[]).map(mm);
+      P.forEach((x,i)=>{ rows.push(blRow("period","الحصة "+(BL_ORD[i]||i+1),x[1]-x[0])); if(ba&&i===ba-1&&bt[0]!=null&&bt[1]!=null) rows.push(blRow("break","الفسحة",(P[i+1]?P[i+1][0]:bt[1])-x[1])); });
+      if(pr) rows.push({...pr}); const pg=gaps.filter((v,i)=>!(ba&&i===ba-1)); const gp=pg.length&&pg.every(v=>v===pg[0])?pg[0]:0;
+      g.rows=rows; g.mode="fixed"; g.gap=gp>0&&gp<=5?gp:0; g.gapScope="periods"; g.start=blFmt(P[0][0]-(asm?+asm.dur||0:0),"24").padStart(5,"0"); toast("✓ جُلبت أوقات الجداول الدراسية؛ راجعها ثم احفظ"); redraw(); }catch(e){ toast("تعذّر جلب الأوقات","bad"); } };
+}
+/* the class timetables keep one set of times: take them from the group that has Sunday */
+async function blSyncToTT(D){
+  const g=D.groups.find(x=>(x.days||[]).includes(0))||D.groups[0]; if(!g) return; const C=blCompute(g);
+  const hm=m=>`${Math.floor(m/60)}:${String(m%60).padStart(2,"0")}`;
+  const periods=[]; let ba=0, bt=["",""];
+  C.rows.forEach(r=>{ if(r.type==="period") periods.push([hm(r.s),hm(r.e)]); else if(r.type==="break"&&!ba&&periods.length){ ba=periods.length; bt=[hm(r.s),hm(r.e)]; } });
+  if(!periods.length) return; if(ba>=periods.length){ ba=0; bt=["",""]; }
+  await S.db.doc("wp/config").update({periods,breakAfter:ba,breakTime:bt});
 }
 function blBoot(db){ db.doc("site/bell").onSnapshot(d=>{ S.bell=d.exists?d.data():null; if(route()==="bell") renderBell(); },()=>{}); }
 
@@ -10884,10 +10904,10 @@ window.wpApiAsc=async function(file){ const pages=await pdfItems(file); const se
   const T={}; Object.entries(times).forEach(([p,set])=>{ const v=[...set].sort((x,y)=>x-y); const f=x=>String(Math.floor(x/60)).padStart(2,"0")+":"+String(x%60).padStart(2,"0"); T[p]={start:f(v[0]),end:v.length>1?f(v[v.length-1]):""}; });
   return {secs,times:T}; };
 /* central timetable host: the timetable editor now lives in «إدارة الجداول الدراسية» */
-function wpTTDraw(){ const el=S.ttHost; if(!el||!document.body.contains(el)){ S.ttHost=null; return false; } if(!S.loaded.boot||!S.canEdit){ el.innerHTML='<div class="empty">جارٍ تحميل الجداول…</div>'; return true; } try{ const tab=S.ttTab||"tt"; const T=[["tt","🗓️ الجداول الدراسية"],["times","⏰ أوقات الحصص والفسحة"],["subj","📚 المواد الدراسية"]];
+function wpTTDraw(){ const el=S.ttHost; if(!el||!document.body.contains(el)){ S.ttHost=null; return false; } if(!S.loaded.boot||!S.canEdit){ el.innerHTML='<div class="empty">جارٍ تحميل الجداول…</div>'; return true; } try{ const tab=S.ttTab||"tt"; const T=[["tt","🗓️ الجداول الدراسية"],["subj","📚 المواد الدراسية"]]; if(tab==="times") S.ttTab="tt";
     el.innerHTML=`<div class="subtabs" role="tablist" style="margin-bottom:12px">${T.map(([k,l])=>`<button type="button" role="tab" aria-selected="${k===tab}" class="${k===tab?"on":""}" data-ttb="${k}">${l}</button>`).join("")}</div><div id="ttBody" class="stack"></div>`;
     el.querySelectorAll("[data-ttb]").forEach(b=>b.onclick=()=>{ S.ttTab=b.dataset.ttb; wpTTDraw(); }); const body=el.querySelector("#ttBody");
-    if(tab==="times") admTimes(body,null,{role:"admin"}); else if(tab==="subj") admSubjects(body); else admTT(body); }catch(e){ console.error(e); el.innerHTML='<div class="note bad">تعذّر عرض الجدول</div>'; } return true; }
+    if(tab==="subj") admSubjects(body); else admTT(body); }catch(e){ console.error(e); el.innerHTML='<div class="note bad">تعذّر عرض الجدول</div>'; } return true; }
 window.wpTTHost=el=>{ S.ttHost=el; if(!S.booted){ S.booted=true; boot(); } wpTTDraw(); };
 window.wpTTLeave=()=>{ S.ttHost=null; };
 window.wpTTInfo=()=>({periods:(cfg().periods||[]).length,days:DAYS.slice(),mode:S.mode,teachers:(S.teachers||[]).map(t=>t.name)});
